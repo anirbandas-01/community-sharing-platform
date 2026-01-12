@@ -88,10 +88,20 @@ function Login(){
                     {loading? 'Logging in....' : 'Login'}
                 </button>
 
-                <p className="register-link">
-                    Don't have an account? <a href="/register">Register here</a>
-                </p>
+
+               <div>
+                    <p className="register-link">
+                        Don't have an account? <a href="/register">Register here</a>
+                    </p>
+                    <p>
+                       <a href="/forgot-password">Forgot password</a>
+                    </p>
+                </div>
             </form>
+
+            <div className="test-credentials">
+                <small>Test: test@example.com / password</small>
+            </div>
         </div>
     );
 }
