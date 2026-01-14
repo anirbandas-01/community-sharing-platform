@@ -56,6 +56,16 @@ function Login(){
     return(
         <div className="login-form">
             <h2>Welcome Back!</h2>
+
+            <p className="subtitle">Login to access community features</p>
+
+           {error && (
+              <div className="alert alert-error"> 
+                {error}
+              </div>
+           )}
+
+
             <form  onSubmit={handleSubmit}>
                 {error && <div className="alert error">{error}</div>}
 
