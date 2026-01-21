@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { data } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function Home(){
 
    const [apiStatus, setApiStatus] = useState('checking....');
+   const isLoggedIn = localStorage.getItem('auth_token')
 
    useEffect(()=> {
     fetch('http://community-sharing-platform.test/api/test')
@@ -20,11 +21,25 @@ function Home(){
     return(
         <div className="home">
 
-           <div className="status">
+           {/* <div className="status">
               <p><strong>Backend status:</strong>{apiStatus}</p>
-           </div>
+           </div> */}
 
             <h2>Share tools, exchange skills, and build Community.</h2>
+
+            {isLoggedIn ? (
+                <div className="logged-in-message">
+                    <p>You're logged in! Visit Your <Link to='/dashboard'>Dashboard</Link></p>
+                </div>
+            ):(
+                <div className="auth-prompt">
+                    <p>Join our community to start sharing!</p>
+                    <div className="home-buttons">
+                        <Link to='/register' className="btn btn-primary">Sign up Free</Link>
+                        <Link to="/login" className="btn btn-outline">Login</Link>
+                    </div>
+                </div>
+            )}
 
             <div className="features">
                 <div className="features-card">

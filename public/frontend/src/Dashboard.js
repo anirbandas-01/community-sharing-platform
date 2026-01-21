@@ -24,7 +24,7 @@ function Dashboard(){
        
        const fetchUserData = async () => {
         try {
-            const data = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('http://community-sharing-platform.test/api/user',{
                 headers: {
                     'Authorization' : `Bearer ${token}`,
@@ -62,10 +62,18 @@ function Dashboard(){
             console.log('Logout error:', error);
         }finally{
             localStorage.removeItem('auth_token');
-            localStorage.removeItem(user);
+            localStorage.removeItem('user');
             navigate('/login');
         }
        };
+
+       if(loading){
+        return (
+            <div className="loading">
+                <p>loading your dashboard...</p>
+            </div>
+        );
+       }
                 return(
                     <div className="dashboard">
                         <header className="dashboard-header">

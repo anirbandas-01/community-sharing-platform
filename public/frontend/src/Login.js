@@ -78,6 +78,7 @@ function Login(){
                        value={formData.email}
                        onChange={handelChange}
                        required
+                       disabled={loading}
                     />
                 </div>
 
@@ -90,16 +91,25 @@ function Login(){
                         value={formData.password}
                         onChange={handelChange}
                         required
+                        disabled={loading}
                     />
                 </div>
 
 
-                <button type="submit" disabled={loading}>
-                    {loading? 'Logging in....' : 'Login'}
+                <button type="submit"
+                        className="btn btn-primary"
+                        disabled={loading}
+                    >
+                    {loading? (
+                        <>
+                           <span className="spinner"></span>
+                            Logging in....
+                        </>  
+                        )  : 'Login'}
                 </button>
 
 
-               <div>
+               <div className="auth-links">
                     <p className="register-link">
                         Don't have an account? <a href="/register">Register here</a>
                     </p>
