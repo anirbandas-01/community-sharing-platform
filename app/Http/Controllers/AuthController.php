@@ -5,35 +5,42 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rules;
 
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+
+//Registration 
+ public function register(Request $request)
     {
         //validate user input
-        $request-> validate([
-            'name'=>'required',
-            'email'=> 'required|email|unique:users',
-            'password'=>'required|min:6'
+       $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed','min:6', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
-            'name'=> $request->name,
-            'email'=> $request->email,
-            'password'=> bcrypt($request->password)
+            'name'=> $validated['name'],
+            'email'=> $validated['email'],
+            'password'=> Hash::make($validated['password']),
         ]);
 
 
           return response()->json([
-            'message' => 'User created successfully',
-            'user' => $user
+            'success'=>true,
+            'message' => 'Registration successfully',
+            'user' => [
+                'id'=> $user->id,
+                'name'=>$user->name,
+                'email'=>$user->email
+            ]
           ], 201);
     }
 
 
-
+//Login
     public function login(Request $request){
         $request->validate([
             'email'=>'required| email',
