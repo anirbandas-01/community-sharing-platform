@@ -5,7 +5,7 @@ import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import './App.css';
 //import ToolList from './ToolList';
 import Home from './Home';
-import Register from './Register';
+import Register from './components/Register';
 import Login from './Login';
 import Dashboard from './Dashboard';
 import ProtectedRoute from './ProtectedRoutes';
