@@ -58,7 +58,7 @@ class AuthController extends Controller
             $image->storeAs('public/profiles', $profileImageName);
         }
 
-        // Create user with basic info
+        
         $userData = [
             'name' => $request->name,
             'email' => $request->email,
@@ -70,7 +70,7 @@ class AuthController extends Controller
             'state' => $request->state,
             'zip_code' => $request->zip_code,
             'profile_image' => $profileImageName,
-            'trust_score' => 100, // Starting trust score
+            'trust_score' => 100, 
         ];
 
         // Add professional-specific fields

@@ -4,18 +4,26 @@ import Login from './pages/Login'
 import Home from './pages/Home'
 
 import './App.css'
+import Footer from './components/Footer'
+import Navbar from './components/Navbar'
 
 function App() {
   
 
   return (
-    <Routes>
-       <Route path='/' element={<Home />}/> 
-      <Route path='/register' element={<Register />}/>
-      <Route path='/login' element={<Login />}/>
+    <div className='min-h-screen flex flex-col'>
+      <Navbar />
+        <main className='flex-grow'> 
+          <Routes>
+            <Route path='/' element={<Home />}/> 
+            <Route path='/register' element={<Register />}/>
+            <Route path='/login' element={<Login />}/>
 
 
-    </Routes>
+          </Routes>
+         </main> 
+    <Footer />
+    </div>
   )
 }
 
