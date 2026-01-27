@@ -13,7 +13,8 @@ function App() {
   return (
     <div className='min-h-screen flex flex-col'>
       <Navbar />
-        <main className='flex-grow'> 
+      <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+        <main className='flex-grow pt-16'> 
           <Routes>
             <Route path='/' element={<Home />}/> 
             <Route path='/register' element={<Register />}/>
@@ -27,4 +28,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

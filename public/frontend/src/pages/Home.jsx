@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-200">
       {/* Simple Navigation */}
       {/* <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -30,7 +30,7 @@ function Home() {
       </nav> */}
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+      <div className="max-w-7xl mx-auto px-4 py-24 text-center">
         <h1 className="text-5xl font-bold text-gray-900 mb-6">
           Welcome to <span className="text-blue-600">LocalConnect</span>
         </h1>
