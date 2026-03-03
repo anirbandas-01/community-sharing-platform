@@ -1,0 +1,27 @@
+/* Base styles that apply everywhere */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+/* Layout */
+.main-content {
+    margin-left: 260px;
+    margin-top: 70px;
+    padding: 32px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 16px;
+    }
+}
