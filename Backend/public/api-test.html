@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Professional API Test</title>
+        <style>
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #f5f5f5;
+            }
+            .container {
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                color: #2563eb;
+                border-bottom: 3px solid #2563eb;
+                padding-bottom: 10px;
+            }
+            .test-section {
+                margin: 20px 0;
+                padding: 15px;
+                background: #f8fafc;
+                border-left: 4px solid #2563eb;
+                border-radius: 5px;
+            }
+            button {
+                background: #2563eb;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 5px;
+                font-size: 14px;
+            }
+            button:hover {
+                background: #1d4ed8;
+            }
+            .result {
+                margin-top: 10px;
+                padding: 15px;
+                background: #1e293b;
+                color: #10b981;
+                border-radius: 5px;
+                font-family: "Courier New", monospace;
+                font-size: 12px;
+                max-height: 400px;
+                overflow-y: auto;
+                white-space: pre-wrap;
+            }
+            .error {
+                color: #ef4444;
+            }
+            .success {
+                color: #10b981;
+            }
+            .warning {
+                color: #f59e0b;
+            }
+            .token-input {
+                width: 100%;
+                padding: 10px;
+                margin: 10px 0;
+                border: 2px solid #e2e8f0;
+                border-radius: 5px;
+                font-family: monospace;
+            }
+            .endpoint {
+                background: #eff6ff;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-family: monospace;
+                color: #1e40af;
+                display: inline-block;
+                margin: 5px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔧 Professional Dashboard API Tester</h1>
+
+            <div class="test-section">
+                <h3>Authentication Setup</h3>
+                <p>Enter your authentication token:</p>
+                <input
+                    type="text"
+                    id="authToken"
+                    class="token-input"
+                    placeholder="Bearer token (from localStorage or login response)"
+                />
+                <button onclick="saveToken()">Save Token</button>
+                <p id="tokenStatus" style="margin-top: 10px"></p>
+            </div>
+
+            <div class="test-section">
+                <h3>1. Dashboard Statistics</h3>
+                <p class="endpoint">GET /api/professional/dashboard</p>
+                <button onclick="testDashboard()">Test Dashboard API</button>
+                <div
+                    id="dashboardResult"
+                    class="result"
+                    style="display: none"
+                ></div>
+            </div>
+
+            <div class="test-section">
+                <h3>2. Profile Information</h3>
+                <p class="endpoint">GET /api/professional/profile</p>
+                <button onclick="testProfile()">Test Profile API</button>
+                <div
+                    id="profileResult"
+                    class="result"
+                    style="display: none"
+                ></div>
+            </div>
+
+            <div class="test-section">
+                <h3>3. Services List</h3>
+                <p class="endpoint">GET /api/professional/services</p>
+                <button onclick="testServices()">Test Services API</button>
+                <div
+                    id="servicesResult"
+                    class="result"
+                    style="display: none"
+                ></div>
+            </div>
+
+            <div class="test-section">
+                <h3>4. Appointments List</h3>
+                <p class="endpoint">GET /api/professional/appointments</p>
+                <button onclick="testAppointments()">
+                    Test Appointments API
+                </button>
+                <div
+                    id="appointmentsResult"
+                    class="result"
+                    style="display: none"
+                ></div>
+            </div>
+
+            <div class="test-section">
+                <h3>5. Earnings Data</h3>
+                <p class="endpoint">GET /api/professional/earnings</p>
+                <button onclick="testEarnings()">Test Earnings API</button>
+                <div
+                    id="earningsResult"
+                    class="result"
+                    style="display: none"
+                ></div>
+            </div>
+
+            <div class="test-section">
+                <h3>6. Reviews & Ratings</h3>
+                <p class="endpoint">GET /api/professional/reviews</p>
+                <button onclick="testReviews()">Test Reviews API</button>
+                <div
+                    id="reviewsResult"
+                    class="result"
+                    style="display: none"
+                ></div>
+            </div>
+
+            <div class="test-section">
+                <h3>7. Add New Service</h3>
+                <p class="endpoint">POST /api/professional/services</p>
+                <button onclick="testAddService()">Test Add Service API</button>
+                <div
+                    id="addServiceResult"
+                    class="result"
+                    style="display: none"
+                ></div>
+            </div>
+
+            <div class="test-section">
+                <h3>Test All Endpoints</h3>
+                <button onclick="testAll()" style="background: #10b981">
+                    Run All Tests
+                </button>
+                <button onclick="clearResults()" style="background: #64748b">
+                    Clear Results
+                </button>
+            </div>
+        </div>
+
+        <script>
+            const API_BASE = "/api";
+            let authToken = localStorage.getItem("auth_token") || "";
+
+            // Load token on page load
+            window.onload = function () {
+                if (authToken) {
+                    document.getElementById("authToken").value = authToken;
+                    updateTokenStatus(true);
+                }
+            };
+
+            function saveToken() {
+                authToken = document.getElementById("authToken").value.trim();
+                if (authToken) {
+                    localStorage.setItem("auth_token", authToken);
+                    updateTokenStatus(true);
+                } else {
+                    updateTokenStatus(false);
+                }
+            }
+
+            function updateTokenStatus(isValid) {
+                const statusEl = document.getElementById("tokenStatus");
+                if (isValid) {
+                    statusEl.innerHTML =
+                        '<span class="success">✓ Token saved successfully</span>';
+                } else {
+                    statusEl.innerHTML =
+                        '<span class="error">✗ Please enter a valid token</span>';
+                }
+            }
+
+            function getAuthHeaders() {
+                return {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`,
+                    Accept: "application/json",
+                };
+            }
+
+            async function makeRequest(endpoint, method = "GET", body = null) {
+                const options = {
+                    method: method,
+                    headers: getAuthHeaders(),
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                try {
+                    const response = await fetch(
+                        `${API_BASE}${endpoint}`,
+                        options,
+                    );
+                    const data = await response.json();
+
+                    return {
+                        status: response.status,
+                        ok: response.ok,
+                        data: data,
+                    };
+                } catch (error) {
+                    return {
+                        status: 0,
+                        ok: false,
+                        error: error.message,
+                    };
+                }
+            }
+
+            function displayResult(elementId, result) {
+                const resultEl = document.getElementById(elementId);
+                resultEl.style.display = "block";
+
+                let output = "";
+                output += `Status: ${result.status}\n`;
+                output += `Success: ${result.ok ? "Yes" : "No"}\n`;
+                output += `\n--- Response Data ---\n`;
+                output += JSON.stringify(result.data || result.error, null, 2);
+
+                resultEl.textContent = output;
+                resultEl.className = result.ok
+                    ? "result success"
+                    : "result error";
+            }
+
+            async function testDashboard() {
+                const result = await makeRequest("/professional/dashboard");
+                displayResult("dashboardResult", result);
+            }
+
+            async function testProfile() {
+                const result = await makeRequest("/professional/profile");
+                displayResult("profileResult", result);
+            }
+
+            async function testServices() {
+                const result = await makeRequest("/professional/services");
+                displayResult("servicesResult", result);
+            }
+
+            async function testAppointments() {
+                const result = await makeRequest("/professional/appointments");
+                displayResult("appointmentsResult", result);
+            }
+
+            async function testEarnings() {
+                const result = await makeRequest("/professional/earnings");
+                displayResult("earningsResult", result);
+            }
+
+            async function testReviews() {
+                const result = await makeRequest("/professional/reviews");
+                displayResult("reviewsResult", result);
+            }
+
+            async function testAddService() {
+                const serviceData = {
+                    name: "Test Service",
+                    description: "This is a test service created via API",
+                    price: 999.99,
+                    duration: 60,
+                    category: "Testing",
+                };
+
+                const result = await makeRequest(
+                    "/professional/services",
+                    "POST",
+                    serviceData,
+                );
+                displayResult("addServiceResult", result);
+            }
+
+            async function testAll() {
+                if (!authToken) {
+                    alert(
+                        "Please enter and save your authentication token first!",
+                    );
+                    return;
+                }
+
+                await testDashboard();
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                await testProfile();
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                await testServices();
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                await testAppointments();
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                await testEarnings();
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                await testReviews();
+            }
+
+            function clearResults() {
+                const results = document.querySelectorAll(".result");
+                results.forEach((result) => {
+                    result.style.display = "none";
+                    result.textContent = "";
+                });
+            }
+        </script>
+    </body>
+</html>
