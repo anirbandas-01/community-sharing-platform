@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // ✅ ADD THIS IMPORT
+import api from "../services/api";
 import "../styles/auth/login.css";
-import api  from "../services/api";
 
 const Login = () => {
-
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ NOW THIS WORKS
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: "", type: "" });
@@ -27,82 +28,46 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  /* const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    console.log("🔐 Attempting login:", formData.email);
+
     try {
-      const response = await fetch("/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          remember: formData.remember,
-        }),
+      // ✅ Send as JSON
+      const response = await api.post("/login", {
+        email: formData.email,
+        password: formData.password,
       });
 
-      const data = await response.json();
-      setLoading(false);
+      console.log("✅ Login response:", response.data);
 
-      if (!response.ok) {
-        showAlert(data.message || "Invalid email or password", "error");
-        return;
-      }
+      // ✅ Store token
+      localStorage.setItem("auth_token", response.data.token);
+
+      // ✅ Update auth context
+      login(response.data.user, response.data.token);
 
       showAlert("Login successful! Redirecting...", "success");
+
+      // ✅ Redirect
       setTimeout(() => {
-        // Redirect based on user type or to dashboard
-        navigate("/dashboard");
-      }, 1500);
-    } catch (err) {
+        navigate(response.data.redirect_url);
+      }, 1000);
+
+    } catch (error) {
       setLoading(false);
-      console.error(err);
-      showAlert("Server error. Please try again.", "error");
+      console.error("❌ Login error:", error);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.errors?.email?.[0] ||
+        "Invalid email or password";
+
+      showAlert(errorMessage, "error");
     }
-  }; */
-
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-
-    console.log("LOGIN DATA →", formData.email, formData.password);
-
-  try {
-    /* const res = await api.post("/login", {
-      email: formData.email,
-      password: formData.password,
-    }); */
-
-    const fd = new FormData();
-fd.append("email", formData.email);
-fd.append("password", formData.password);
-
-const res = await api.post("/login", fd);
-
-    login(res.data.user, res.data.token);
-
-    showAlert("Login successful!", "success");
-
-    setTimeout(() => {
-      if (res.data.user.role === "professional") {
-        navigate("/professional/dashboard");
-      } else {
-        navigate("/resident/dashboard");
-      }
-    }, 800);
-
-  } catch (err) {
-    setLoading(false);
-    showAlert(
-      err.response?.data?.message || "Invalid credentials",
-      "error"
-    );
-  }
-};
+  };
 
   const showAlert = (message, type) => {
     setAlert({ show: true, message, type });
@@ -196,7 +161,7 @@ const res = await api.post("/login", fd);
                   id="email"
                   name="email"
                   className="form-input"
-                  placeholder="admin@localhub.com"
+                  placeholder="your.email@example.com"
                   value={formData.email}
                   onChange={handleInputChange}
                   required

@@ -41,10 +41,22 @@ class AuthController extends Controller
             'profile_image_url' => asset('uploads/profiles/' . $imageName),
         ]);
 
-        return response()->json([
-            'message' => 'User registered successfully',
-            'user'    => $user
-        ], 201);
+        // ✅ Create token immediately
+$token = $user->createToken('auth-token')->plainTextToken;
+
+// ✅ Redirect based on role
+$redirectUrl = match($user->user_type) {
+    'professional' => '/professional/dashboard',
+    'resident' => '/resident/dashboard',
+    default => '/'
+};
+
+return response()->json([
+    'message' => 'User registered successfully',
+    'token' => $token,
+    'user' => $user,
+    'redirect_url' => $redirectUrl
+], 201);
     }
 
 
@@ -52,7 +64,7 @@ class AuthController extends Controller
 
 
 
-     public function login(Request $request)
+     /* public function login(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
@@ -92,8 +104,43 @@ class AuthController extends Controller
             'user_type'=> $user->user_type,
             'redirect_url' => $redirectUrl
         ],200);
-    } 
+    }  */
+   
 
+        public function login(Request $request)
+{
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
+
+    // ✅ Find user
+    $user = User::where('email', $credentials['email'])->first();
+
+    // ✅ Check password with Hash::check (NOT Auth::attempt)
+    if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        return response()->json(['message' => 'Invalid credentials'], 401);
+    }
+
+    // ✅ Delete OLD tokens FIRST
+    $user->tokens()->delete();
+
+    // ✅ Create NEW token
+    $token = $user->createToken('auth-token')->plainTextToken;
+
+    // ❌ REMOVE THIS LINE (No sessions for API):
+    // session(['user_id' => $user->id]); 
+
+    return response()->json([
+        'token' => $token,
+        'user' => $user,
+        'redirect_url' => match($user->user_type) {
+            'professional' => '/professional/dashboard',
+            'resident' => '/resident/dashboard',
+            default => '/'
+        }
+    ]);
+}
  
 
     public function logout(Request $request){

@@ -10,6 +10,13 @@ import ResidentBookings from './pages/resident/ResidentBookings';
 import ResidentMessages from './pages/resident/ResidentMessages';
 import ResidentProfile from './pages/resident/ResidentProfile';
 import ProtectedRoute from "./utils/ProtectedRoute";
+import ProfessionalDashboard from "./pages/professional/ProfessionalDashboard";
+import ProfessionalServices from "./pages/professional/ProfessionalServices";
+import ProfessionalAppointments from "./pages/professional/ProfessionalAppointments";
+import ProfessionalEarnings from "./pages/professional/ProfessionalEarnings";
+import ProfessionalReviews from "./pages/professional/ProfessionalReviews";
+import ProfessionalMessages from "./pages/professional/ProfessionalMessages";
+import ProfessionalSettings from "./pages/professional/ProfessionalSettings";
 
 
 
@@ -22,16 +29,113 @@ function App() {
         <Route path='/login' element={<Login/>}/>
         <Route path='/register' element={<Register/>}/>
         
-        <Route path="/resident" element={
+        <Route path="/resident/dashboard"
+          element={
                <ProtectedRoute>
                     <ResidentDashboard />
-                    <ResidentServices />
-                    <ResidentBookings />
-                    <ResidentMessages />
-                    <ResidentProfile />
                 </ProtectedRoute>
-        }
-        />
+            }
+          />
+
+          <Route
+            path="/resident/services"
+              element={
+                <ProtectedRoute>    
+                    <ResidentServices />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route 
+              path="/resident/bookings"
+                element={
+                  <ProtectedRoute>   
+                    <ResidentBookings />
+                  </ProtectedRoute>
+                }
+            />
+
+            <Route
+              path="/resident/message"
+                element={
+                  <ProtectedRoute>
+                    <ResidentMessages />
+                  </ProtectedRoute>
+                }
+            />
+
+            <Route
+               path="/resident/profile"
+                element={
+                  <ProtectedRoute>    
+                    <ResidentProfile />
+                  </ProtectedRoute>
+                }
+            />
+
+            
+            <Route
+               path="/professional/dashboard"
+                element={
+                  <ProtectedRoute>    
+                    <ProfessionalDashboard />
+                  </ProtectedRoute>
+                }
+            />
+
+            <Route
+               path="/professional/services"
+                element={
+                  <ProtectedRoute>    
+                    <ProfessionalServices />
+                  </ProtectedRoute>
+                }
+            />
+
+            <Route
+               path="/professional/appointments"
+                element={
+                  <ProtectedRoute>    
+                    <ProfessionalAppointments />
+                  </ProtectedRoute>
+                }
+            />
+
+            <Route
+               path="/Professional/earnings"
+                element={
+                  <ProtectedRoute>    
+                    <ProfessionalEarnings />
+                  </ProtectedRoute>
+                }
+            />
+          
+           <Route
+               path="/professional/reviews"
+                element={
+                  <ProtectedRoute>    
+                    <ProfessionalReviews />
+                  </ProtectedRoute>
+                }
+            />
+
+           <Route
+               path="/professional/messages"
+                element={
+                  <ProtectedRoute>    
+                    <ProfessionalMessages />
+                  </ProtectedRoute>
+                }
+            />
+
+            <Route
+               path="/professional/settings"
+                element={
+                  <ProtectedRoute>    
+                    <ProfessionalSettings />
+                  </ProtectedRoute>
+                }
+            />
       </Routes>
   )
 }

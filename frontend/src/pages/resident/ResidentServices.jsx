@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ResidentLayout from "../../components/resident/ResidentLayout";
 
 const ResidentServices = () => {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
   const [searchQuery, setSearchQuery] = useState("");
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,7 @@ const ResidentServices = () => {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(
-        `/api/search/professionals?query=${encodeURIComponent(searchQuery)}`,
+        `${API_BASE}/search/professionals?query=${encodeURIComponent(searchQuery)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -72,7 +73,7 @@ const ResidentServices = () => {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(
-        `/api/professional/services?professional_id=${professional.id}`,
+        `${API_BASE}/professional/services?professional_id=${professional.id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -135,7 +136,7 @@ const ResidentServices = () => {
 
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/resident/appointments", {
+      const response = await fetch(`${API_BASE}/resident/appointments`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

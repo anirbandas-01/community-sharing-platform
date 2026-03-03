@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import "../../styles/resident-dashboard.css";
+import "../../styles/professional-dashboard.css";
 
-const ResidentLayout = ({ children }) => {
+const ProfessionalLayout = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,13 +15,12 @@ const ResidentLayout = ({ children }) => {
 
   const loadUserData = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       if (!token) {
         navigate("/login");
         return;
       }
 
-      // ✅ FIX: Use correct API URL
       const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
       const response = await fetch(`${API_BASE}/user/profile`, {
         headers: {
@@ -33,10 +32,9 @@ const ResidentLayout = ({ children }) => {
       if (!response.ok) throw new Error("Failed to load profile");
 
       const data = await response.json();
-      console.log("✅ User data loaded:", data); // ✅ Debug log
       setUser(data.user || data);
     } catch (error) {
-      console.error("❌ Error loading user:", error);
+      console.error("Error loading user:", error);
       navigate("/login");
     } finally {
       setLoading(false);
@@ -65,7 +63,7 @@ const ResidentLayout = ({ children }) => {
   };
 
   const getInitials = (name) => {
-    if (!name) return "R";
+    if (!name) return "P";
     return name
       .split(" ")
       .map((n) => n[0])
@@ -102,7 +100,7 @@ const ResidentLayout = ({ children }) => {
         <div className="nav-right">
           <div className="user-menu" onClick={handleLogout}>
             <div className="user-avatar">{getInitials(user?.name)}</div>
-            <span>{user?.name || "Resident"}</span>
+            <span>{user?.name || "Professional"}</span>
             <i className="fas fa-sign-out-alt"></i>
           </div>
         </div>
@@ -111,39 +109,53 @@ const ResidentLayout = ({ children }) => {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? "active" : ""}`}>
         <Link
-          to="/resident/dashboard"
-          className={`sidebar-item ${isActive("/resident/dashboard") ? "active" : ""}`}
+          to="/professional/dashboard"
+          className={`sidebar-item ${isActive("/professional/dashboard") ? "active" : ""}`}
         >
-          <i className="fas fa-home"></i>
+          <i className="fas fa-th-large"></i>
           Dashboard
         </Link>
         <Link
-          to="/resident/services"
-          className={`sidebar-item ${isActive("/resident/services") ? "active" : ""}`}
+          to="/professional/services"
+          className={`sidebar-item ${isActive("/professional/services") ? "active" : ""}`}
         >
-          <i className="fas fa-search"></i>
-          Find Services
+          <i className="fas fa-briefcase"></i>
+          My Services
         </Link>
         <Link
-          to="/resident/bookings"
-          className={`sidebar-item ${isActive("/resident/bookings") ? "active" : ""}`}
+          to="/professional/appointments"
+          className={`sidebar-item ${isActive("/professional/appointments") ? "active" : ""}`}
         >
           <i className="fas fa-calendar-check"></i>
-          My Bookings
+          Appointments
         </Link>
         <Link
-          to="/resident/messages"
-          className={`sidebar-item ${isActive("/resident/messages") ? "active" : ""}`}
+          to="/professional/earnings"
+          className={`sidebar-item ${isActive("/professional/earnings") ? "active" : ""}`}
+        >
+          <i className="fas fa-dollar-sign"></i>
+          My Earnings
+        </Link>
+        <Link
+          to="/professional/reviews"
+          className={`sidebar-item ${isActive("/professional/reviews") ? "active" : ""}`}
+        >
+          <i className="fas fa-star"></i>
+          Reviews & Ratings
+        </Link>
+        <Link
+          to="/professional/messages"
+          className={`sidebar-item ${isActive("/professional/messages") ? "active" : ""}`}
         >
           <i className="fas fa-comments"></i>
           Messages
         </Link>
         <Link
-          to="/resident/profile"
-          className={`sidebar-item ${isActive("/resident/profile") ? "active" : ""}`}
+          to="/professional/settings"
+          className={`sidebar-item ${isActive("/professional/settings") ? "active" : ""}`}
         >
-          <i className="fas fa-user"></i>
-          My Profile
+          <i className="fas fa-cog"></i>
+          Settings
         </Link>
       </aside>
 
@@ -153,4 +165,4 @@ const ResidentLayout = ({ children }) => {
   );
 };
 
-export default ResidentLayout;
+export default ProfessionalLayout;

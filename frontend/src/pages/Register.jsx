@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../styles/auth/register.css";
+import api from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ show: false, message: "", type: "" });
   const [imagePreview, setImagePreview] = useState(null);
+
+  const totalSteps = 3;
+
   const [formData, setFormData] = useState({
     name: "",
     profile: "",
@@ -21,17 +28,39 @@ const Register = () => {
     terms: false,
   });
 
-  const totalSteps = 3;
-
+  // =============================
+  // STEP PROGRESS UPDATE
+  // =============================
   useEffect(() => {
-    updateSteps();
+    const progressLine = document.getElementById("progressLine");
+    if (progressLine) {
+      progressLine.style.width =
+        ((currentStep - 1) / (totalSteps - 1)) * 100 + "%";
+    }
   }, [currentStep]);
 
+  // =============================
+  // INPUT HANDLER
+  // =============================
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 
     if (type === "file") {
-      handlePhotoUpload(e);
+      const file = files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        showAlert("File must be less than 2MB", "error");
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, profile_image: file }));
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target.result);
+      };
+      reader.readAsDataURL(file);
     } else if (type === "checkbox") {
       setFormData((prev) => ({ ...prev, [name]: checked }));
     } else {
@@ -39,89 +68,54 @@ const Register = () => {
     }
   };
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // =============================
+  // VALIDATION
+  // =============================
+  const validateStep = () => {
+    if (currentStep === 1) {
+      if (!formData.name.trim())
+        return showAlert("Enter your full name", "error");
 
-    if (file.size > 2 * 1024 * 1024) {
-      showAlert("File size must be less than 2MB", "error");
-      e.target.value = "";
-      return;
+      if (!formData.profile)
+        return showAlert("Select a profile type", "error");
+
+      if (!formData.city.trim())
+        return showAlert("Enter your city", "error");
     }
 
-    setFormData((prev) => ({ ...prev, profile_image: file }));
+    if (currentStep === 2) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+        return showAlert("Enter valid email", "error");
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImagePreview(event.target.result);
-    };
-    reader.readAsDataURL(file);
+      if (!/^[0-9]{10}$/.test(formData.phone))
+        return showAlert("Enter valid 10-digit phone", "error");
+
+      if (formData.password.length < 8)
+        return showAlert("Password must be 8+ characters", "error");
+
+      if (formData.password !== formData.password_confirmation)
+        return showAlert("Passwords do not match", "error");
+    }
+
+    if (currentStep === 3) {
+      if (!/^[0-9]{12}$/.test(formData.aadhaar))
+        return showAlert("Enter valid 12-digit Aadhaar", "error");
+
+      if (!formData.profile_image)
+        return showAlert("Upload profile photo", "error");
+
+      if (!formData.terms)
+        return showAlert("Accept terms & conditions", "error");
+    }
+
+    return true;
   };
 
-  const removeImage = (e) => {
-    e.stopPropagation();
-    setFormData((prev) => ({ ...prev, profile_image: null }));
-    setImagePreview(null);
-    document.getElementById("photoInput").value = "";
-  };
-
-  const validateStep = (step) => {
-    let isValid = true;
-
-    if (step === 1) {
-      if (!formData.name.trim()) {
-        showAlert("Please enter your full name", "error");
-        return false;
-      }
-      if (!formData.profile) {
-        showAlert("Please select a profile", "error");
-        return false;
-      }
-      if (!formData.city.trim()) {
-        showAlert("Please enter your city", "error");
-        return false;
-      }
-    }
-
-    if (step === 2) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        showAlert("Please enter a valid email address", "error");
-        return false;
-      }
-      if (!/^[0-9]{10}$/.test(formData.phone)) {
-        showAlert("Please enter a valid 10-digit phone number", "error");
-        return false;
-      }
-      if (formData.password.length < 8) {
-        showAlert("Password must be at least 8 characters", "error");
-        return false;
-      }
-      if (formData.password !== formData.password_confirmation) {
-        showAlert("Passwords do not match", "error");
-        return false;
-      }
-    }
-
-    if (step === 3) {
-      if (!/^[0-9]{12}$/.test(formData.aadhaar)) {
-        showAlert("Please enter a valid 12-digit Aadhaar number", "error");
-        return false;
-      }
-      if (!formData.profile_image) {
-        showAlert("Please upload your photo", "error");
-        return false;
-      }
-      if (!formData.terms) {
-        showAlert("Please accept the terms and conditions", "error");
-        return false;
-      }
-    }
-
-    return isValid;
-  };
-
+  // =============================
+  // STEP NAVIGATION
+  // =============================
   const handleNext = () => {
-    if (validateStep(currentStep) && currentStep < totalSteps) {
+    if (validateStep() && currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -132,71 +126,70 @@ const Register = () => {
     }
   };
 
-  const updateSteps = () => {
-    const progressLine = document.getElementById("progressLine");
-    if (progressLine) {
-      progressLine.style.width =
-        ((currentStep - 1) / (totalSteps - 1)) * 100 + "%";
-    }
-  };
+  const removeImage = (e) => {
+  e.stopPropagation();
+  setFormData((prev) => ({
+    ...prev,
+    profile_image: null,
+  }));
+  setImagePreview(null);
 
+  const fileInput = document.getElementById("photoInput");
+  if (fileInput) fileInput.value = "";
+};
+
+  // =============================
+  // SUBMIT
+  // =============================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep(currentStep)) return;
+    if (!validateStep()) return;
 
     setLoading(true);
 
-    const fd = new FormData();
-    fd.append("name", formData.name);
-    fd.append("email", formData.email);
-    fd.append("phone", formData.phone);
-    fd.append("password", formData.password);
-    fd.append("password_confirmation", formData.password_confirmation);
-    fd.append("city", formData.city);
-    fd.append("aadhaar", formData.aadhaar);
-    fd.append("user_type", formData.profile);
-    if (formData.profile_image) {
-      fd.append("profile_image", formData.profile_image);
-    }
-
     try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
-        body: fd,
+      const fd = new FormData();
+
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== null) {
+          fd.append(
+            key === "profile" ? "user_type" : key,
+            formData[key]
+          );
+        }
       });
 
-      const data = await response.json();
-      setLoading(false);
+      const response = await api.post("/register", fd);
 
-      if (!response.ok) {
-        if (data.errors) {
-          const firstError = Object.values(data.errors)[0][0];
-          showAlert(firstError, "error");
-        } else if (data.message) {
-          showAlert(data.message, "error");
-        } else {
-          showAlert("Registration failed", "error");
-        }
-        return;
-      }
+      const { token, redirect_url, user } = response.data;
+
+      // ✅ Use context login (Professional way)
+      login(user, token);
 
       showAlert("Registration successful!", "success");
-      setTimeout(() => navigate("/login"), 1500);
-    } catch (err) {
+
+      setTimeout(() => navigate(redirect_url), 1000);
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        Object.values(error.response?.data?.errors || {})[0]?.[0] ||
+        "Registration failed";
+
+      showAlert(message, "error");
+    } finally {
       setLoading(false);
-      console.error(err);
-      showAlert("Server error. Try again.", "error");
     }
   };
 
+  // =============================
+  // ALERT
+  // =============================
   const showAlert = (message, type) => {
     setAlert({ show: true, message, type });
-    setTimeout(() => setAlert({ show: false, message: "", type: "" }), 5000);
+    setTimeout(() => {
+      setAlert({ show: false, message: "", type: "" });
+    }, 4000);
   };
-
   return (
     <>
       {/* Animated Background */}

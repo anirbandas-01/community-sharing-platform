@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import ResidentLayout from "../../components/resident/ResidentLayout";
 
 const ResidentDashboard = () => {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
   const [user, setUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [stats, setStats] = useState({
@@ -26,14 +27,14 @@ const ResidentDashboard = () => {
       };
 
       // Load user profile
-      const userRes = await fetch("/api/user/profile", { headers });
+      const userRes = await fetch(`${API_BASE}/user/profile`, { headers });
       if (userRes.ok) {
         const userData = await userRes.json();
         setUser(userData.user || userData);
       }
 
       // Load appointments
-      const apptRes = await fetch("/api/resident/appointments", { headers });
+      const apptRes = await fetch(`${API_BASE}/resident/appointments`, { headers });
       if (apptRes.ok) {
         const apptData = await apptRes.json();
         const appts = apptData.appointments || apptData.data || [];

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ResidentLayout from "../../components/resident/ResidentLayout";
 
 const ResidentBookings = () => {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
   const [bookings, setBookings] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -13,7 +14,7 @@ const ResidentBookings = () => {
   const loadBookings = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/resident/appointments", {
+      const response = await fetch(`${API_BASE}/resident/appointments`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
@@ -57,7 +58,7 @@ const ResidentBookings = () => {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(
-        `/api/resident/appointments/${bookingId}/cancel`,
+        `${API_BASE}/resident/appointments/${bookingId}/cancel`,
         {
           method: "PUT",
           headers: {

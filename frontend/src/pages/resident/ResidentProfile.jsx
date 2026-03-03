@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ResidentLayout from "../../components/resident/ResidentLayout";
 
 const ResidentProfile = () => {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -20,7 +21,7 @@ const ResidentProfile = () => {
   const loadUserData = async () => {
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/user/profile", {
+      const response = await fetch(`${API_BASE}/user/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
@@ -51,7 +52,7 @@ const ResidentProfile = () => {
 
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/user/profile", {
+      const response = await fetch(`${API_BASE}/user/profile`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -104,7 +105,7 @@ const ResidentProfile = () => {
     }
 
     const token = localStorage.getItem("auth_token");
-    fetch("/api/user/change-password", {
+    fetch(`${API_BASE}user/change-password`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -136,7 +137,7 @@ const ResidentProfile = () => {
 
     try {
       const token = localStorage.getItem("auth_token");
-      await fetch("/api/logout", {
+      await fetch(`${API_BASE}/logout`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
