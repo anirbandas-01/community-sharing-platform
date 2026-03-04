@@ -6,7 +6,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfessionalsController;
 use App\Http\Controllers\Api\ResidentController;
 use App\Http\Controllers\Api\UserController;
-
+use App\Http\Controllers\Api\BusinessController;
+use App\Http\Controllers\Api\EnterpriseController;
+use App\Http\Controllers\Api\AdminController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -24,7 +26,31 @@ use App\Http\Controllers\Api\UserController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
+// Admin Routes (add after other routes)
+Route::prefix('admin')->group(function () {
+    // Admin login
+    Route::post('/login', [AuthController::class, 'adminLogin']);
+    
+    // Protected admin routes
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        
+        // Users
+        Route::get('/users', [AdminController::class, 'getUsers']);
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+        
+        // Communities
+        Route::get('/communities', [AdminController::class, 'getCommunities']);
+        Route::post('/communities', [AdminController::class, 'createCommunity']);
+        Route::put('/communities/{id}', [AdminController::class, 'updateCommunity']);
+        Route::delete('/communities/{id}', [AdminController::class, 'deleteCommunity']);
+        
+        // Verifications
+        Route::get('/verifications', [AdminController::class, 'getPendingVerifications']);
+        Route::put('/verifications/{id}', [AdminController::class, 'updateVerificationStatus']);
+    });
+});
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -86,5 +112,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/resident/appointments', [ResidentController::class, 'getAppointments']);
         Route::post('/resident/appointments', [ResidentController::class, 'createAppointment']);
         Route::put('/resident/appointments/{id}/cancel', [ResidentController::class, 'cancelAppointment']);
+    });
+
+    Route::middleware('role:business')->group(function () {
+        // Products/Inventory
+        Route::get('/business/products', [BusinessController::class, 'getProducts']);
+        Route::post('/business/products', [BusinessController::class, 'createProduct']);
+        Route::get('/business/products/{id}', [BusinessController::class, 'getProduct']);
+        Route::put('/business/products/{id}', [BusinessController::class, 'updateProduct']);
+        Route::delete('/business/products/{id}', [BusinessController::class, 'deleteProduct']);
+
+        // Enterprise
+        Route::post('/enterprise/register', [EnterpriseController::class, 'store']);
+        Route::get('/enterprise/show', [EnterpriseController::class, 'show']);
+
+        // Orders (placeholder)
+        Route::get('/business/orders', function () {
+            return response()->json(['orders' => []]);
+        });
     });
 });

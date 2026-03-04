@@ -150,4 +150,45 @@ return response()->json([
             'message' => 'Logged out successfully'
         ]);
     }
+
+
+
+/**
+ * Admin login
+ */
+public function adminLogin(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'message' => 'Invalid credentials'
+        ], 401);
+    }
+
+    // Check if user is admin
+    if ($user->user_type !== 'admin') {
+        return response()->json([
+            'message' => 'Unauthorized access'
+        ], 403);
+    }
+
+    // Delete old tokens
+    $user->tokens()->delete();
+
+    // Create new token
+    $token = $user->createToken('admin-token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login successful',
+        'token' => $token,
+        'user' => $user,
+        'redirect_url' => '/admin/dashboard'
+    ]);
+}
 }

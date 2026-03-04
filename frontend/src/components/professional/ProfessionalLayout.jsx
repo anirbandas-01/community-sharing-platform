@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../../styles/professional-dashboard.css";
+import Chatbot from "../Chatbot";
+
 
 const ProfessionalLayout = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -161,6 +163,7 @@ const ProfessionalLayout = ({ children }) => {
 
       {/* Main Content */}
       <main className="main-content">{children}</main>
+      <Chatbot />
     </div>
   );
 };

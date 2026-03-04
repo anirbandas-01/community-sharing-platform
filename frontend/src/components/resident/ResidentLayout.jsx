@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../../styles/resident-dashboard.css";
+import Chatbot from "../Chatbot";
+
 
 const ResidentLayout = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -149,6 +151,7 @@ const ResidentLayout = ({ children }) => {
 
       {/* Main Content */}
       <main className="main-content">{children}</main>
+      <Chatbot />
     </div>
   );
 };

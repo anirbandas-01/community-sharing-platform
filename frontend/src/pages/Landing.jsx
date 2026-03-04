@@ -7,6 +7,7 @@ import Stats from "../components/landing/Stats";
 import HowItWorks from "../components/landing/HowItWorks";
 import CTA from "../components/landing/CTA";
 import Footer from "../components/Footer";
+import Chatbot from "../components/Chatbot";
 import "../styles/landing.css";
 
 const Landing = () => {
@@ -36,6 +37,7 @@ const Landing = () => {
       <HowItWorks />
       <CTA />
       <Footer />
+      <Chatbot />
     </>
   );
 };
