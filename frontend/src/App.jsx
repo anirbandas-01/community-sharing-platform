@@ -25,6 +25,7 @@ import BusinessEnterprise from "./pages/business/BusinessEnterprise";
 import BusinessRevenue from "./pages/business/BusinessRevenue";
 import BusinessContact from "./pages/business/BusinessContact";
 import { useEffect, useState } from "react";
+import AdminLogin from "./pages/AdminLogin";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
@@ -266,7 +267,10 @@ function App() {
                 }
             />
 
+
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="*" element={<Navigate to="/" />} />
+
       </Routes>
   )
 }

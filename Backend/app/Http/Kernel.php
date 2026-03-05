@@ -70,7 +70,7 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'admin.session' => \App\Http\Middleware\AdminSession::class,
 
-
+          'admin' => \App\Http\Middleware\AdminMiddleware::class,
     ];
 
     
