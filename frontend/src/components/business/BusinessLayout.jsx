@@ -20,7 +20,7 @@ const BusinessLayout = ({ children }) => {
 
   const loadUser = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/user/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -41,7 +41,7 @@ const BusinessLayout = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       await fetch(`${API_BASE}/logout`, {
         method: "POST",
         headers: {
@@ -52,7 +52,7 @@ const BusinessLayout = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
       navigate("/login");
     }
   };

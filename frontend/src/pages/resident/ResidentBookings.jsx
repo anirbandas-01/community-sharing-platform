@@ -13,7 +13,7 @@ const ResidentBookings = () => {
 
   const loadBookings = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/resident/appointments`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ const ResidentBookings = () => {
     if (!confirm("Are you sure you want to cancel this booking?")) return;
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `${API_BASE}/resident/appointments/${bookingId}/cancel`,
         {

@@ -44,7 +44,7 @@ const Login = () => {
       console.log("✅ Login response:", response.data);
 
       // ✅ Store token
-      localStorage.setItem("auth_token", response.data.token);
+      localStorage.setItem("token", response.data.token);
 
       // ✅ Update auth context
       login(response.data.user, response.data.token);

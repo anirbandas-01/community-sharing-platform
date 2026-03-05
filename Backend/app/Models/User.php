@@ -106,4 +106,12 @@ class User extends Authenticatable
         return $this->hasOne(Enterprise::class);
     }
 
+    /**
+ * Check if user is an admin
+ */
+        public function isAdmin()
+        {
+            return $this->user_type === 'admin';
+        }
+
 }

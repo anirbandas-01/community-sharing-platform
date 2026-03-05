@@ -22,7 +22,7 @@ const BusinessInventory = () => {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/business/products`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -63,7 +63,7 @@ const BusinessInventory = () => {
     }
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/business/products`, {
         method: "POST",
         headers: {
@@ -95,7 +95,7 @@ const BusinessInventory = () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/business/products/${id}`, {
         method: "DELETE",
         headers: {

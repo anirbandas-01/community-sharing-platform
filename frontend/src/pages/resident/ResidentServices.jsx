@@ -25,7 +25,7 @@ const ResidentServices = () => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `${API_BASE}/search/professionals?query=${encodeURIComponent(searchQuery)}`,
         {
@@ -71,7 +71,7 @@ const ResidentServices = () => {
 
     // Load professional's services
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `${API_BASE}/professional/services?professional_id=${professional.id}`,
         {
@@ -135,7 +135,7 @@ const ResidentServices = () => {
     };
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/resident/appointments`, {
         method: "POST",
         headers: {

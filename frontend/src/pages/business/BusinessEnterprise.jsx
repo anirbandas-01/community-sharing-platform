@@ -31,7 +31,7 @@ const BusinessEnterprise = () => {
   const checkEnterpriseStatus = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/enterprise/show`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -77,7 +77,7 @@ const BusinessEnterprise = () => {
     });
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/enterprise/register`, {
         method: "POST",
         headers: {

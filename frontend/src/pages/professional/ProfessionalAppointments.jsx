@@ -112,7 +112,7 @@ const ProfessionalAppointments = () => {
     if (!confirm("Are you sure you want to reject this appointment?")) return;
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/professional/appointments/${id}`, {
         method: "PUT",
         headers: {

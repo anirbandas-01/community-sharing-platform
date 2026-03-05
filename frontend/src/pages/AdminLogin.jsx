@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "../../styles/admin-login.css";
+import "../styles/admin-login.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
@@ -44,7 +44,7 @@ const AdminLogin = () => {
       }
 
       // Store token
-      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("token", data.token);
       localStorage.setItem("user_type", "admin");
 
       // Redirect to admin dashboard

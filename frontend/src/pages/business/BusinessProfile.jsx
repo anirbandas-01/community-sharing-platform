@@ -15,7 +15,7 @@ const BusinessProfile = () => {
   const loadProfile = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
 
       // Load user profile
       const userResponse = await fetch(`${API_BASE}/user/profile`, {

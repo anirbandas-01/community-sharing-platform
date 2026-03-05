@@ -26,6 +26,7 @@ import BusinessRevenue from "./pages/business/BusinessRevenue";
 import BusinessContact from "./pages/business/BusinessContact";
 import { useEffect, useState } from "react";
 import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
@@ -38,7 +39,7 @@ function App() {
     checkAuth();
   }, []);
 
-  const checkAuth = async () => {
+  /* const checkAuth = async () => {
     const token = localStorage.getItem("token");
     if(!token){
       setLoading(false);
@@ -65,8 +66,45 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }; */
 
+
+   const checkAuth = async () => {
+  const token = localStorage.getItem("token");
+  const userType = localStorage.getItem("user_type");
+
+  if (!token) {
+    setLoading(false);
+    return;
+  }
+
+  try {
+    let endpoint = "/user/profile";
+
+    if (userType === "admin") {
+      endpoint = "/admin/profile";
+    }
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setUser(data.user || data);
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user_type");
+    }
+  } catch (error) {
+    console.error("Auth check failed:", error);
+  } finally {
+    setLoading(false);
+  }
+};  
     const ProtectedRoute = ({ children, allowedType }) => {
     if (loading) {
       return (
@@ -76,9 +114,19 @@ function App() {
       );
     }
 
-    if (!user) {
+    /* if (!user) {
       return <Navigate to="/login" />;
-    }
+    } */
+
+      if (!user) {
+  const type = localStorage.getItem("user_type");
+
+  if (type === "admin") {
+    return <Navigate to="/admin/login" />;
+  }
+
+  return <Navigate to="/login" />;
+}
 
     if (allowedType && user.user_type !== allowedType) {
       return <Navigate to={`/${user.user_type}/dashboard`} />;
@@ -269,6 +317,13 @@ function App() {
 
 
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute allowedType="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+          />
+          
           <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>

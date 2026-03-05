@@ -17,7 +17,7 @@ const ResidentLayout = ({ children }) => {
 
   const loadUserData = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       if (!token) {
         navigate("/login");
         return;
@@ -49,7 +49,7 @@ const ResidentLayout = ({ children }) => {
     if (!confirm("Are you sure you want to logout?")) return;
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
       await fetch(`${API_BASE}/logout`, {
         method: "POST",
@@ -61,7 +61,7 @@ const ResidentLayout = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
       navigate("/login");
     }
   };

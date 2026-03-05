@@ -20,7 +20,7 @@ const ResidentDashboard = () => {
 
   const loadDashboardData = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const headers = {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",

@@ -20,7 +20,7 @@ const ResidentProfile = () => {
 
   const loadUserData = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/user/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -51,7 +51,7 @@ const ResidentProfile = () => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE}/user/profile`, {
         method: "POST",
         headers: {
@@ -104,7 +104,7 @@ const ResidentProfile = () => {
       return;
     }
 
-    const token = localStorage.getItem("auth_token");
+    const token = localStorage.getItem("token");
     fetch(`${API_BASE}user/change-password`, {
       method: "POST",
       headers: {
@@ -122,7 +122,7 @@ const ResidentProfile = () => {
       .then((data) => {
         alert(data.message);
         if (data.message.includes("successfully")) {
-          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
           window.location.href = "/login";
         }
       })
@@ -136,7 +136,7 @@ const ResidentProfile = () => {
     if (!confirm("Are you sure you want to logout?")) return;
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       await fetch(`${API_BASE}/logout`, {
         method: "POST",
         headers: {
@@ -147,7 +147,7 @@ const ResidentProfile = () => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
       window.location.href = "/login";
     }
   };
