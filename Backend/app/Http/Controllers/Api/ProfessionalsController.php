@@ -577,4 +577,80 @@ public function getMessages(Request $request)
     // Return empty array for now, you can add real messages later
     return response()->json([]);
 }
+
+// GET /professionals (public search)
+public function publicList(Request $request)
+{
+    $professionals = User::where('user_type', 'professional')
+        ->with(['professionalProfile', 'services'])
+        ->when($request->profession, function ($query, $profession) {
+            $query->whereHas('professionalProfile', function ($q) use ($profession) {
+                $q->where('specialization', 'LIKE', "%{$profession}%");
+            });
+        })
+        ->get()
+        ->map(function ($pro) {
+            return [
+                'id' => $pro->id,
+                'name' => $pro->name,
+                'profession' => $pro->professionalProfile->specialization ?? 'Professional',
+                'rating' => 4.8, // Mock for now
+                'reviews_count' => 124, // Mock
+                'price' => '₹500',
+                'experience' => $pro->professionalProfile->experience_years ?? 0 . ' years',
+                'location' => $pro->city ?? 'Location not specified',
+                'available' => true,
+                'image' => $pro->profile_image_url,
+                'services' => $pro->services->pluck('name')->toArray(),
+                'verified' => true,
+            ];
+        });
+
+    return response()->json(['professionals' => $professionals]);
+}
+
+// GET /professionals/{id} (public detail)
+public function publicShow($id)
+{
+    $pro = User::where('user_type', 'professional')
+        ->with(['professionalProfile', 'services'])
+        ->findOrFail($id);
+
+    return response()->json([
+        'professional' => [
+            'id' => $pro->id,
+            'name' => $pro->name,
+            'profession' => $pro->professionalProfile->specialization ?? 'Professional',
+            'bio' => $pro->professionalProfile->bio ?? '',
+            'image' => $pro->profile_image_url,
+            'rating' => 4.8,
+            'total_reviews' => 124,
+            'total_bookings' => 456,
+            'experience' => $pro->professionalProfile->experience_years ?? 0 . ' years',
+            'location' => $pro->city ?? 'Not specified',
+            'phone' => $pro->phone,
+            'email' => $pro->email,
+            'available' => true,
+            'verified' => true,
+            'response_time' => '< 1 hour',
+            'services' => $pro->services->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'price' => $service->price,
+                    'duration' => $service->duration . ' hours',
+                ];
+            }),
+            'certifications' => [],
+            'portfolio' => [],
+        ]
+    ]);
+}
+
+// GET /professionals/{id}/reviews
+public function reviews($id)
+{
+    // Return empty for now, implement later
+    return response()->json(['reviews' => []]);
+}
 }

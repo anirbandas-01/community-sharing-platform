@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\EnterpriseController;
 use App\Http\Controllers\Api\AdminController; 
+use App\Http\Controllers\Api\CommunitiesController;
+use App\Http\Controllers\Api\MessagesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -131,4 +133,40 @@ Route::middleware('auth:sanctum')->group(function () {
             return response()->json(['orders' => []]);
         });
     });
+
+    // Add after existing routes:
+
+// Public Communities
+Route::get('/communities', [CommunitiesController::class, 'index']);
+Route::get('/communities/{id}', [CommunitiesController::class, 'show']);
+Route::get('/communities/{id}/members', [CommunitiesController::class, 'members']);
+Route::get('/communities/{id}/posts', [CommunitiesController::class, 'posts']);
+
+// Public Professionals
+Route::get('/professionals', [ProfessionalsController::class, 'publicList']);
+Route::get('/professionals/{id}', [ProfessionalsController::class, 'publicShow']);
+Route::get('/professionals/{id}/reviews', [ProfessionalsController::class, 'reviews']);
+
+// Protected Routes
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // User Communities
+    Route::get('/user/communities', [CommunitiesController::class, 'userCommunities']);
+    Route::post('/communities/{id}/join', [CommunitiesController::class, 'join']);
+    Route::post('/communities/{id}/leave', [CommunitiesController::class, 'leave']);
+    
+    // Bookings (you already have appointments, just add alias)
+    Route::post('/bookings', [ResidentController::class, 'createAppointment']);
+    Route::post('/bookings/{id}/cancel', [ResidentController::class, 'cancelAppointment']);
+    Route::get('/user/bookings', [ResidentController::class, 'getAppointments']);
+    
+    // Messages
+    Route::get('/messages/conversations', [MessagesController::class, 'conversations']);
+    Route::get('/messages/conversations/{id}', [MessagesController::class, 'messages']);
+    Route::post('/messages', [MessagesController::class, 'send']);
+    
+    // Settings
+    Route::get('/user/settings', [UserController::class, 'getSettings']);
+    Route::post('/user/settings', [UserController::class, 'saveSettings']);
+});
 });

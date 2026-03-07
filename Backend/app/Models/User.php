@@ -114,4 +114,13 @@ class User extends Authenticatable
             return $this->user_type === 'admin';
         }
 
+        /**
+ * Communities this user is a member of
+ */
+public function communities()
+{
+    return $this->belongsToMany(Community::class, 'community_members')
+        ->withPivot('role', 'status')
+        ->withTimestamps();
+}
 }

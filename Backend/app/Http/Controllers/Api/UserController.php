@@ -85,4 +85,35 @@ class UserController extends Controller
             'profile_image' => asset('storage/' .$path)
         ]);
     }
+
+
+
+    // GET /user/settings
+public function getSettings(Request $request)
+{
+    // Return default settings
+    return response()->json([
+        'email_notifications' => true,
+        'sms_notifications' => false,
+        'push_notifications' => true,
+        'booking_updates' => true,
+        'community_updates' => true,
+        'message_notifications' => true,
+        'promotional_emails' => false,
+        'profile_visibility' => 'public',
+        'show_phone' => true,
+        'show_email' => false,
+        'show_address' => false,
+        'language' => 'en',
+        'timezone' => 'Asia/Kolkata',
+        'theme' => 'light',
+    ]);
+}
+
+// POST /user/settings
+public function saveSettings(Request $request)
+{
+    // For now, just return success
+    return response()->json(['message' => 'Settings saved successfully']);
+}
 }
