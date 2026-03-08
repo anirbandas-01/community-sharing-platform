@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
            
             $table->string('password');
-            $table->enum('user_type', ['resident', 'professional', 'business']);
+            $table->enum('user_type', ['resident', 'professional', 'business', 'admin']);
 
             $table->string('phone')->nullable();
             $table->string('city')->nullable();
