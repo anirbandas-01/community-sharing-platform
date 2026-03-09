@@ -32,10 +32,10 @@ const ProfessionalSettings = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/professional/dashboard' },
-    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings', badge: '8' },
+    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings'},
     { icon: Briefcase, label: 'My Services', path: '/professional/services' },
     { icon: Users, label: 'My Groups', path: '/professional/groups' },
-    { icon: MessageCircle, label: 'Messages', path: '/professional/messages', badge: '12' },
+    { icon: MessageCircle, label: 'Messages', path: '/professional/messages'},
     { icon: TrendingUp, label: 'Analytics', path: '/professional/analytics' },
     { icon: UserIcon, label: 'Profile', path: '/professional/profile' },
     { icon: Settings, label: 'Settings', path: '/professional/settings' },

@@ -16,10 +16,10 @@ const ProfessionalBookings = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/professional/dashboard' },
-    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings', badge: '8' },
+    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings', },
     { icon: Briefcase, label: 'My Services', path: '/professional/services' },
     { icon: Users, label: 'My Groups', path: '/professional/groups' },
-    { icon: MessageCircle, label: 'Messages', path: '/professional/messages', badge: '12' },
+    { icon: MessageCircle, label: 'Messages', path: '/professional/messages', },
     { icon: TrendingUp, label: 'Analytics', path: '/professional/analytics' },
     { icon: UserIcon, label: 'Profile', path: '/professional/profile' },
     { icon: Settings, label: 'Settings', path: '/professional/settings' },
@@ -53,71 +53,7 @@ const ProfessionalBookings = () => {
     }
   };
 
-  // Demo data
-  const demoBookings = [
-    {
-      id: 1,
-      client_name: 'Sarah Wilson',
-      service_name: 'Plumbing Repair',
-      date: 'Mar 08, 2026',
-      time: '10:00 AM',
-      price: 1200,
-      status: 'confirmed',
-      location: 'Apartment 402, Sunrise Complex',
-      notes: 'Kitchen sink is leaking. Please bring extra pipes.',
-      appointment_time: '2026-03-08T10:00:00'
-    },
-    {
-      id: 2,
-      client_name: 'David Brown',
-      service_name: 'Pipe Installation',
-      date: 'Mar 08, 2026',
-      time: '2:30 PM',
-      price: 1800,
-      status: 'confirmed',
-      location: 'Villa 15, Palm Gardens',
-      notes: 'New bathroom pipe installation required.',
-      appointment_time: '2026-03-08T14:30:00'
-    },
-    {
-      id: 3,
-      client_name: 'Lisa Anderson',
-      service_name: 'Emergency Service',
-      date: 'Mar 09, 2026',
-      time: '11:00 AM',
-      price: 1500,
-      status: 'pending',
-      location: 'House 23, Green Valley',
-      notes: 'Urgent repair needed.',
-      appointment_time: '2026-03-09T11:00:00'
-    },
-    {
-      id: 4,
-      client_name: 'Mike Johnson',
-      service_name: 'Drain Cleaning',
-      date: 'Mar 05, 2026',
-      time: '9:00 AM',
-      price: 600,
-      status: 'completed',
-      location: 'Flat 101, Tower A',
-      notes: 'Drain was blocked.',
-      appointment_time: '2026-03-05T09:00:00'
-    },
-    {
-      id: 5,
-      client_name: 'Emily Davis',
-      service_name: 'Plumbing Repair',
-      date: 'Mar 07, 2026',
-      time: '3:00 PM',
-      price: 800,
-      status: 'cancelled',
-      location: 'Office Complex, 5th Floor',
-      notes: 'Client cancelled due to schedule conflict.',
-      appointment_time: '2026-03-07T15:00:00'
-    },
-  ];
-
-  const displayBookings = bookings.length > 0 ? bookings : demoBookings;
+  const displayBookings = bookings;
 
   const filterBookings = () => {
     const now = new Date();

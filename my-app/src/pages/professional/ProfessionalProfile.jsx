@@ -16,10 +16,10 @@ const ProfessionalProfile = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/professional/dashboard' },
-    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings', badge: '8' },
+    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings'},
     { icon: Briefcase, label: 'My Services', path: '/professional/services' },
     { icon: Users, label: 'My Groups', path: '/professional/groups' },
-    { icon: MessageCircle, label: 'Messages', path: '/professional/messages', badge: '12' },
+    { icon: MessageCircle, label: 'Messages', path: '/professional/messages'},
     { icon: TrendingUp, label: 'Analytics', path: '/professional/analytics' },
     { icon: UserIcon, label: 'Profile', path: '/professional/profile' },
     { icon: Settings, label: 'Settings', path: '/professional/settings' },
@@ -63,26 +63,6 @@ const ProfessionalProfile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Demo data
-  const demoProfile = {
-    name: 'Rajesh Kumar',
-    email: 'rajesh.kumar@example.com',
-    phone: '+91 98765 43210',
-    city: 'Mumbai',
-    specialization: 'Plumber',
-    bio: 'Experienced plumber with 8+ years in residential and commercial plumbing. Specializing in repairs, installations, and emergency services. Licensed and insured.',
-    experience_years: 8,
-    qualifications: 'ITI Plumbing, Licensed Plumber',
-    hourly_rate: 500,
-    consultation_fee: 300,
-    is_verified: true,
-    profile_image: 'https://i.pravatar.cc/300?img=12',
-    services_offered: ['Repair', 'Installation', 'Emergency', 'Maintenance'],
-    availability: ['Mon-Fri: 9AM-6PM', 'Sat: 9AM-2PM', 'Sun: Emergency only'],
-  };
-
-  const displayProfile = profile || demoProfile;
-
   const stats = [
     { label: 'Total Bookings', value: '156', icon: '📅' },
     { label: 'Rating', value: '4.8 ⭐', icon: '⭐' },
@@ -99,6 +79,19 @@ const ProfessionalProfile = () => {
             <p className="text-gray-600">Loading profile...</p>
           </div>
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <DashboardLayout menuItems={menuItems} userType="professional">
+        <Card className="text-center py-12">
+          <UserIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Profile Data</h3>
+          <p className="text-gray-600 mb-6">Unable to load your profile. Please try again.</p>
+          <Button variant="primary" onClick={fetchProfile}>Retry</Button>
+        </Card>
       </DashboardLayout>
     );
   }
@@ -138,18 +131,18 @@ const ProfessionalProfile = () => {
             <div className="text-center mb-6">
               <div className="relative inline-block">
                 <img
-                  src={displayProfile.profile_image || 'https://i.pravatar.cc/300?img=12'}
-                  alt={displayProfile.name}
+                  src={profile.profile_image || 'https://i.pravatar.cc/300?img=12'}
+                  alt={profile.name}
                   className="w-32 h-32 rounded-full object-cover mx-auto mb-4 border-4 border-white shadow-lg"
                 />
-                {displayProfile.is_verified && (
+                {profile.is_verified && (
                   <div className="absolute bottom-4 right-0 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center border-4 border-white">
                     <Award className="w-5 h-5 text-white" />
                   </div>
                 )}
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">{displayProfile.name}</h2>
-              <p className="text-gray-600 mb-3">{displayProfile.specialization}</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
+              <p className="text-gray-600 mb-3">{profile.specialization}</p>
               <Badge variant="success">Verified Professional</Badge>
             </div>
 
@@ -157,15 +150,15 @@ const ProfessionalProfile = () => {
             <div className="space-y-3 mb-6 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Experience</span>
-                <span className="font-semibold text-gray-900">{displayProfile.experience_years} years</span>
+                <span className="font-semibold text-gray-900">{profile.experience_years} years</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Hourly Rate</span>
-                <span className="font-semibold text-gray-900">₹{displayProfile.hourly_rate}</span>
+                <span className="font-semibold text-gray-900">₹{profile.hourly_rate}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Consultation Fee</span>
-                <span className="font-semibold text-gray-900">₹{displayProfile.consultation_fee}</span>
+                <span className="font-semibold text-gray-900">₹{profile.consultation_fee}</span>
               </div>
             </div>
 
@@ -173,15 +166,15 @@ const ProfessionalProfile = () => {
             <div className="space-y-3 mb-6 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Phone className="w-5 h-5" />
-                <span>{displayProfile.phone}</span>
+                <span>{profile.phone}</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail className="w-5 h-5" />
-                <span>{displayProfile.email}</span>
+                <span>{profile.email}</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <MapPin className="w-5 h-5" />
-                <span>{displayProfile.city}</span>
+                <span>{profile.city}</span>
               </div>
             </div>
 
@@ -207,7 +200,7 @@ const ProfessionalProfile = () => {
               <Input
                 label="Full Name"
                 name="name"
-                value={isEditing ? formData.name : displayProfile.name}
+                value={isEditing ? formData.name : profile.name}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={User}
@@ -216,7 +209,7 @@ const ProfessionalProfile = () => {
                 label="Email"
                 name="email"
                 type="email"
-                value={isEditing ? formData.email : displayProfile.email}
+                value={isEditing ? formData.email : profile.email}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={Mail}
@@ -224,7 +217,7 @@ const ProfessionalProfile = () => {
               <Input
                 label="Phone"
                 name="phone"
-                value={isEditing ? formData.phone : displayProfile.phone}
+                value={isEditing ? formData.phone : profile.phone}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={Phone}
@@ -232,7 +225,7 @@ const ProfessionalProfile = () => {
               <Input
                 label="City"
                 name="city"
-                value={isEditing ? formData.city : displayProfile.city}
+                value={isEditing ? formData.city : profile.city}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={MapPin}
@@ -247,7 +240,7 @@ const ProfessionalProfile = () => {
               <Input
                 label="Specialization"
                 name="specialization"
-                value={isEditing ? formData.specialization : displayProfile.specialization}
+                value={isEditing ? formData.specialization : profile.specialization}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={Briefcase}
@@ -256,7 +249,7 @@ const ProfessionalProfile = () => {
                 label="Experience (years)"
                 name="experience_years"
                 type="number"
-                value={isEditing ? formData.experience_years : displayProfile.experience_years}
+                value={isEditing ? formData.experience_years : profile.experience_years}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={Clock}
@@ -265,7 +258,7 @@ const ProfessionalProfile = () => {
                 label="Hourly Rate (₹)"
                 name="hourly_rate"
                 type="number"
-                value={isEditing ? formData.hourly_rate : displayProfile.hourly_rate}
+                value={isEditing ? formData.hourly_rate : profile.hourly_rate}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={DollarSign}
@@ -274,7 +267,7 @@ const ProfessionalProfile = () => {
                 label="Consultation Fee (₹)"
                 name="consultation_fee"
                 type="number"
-                value={isEditing ? formData.consultation_fee : displayProfile.consultation_fee}
+                value={isEditing ? formData.consultation_fee : profile.consultation_fee}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={DollarSign}
@@ -287,7 +280,7 @@ const ProfessionalProfile = () => {
               </label>
               <textarea
                 name="qualifications"
-                value={isEditing ? formData.qualifications : displayProfile.qualifications}
+                value={isEditing ? formData.qualifications : profile.qualifications}
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-50"
@@ -301,7 +294,7 @@ const ProfessionalProfile = () => {
               </label>
               <textarea
                 name="bio"
-                value={isEditing ? formData.bio : displayProfile.bio}
+                value={isEditing ? formData.bio : profile.bio}
                 onChange={handleChange}
                 disabled={!isEditing}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-50"
@@ -314,7 +307,7 @@ const ProfessionalProfile = () => {
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Services Offered</h2>
             <div className="flex flex-wrap gap-2">
-              {displayProfile.services_offered?.map((service, idx) => (
+              {profile.services_offered?.map((service, idx) => (
                 <Badge key={idx} variant="primary">{service}</Badge>
               ))}
             </div>
@@ -324,7 +317,7 @@ const ProfessionalProfile = () => {
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Availability</h2>
             <div className="space-y-2">
-              {displayProfile.availability?.map((slot, idx) => (
+              {profile.availability?.map((slot, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-gray-700">
                   <Clock className="w-4 h-4 text-primary-600" />
                   <span>{slot}</span>

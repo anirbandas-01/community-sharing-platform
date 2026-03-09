@@ -26,6 +26,7 @@ import ProfessionalBookings from './pages/professional/ProfessionalBookings';
 import ProfessionalProfile from './pages/professional/ProfessionalProfile';
 import ProfessionalSettings from './pages/professional/ProfessionalSettings';
 import ProfessionalMessages from './pages/professional/Professionalmessages';
+import ProfessionalGroups from './pages/professional/Professionalgroups';
 
 function App() {
   return (
@@ -173,6 +174,15 @@ function App() {
             element={
               <ProtectedRoute allowedTypes={['professional']}>
                 <ProfessionalMessages />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/professional/groups"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalGroups />
               </ProtectedRoute>
             }
           />

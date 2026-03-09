@@ -15,10 +15,10 @@ const ProfessionalServices = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/professional/dashboard' },
-    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings', badge: '8' },
+    { icon: Calendar, label: 'My Bookings', path: '/professional/bookings'},
     { icon: Briefcase, label: 'My Services', path: '/professional/services' },
     { icon: Users, label: 'My Groups', path: '/professional/groups' },
-    { icon: MessageCircle, label: 'Messages', path: '/professional/messages', badge: '12' },
+    { icon: MessageCircle, label: 'Messages', path: '/professional/messages'},
     { icon: TrendingUp, label: 'Analytics', path: '/professional/analytics' },
     { icon: UserIcon, label: 'Profile', path: '/professional/profile' },
     { icon: Settings, label: 'Settings', path: '/professional/settings' },
@@ -61,55 +61,7 @@ const ProfessionalServices = () => {
     }
   };
 
-  // Demo data
-  const demoServices = [
-    {
-      id: 1,
-      name: 'Plumbing Repair',
-      description: 'Complete plumbing repair services including pipe fixing, leak detection, and emergency repairs',
-      price: '500',
-      duration: '1-2 hours',
-      is_active: true,
-      bookings_count: 45,
-      rating: 4.8,
-      category: 'Repair',
-    },
-    {
-      id: 2,
-      name: 'Pipe Installation',
-      description: 'New pipe installation for kitchen, bathroom, and outdoor areas',
-      price: '800',
-      duration: '2-4 hours',
-      is_active: true,
-      bookings_count: 32,
-      rating: 4.9,
-      category: 'Installation',
-    },
-    {
-      id: 3,
-      name: 'Emergency Service',
-      description: '24/7 emergency plumbing service for urgent issues',
-      price: '1200',
-      duration: '1-3 hours',
-      is_active: true,
-      bookings_count: 28,
-      rating: 4.7,
-      category: 'Emergency',
-    },
-    {
-      id: 4,
-      name: 'Drain Cleaning',
-      description: 'Professional drain cleaning and unclogging service',
-      price: '600',
-      duration: '1 hour',
-      is_active: false,
-      bookings_count: 19,
-      rating: 4.6,
-      category: 'Maintenance',
-    },
-  ];
-
-  const displayServices = services.length > 0 ? services : demoServices;
+  const displayServices = services;
 
   return (
     <DashboardLayout menuItems={menuItems} userType="professional">
