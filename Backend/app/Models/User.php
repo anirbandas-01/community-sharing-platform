@@ -97,7 +97,7 @@ class User extends Authenticatable
     public function getProfileImageUrlAttribute()
     {
         if ($this->profile_image) {
-            return asset('storage/profiles/' . $this->profile_image);
+            return asset('uploads/profiles/' . $this->profile_image);
         }
         return null;
     }

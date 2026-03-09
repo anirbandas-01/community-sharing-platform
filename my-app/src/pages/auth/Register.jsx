@@ -112,7 +112,7 @@ const Register = () => {
     setLoading(true);
     const fd = new FormData();
     Object.keys(formData).forEach((key) => {
-      if (formData[key] !== null && key !== 'password_confirmation' && key !== 'terms') {
+      if (formData[key] !== null  && key !== 'terms') {
         fd.append(key, formData[key]);
       }
     });
@@ -123,7 +123,8 @@ const Register = () => {
       });
       const { token, user, redirect_url } = response.data;
       login(user, token);
-      navigate(redirect_url || `/${user.user_type}/dashboard`);
+      //navigate(redirect_url || `/${user.user_type}/dashboard`);
+      window.location.href = redirect_url || `/${user.user_type}/dashboard`;
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {
