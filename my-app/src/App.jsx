@@ -22,6 +22,10 @@ import BusinessInventory from './pages/business/BusinessInventory';
 import CommunityDetail from './pages/resident/CommunityDetail';
 import ProfessionalDetail from './pages/resident/ProfessionalDetail';
 import ResidentSettings from './pages/resident/ResidentSettings';
+import ProfessionalBookings from './pages/professional/ProfessionalBookings';
+import ProfessionalProfile from './pages/professional/ProfessionalProfile';
+import ProfessionalSettings from './pages/professional/ProfessionalSettings';
+import ProfessionalMessages from './pages/professional/Professionalmessages';
 
 function App() {
   return (
@@ -137,7 +141,41 @@ function App() {
             }
           />
           
+          <Route
+            path="/professional/bookings"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalBookings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/professional/profile"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalProfile />
+              </ProtectedRoute>
+            }
+          />
           
+          <Route
+            path="/professional/settings"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalSettings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/professional/messages"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalMessages />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Business Routes */}
           <Route
