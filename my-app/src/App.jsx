@@ -25,8 +25,17 @@ import ResidentSettings from './pages/resident/ResidentSettings';
 import ProfessionalBookings from './pages/professional/ProfessionalBookings';
 import ProfessionalProfile from './pages/professional/ProfessionalProfile';
 import ProfessionalSettings from './pages/professional/ProfessionalSettings';
-import ProfessionalMessages from './pages/professional/Professionalmessages';
-import ProfessionalGroups from './pages/professional/Professionalgroups';
+import ProfessionalMessages from './pages/professional/ProfessionalMessages';
+import ProfessionalGroups from './pages/professional/ProfessionalGroups';
+import BusinessSettings from './pages/business/BusinessSettings';
+import BusinessProfile from './pages/business/BusinessProfile';
+import BusinessMessages from './pages/business/BusinessMessages';
+import BusinessSales from './pages/business/BusinessSales';
+import BusinessOrders from './pages/business/BusinessOrders';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminCommunities from './pages/admin/AdminCommunities';
+import AdminReports from './pages/admin/AdminReports';
+import AdminSettings from './pages/admin/AdminSettings';
 
 function App() {
   return (
@@ -205,7 +214,62 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/business/orders"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <BusinessOrders />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/business/sales"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <BusinessSales />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/business/messages"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <BusinessMessages />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/business/analytics"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <BusinessInventory />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/business/profile"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <BusinessProfile />
+              </ProtectedRoute>
+            }
+          />
           
+          <Route
+            path="/business/settings"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <BusinessSettings />
+              </ProtectedRoute>
+            }
+          />
+
+
           {/* Admin Routes */}
           <Route path="/admin/login" element={<Login />} />
           <Route
@@ -216,6 +280,43 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/communities"
+            element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminCommunities />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminReports />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminSettings />
+              </ProtectedRoute>
+            }
+          />
+
           
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />

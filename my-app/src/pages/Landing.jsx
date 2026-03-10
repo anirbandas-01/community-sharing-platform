@@ -67,6 +67,11 @@ const Landing = () => {
               <a href="#about" className="text-gray-600 hover:text-gray-900 font-medium">About</a>
             </div>
             <div className="flex items-center gap-3">
+              <Link to= "/admin/login">
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                Admin 
+              </Button>
+              </Link>
               <Link to="/login">
                 <Button variant="ghost">Sign In</Button>
               </Link>
@@ -230,6 +235,11 @@ const Landing = () => {
                 <li><a href="#" className="hover:text-white">Security</a></li>
               </ul>
             </div>
+          </div>
+          <div>
+            <Link to="/admin/login" className="text-gray-400 hover:text-white transition-colors">
+                Admin Login
+              </Link>
           </div>
           <div className="pt-8 border-t border-gray-800 text-center text-sm">
             <p>&copy; 2026 LocalHub. All rights reserved.</p>

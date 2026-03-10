@@ -1,238 +1,245 @@
-import { Home, Users, Briefcase, Store, MessageCircle, Settings, Shield, BarChart3 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Users, Building2, FileText, Settings, TrendingUp, UserCheck, AlertCircle } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: Users, label: 'Manage Users', path: '/admin/users', badge: '1,234' },
-    { icon: Shield, label: 'Communities', path: '/admin/communities', badge: '45' },
-    { icon: Briefcase, label: 'Professionals', path: '/admin/professionals', badge: '567' },
-    { icon: Store, label: 'Businesses', path: '/admin/businesses', badge: '234' },
-    { icon: MessageCircle, label: 'Support', path: '/admin/support', badge: '12' },
-    { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+    { icon: Users, label: 'Users', path: '/admin/users' },
+    { icon: Building2, label: 'Communities', path: '/admin/communities' },
+    { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/admin/dashboard');
+      setDashboard(response.data);
+    } catch (error) {
+      console.error('Error fetching dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout menuItems={menuItems} userType="admin">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!dashboard) {
+    return (
+      <DashboardLayout menuItems={menuItems} userType="admin">
+        <Card className="text-center py-12">
+          <Home className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Dashboard</h3>
+          <p className="text-gray-600 mb-6">Please try again</p>
+          <Button variant="primary" onClick={fetchDashboard}>Retry</Button>
+        </Card>
+      </DashboardLayout>
+    );
+  }
+
   const stats = [
-    { label: 'Total Users', value: '2,035', change: '+156 this month', color: 'blue', icon: '👥' },
-    { label: 'Active Communities', value: '45', change: '+5 new', color: 'green', icon: '🏘️' },
-    { label: 'Total Revenue', value: '₹12.4L', change: '+22% growth', color: 'purple', icon: '💰' },
-    { label: 'Support Tickets', value: '12', change: '8 pending', color: 'orange', icon: '🎫' },
+    { label: 'Total Users', value: dashboard.users?.total || 0, change: dashboard.users?.new_today ? `+${dashboard.users.new_today} today` : '', icon: Users, color: 'blue' },
+    { label: 'Active Communities', value: dashboard.communities?.active || 0, change: dashboard.communities?.pending ? `${dashboard.communities.pending} pending` : '', icon: Building2, color: 'green' },
+    { label: 'Professionals', value: dashboard.professionals?.total || 0, change: dashboard.professionals?.verified ? `${dashboard.professionals.verified} verified` : '', icon: UserCheck, color: 'purple' },
+    { label: 'Businesses', value: dashboard.businesses?.total || 0, change: dashboard.businesses?.active ? `${dashboard.businesses.active} active` : '', icon: Building2, color: 'orange' },
   ];
 
-  const recentActivities = [
-    { type: 'user', action: 'New user registered', user: 'Sarah Wilson', time: '5 mins ago', color: 'blue' },
-    { type: 'community', action: 'Community created', user: 'Sunrise Apartments', time: '1 hour ago', color: 'green' },
-    { type: 'booking', action: 'New booking made', user: 'David Brown', time: '2 hours ago', color: 'purple' },
-    { type: 'business', action: 'Business verified', user: 'Fresh Mart Store', time: '3 hours ago', color: 'orange' },
-    { type: 'support', action: 'Support ticket opened', user: 'Lisa Anderson', time: '5 hours ago', color: 'red' },
-  ];
+  const recentUsers = dashboard.users?.recent || [];
+  const pendingCommunities = dashboard.communities?.pending_list || [];
+  const systemAlerts = dashboard.alerts || [];
 
-  const userGrowth = [
-    { month: 'Jan', users: 1200 },
-    { month: 'Feb', users: 1450 },
-    { month: 'Mar', users: 1750 },
-    { month: 'Apr', users: 2035 },
-  ];
-
-  const pendingApprovals = [
-    { type: 'Professional', name: 'John Smith - Electrician', submitted: '2 days ago', status: 'review' },
-    { type: 'Business', name: 'Green Grocers', submitted: '1 day ago', status: 'review' },
-    { type: 'Community', name: 'Tech Valley Residents', submitted: '3 hours ago', status: 'new' },
-  ];
-
-  const topCommunities = [
-    { name: 'Sunrise Apartments', members: 234, growth: '+12%' },
-    { name: 'Tech Valley', members: 189, growth: '+8%' },
-    { name: 'Green Meadows', members: 156, growth: '+15%' },
-    { name: 'Downtown Plaza', members: 142, growth: '+5%' },
-  ];
+  const getUserTypeColor = (type) => {
+    const colors = {
+      resident: 'default',
+      professional: 'primary',
+      business: 'warning',
+      admin: 'danger',
+    };
+    return colors[type] || 'default';
+  };
 
   return (
     <DashboardLayout menuItems={menuItems} userType="admin">
-      {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Admin Dashboard 🛡️
+          Welcome back, {user?.name || 'Admin'}! 👋
         </h1>
-        <p className="text-gray-600">Manage and monitor the entire platform</p>
+        <p className="text-gray-600">Platform overview and management</p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, idx) => (
-          <Card key={idx} hover className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 text-6xl opacity-10">
-              {stat.icon}
-            </div>
-            <div className="relative">
-              <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-              <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
-              <p className="text-xs text-gray-500">{stat.change}</p>
-            </div>
-          </Card>
-        ))}
+        {stats.map((stat, idx) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={idx} hover className="relative overflow-hidden">
+              <div className={`absolute top-0 right-0 w-20 h-20 bg-${stat.color}-100 rounded-full -mr-10 -mt-10 opacity-50`}></div>
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
+                    <Icon className={`w-6 h-6 text-${stat.color}-600`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">{stat.label}</p>
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">{stat.change}</p>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column */}
         <div className="lg:col-span-2 space-y-8">
-          {/* User Growth Chart */}
           <Card>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">User Growth</h2>
-              <select className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
-                <option>Last 4 Months</option>
-                <option>Last 6 Months</option>
-                <option>This Year</option>
-              </select>
+              <h2 className="text-xl font-bold text-gray-900">Recent Users</h2>
+              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/admin/users'}>View All</Button>
             </div>
-            <div className="flex items-end gap-6 h-56">
-              {userGrowth.map((item, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center">
-                  <div className="w-full bg-gradient-to-t from-gray-700 to-gray-900 rounded-t-lg relative" style={{ height: `${(item.users / 2500) * 100}%` }}>
-                    <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-sm font-semibold text-gray-900">
-                      {item.users}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-600 mt-2">{item.month}</span>
-                </div>
-              ))}
-            </div>
+            {recentUsers.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No recent users</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {recentUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 text-sm font-medium text-gray-900">{user.name}</td>
+                        <td className="px-4 py-4 text-sm text-gray-600">{user.email}</td>
+                        <td className="px-4 py-4">
+                          <Badge variant={getUserTypeColor(user.user_type)} size="sm" className="capitalize">{user.user_type}</Badge>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-600">{user.created_at}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
 
-          {/* Recent Activities */}
           <Card>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Recent Activities</h2>
-              <Button variant="ghost" size="sm">View All</Button>
-            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Platform Activity</h2>
             <div className="space-y-4">
-              {recentActivities.map((activity, idx) => (
-                <div key={idx} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-${activity.color}-100 flex items-center justify-center`}>
-                    {activity.type === 'user' && <Users className={`w-5 h-5 text-${activity.color}-600`} />}
-                    {activity.type === 'community' && <Shield className={`w-5 h-5 text-${activity.color}-600`} />}
-                    {activity.type === 'booking' && <Briefcase className={`w-5 h-5 text-${activity.color}-600`} />}
-                    {activity.type === 'business' && <Store className={`w-5 h-5 text-${activity.color}-600`} />}
-                    {activity.type === 'support' && <MessageCircle className={`w-5 h-5 text-${activity.color}-600`} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-sm text-gray-600">{activity.user}</p>
-                    <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Top Communities */}
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Top Communities</h2>
-            <div className="space-y-4">
-              {topCommunities.map((community, idx) => (
-                <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg flex items-center justify-center text-white font-bold">
-                      #{idx + 1}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{community.name}</h3>
-                      <p className="text-sm text-gray-600">{community.members} members</p>
+              {dashboard.activity?.length > 0 ? (
+                dashboard.activity.map((activity, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                    <div className="w-2 h-2 bg-primary-600 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{activity.description}</p>
+                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
                     </div>
                   </div>
-                  <Badge variant="success">{community.growth}</Badge>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">No recent activity</p>
                 </div>
-              ))}
+              )}
             </div>
           </Card>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-8">
-          {/* Quick Actions */}
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              <Button variant="primary" className="w-full justify-start">
+              <Button variant="primary" className="w-full justify-start" onClick={() => window.location.href = '/admin/users'}>
                 <Users className="w-5 h-5 mr-2" />
                 Manage Users
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Shield className="w-5 h-5 mr-2" />
-                Create Community
+              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/admin/communities'}>
+                <Building2 className="w-5 h-5 mr-2" />
+                Manage Communities
               </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Support Tickets
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                View Analytics
+              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/admin/reports'}>
+                <FileText className="w-5 h-5 mr-2" />
+                View Reports
               </Button>
             </div>
           </Card>
 
-          {/* Pending Approvals */}
-          <Card className="border-2 border-orange-200 bg-orange-50">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">!</span>
+          {pendingCommunities.length > 0 && (
+            <Card className="border-2 border-yellow-200 bg-yellow-50">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Pending Approvals</h2>
               </div>
-              <h2 className="text-lg font-bold text-gray-900">Pending Approvals</h2>
-            </div>
-            <div className="space-y-3">
-              {pendingApprovals.map((item, idx) => (
-                <div key={idx} className="p-3 bg-white rounded-lg border border-orange-200">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <Badge variant="info" size="sm" className="mb-1">{item.type}</Badge>
-                      <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{item.submitted}</p>
+              <div className="space-y-3">
+                {pendingCommunities.map((community, idx) => (
+                  <div key={idx} className="p-3 bg-white rounded-lg border border-yellow-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-900">{community.name}</span>
+                      <Badge variant="warning" size="sm">Pending</Badge>
                     </div>
+                    <div className="text-xs text-gray-600">Created: {community.created_at}</div>
                   </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button variant="primary" size="sm" className="flex-1">Approve</Button>
-                    <Button variant="outline" size="sm" className="flex-1">Reject</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Platform Health */}
-          <Card className="bg-gradient-to-br from-gray-700 to-gray-900 text-white">
-            <div className="flex items-start gap-3">
-              <div className="text-3xl">🚀</div>
-              <div>
-                <h3 className="font-bold text-lg mb-2">Platform Health</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="opacity-90">Server Status</span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                      Operational
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="opacity-90">API Response</span>
-                    <span className="font-medium">45ms</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="opacity-90">Uptime</span>
-                    <span className="font-medium">99.9%</span>
-                  </div>
-                </div>
+                ))}
               </div>
-            </div>
-          </Card>
+              <Button variant="warning" size="sm" className="w-full mt-4" onClick={() => window.location.href = '/admin/communities'}>
+                Review All
+              </Button>
+            </Card>
+          )}
+
+          {systemAlerts.length > 0 && (
+            <Card className="border-2 border-red-200 bg-red-50">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">System Alerts</h2>
+              </div>
+              <div className="space-y-2">
+                {systemAlerts.map((alert, idx) => (
+                  <div key={idx} className="p-3 bg-white rounded-lg border border-red-200">
+                    <p className="text-sm text-gray-900">{alert.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">{alert.time}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </DashboardLayout>
