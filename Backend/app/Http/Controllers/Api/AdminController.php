@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -78,7 +79,7 @@ class AdminController extends Controller
     /**
      * Get all users with filters
      */
-    public function getUsers(Request $request)
+    /* public function getUsers(Request $request)
     {
         try {
             $query = User::query();
@@ -122,7 +123,58 @@ class AdminController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    } */
+
+   /**
+ * Get all users with filters
+ */
+public function getUsers(Request $request)
+{
+    try {
+        $query = User::query();
+
+        // Filter by user type
+        if ($request->has('type') && $request->type !== 'all') {
+            $query->where('user_type', $request->type);
+        }
+
+        // Search
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('phone', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $users = $query->latest()->get();
+        
+        $transformedUsers = $users->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'user_type' => $user->user_type,
+                'city' => $user->city,
+                'created_at' => $user->created_at->format('M d, Y'),
+                'profile_image' => $user->profile_image 
+                    ? asset('uploads/profiles/' . $user->profile_image) 
+                    : null,
+            ];
+        });
+
+        return response()->json([
+            'users' => $transformedUsers
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Error loading users',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Delete user
@@ -271,7 +323,7 @@ class AdminController extends Controller
             if ($request->hasFile('image')) {
                 // Delete old image
                 if ($community->image) {
-                    \Storage::disk('public')->delete($community->image);
+                    Storage::disk('public')->delete($community->image);
                 }
                 $validated['image'] = $request->file('image')->store('community_images', 'public');
             }
@@ -300,7 +352,7 @@ class AdminController extends Controller
             
             // Delete image if exists
             if ($community->image) {
-                \Storage::disk('public')->delete($community->image);
+                Storage::disk('public')->delete($community->image);
             }
 
             $community->delete();
@@ -388,4 +440,16 @@ class AdminController extends Controller
             ], 500);
         }
     }
+   
+
+    /**
+ * Get admin profile
+ */
+public function profile(Request $request)
+{
+    return response()->json([
+        'user' => $request->user()
+    ]);
+}
+
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
@@ -8,6 +8,7 @@ import Input from '../../components/ui/Input';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -16,6 +17,8 @@ const Login = () => {
     email: '',
     password: '',
   });
+
+  const isAdminLogin = location.pathname === '/admin/login';
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,11 +31,12 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await api.post('/login', formData);
+      const endpoint = isAdminLogin ? '/admin/login' : '/login';
+      const response = await api.post(endpoint, formData);
       const { token, user, redirect_url } = response.data;
       
       login(user, token);
-      navigate(redirect_url || `/${user.user_type}/dashboard`);
+      window.location.href = redirect_url || `/${user.user_type}/dashboard`;
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid credentials');
     } finally {
@@ -70,8 +74,8 @@ const Login = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
-            <p className="text-gray-600 mt-2">Sign in to continue to LocalHub</p>
+            <h1 className="text-2xl font-bold text-gray-900">{isAdminLogin ? 'Admin Login' : 'Welcome Back'}</h1>
+            <p className="text-gray-600 mt-2">{isAdminLogin ? 'Sign in to admin dashboard' : 'Sign in to continue to LocalHub'}</p>
           </div>
 
           {/* Error Alert */}
@@ -116,7 +120,8 @@ const Login = () => {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-
+           
+            {!isAdminLogin && (
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
@@ -126,7 +131,8 @@ const Login = () => {
                 Forgot password?
               </Link>
             </div>
-
+            )}
+ 
             <Button
               type="submit"
               variant="primary"
@@ -140,6 +146,8 @@ const Login = () => {
           </form>
 
           {/* Divider */}
+     {!isAdminLogin && (
+        <>
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
@@ -158,10 +166,17 @@ const Login = () => {
               </Link>
             </p>
           </div>
+          </>
+          )}
         </div>
-
+     
         {/* Admin Login Link */}
         <div className="text-center mt-6">
+          {isAdminLogin ? (
+            <Link to="/login" className="text-sm text-gray-500 hover:text-gray-700">
+              ← Back to User Login
+            </Link>
+          ) : (
           <Link
             to="/admin/login"
             className="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center gap-1"
@@ -171,6 +186,7 @@ const Login = () => {
             </svg>
             Admin Portal
           </Link>
+          )}
         </div>
       </div>
 

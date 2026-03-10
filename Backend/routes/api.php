@@ -35,6 +35,9 @@ Route::prefix('admin')->group(function () {
     
     // Protected admin routes
     Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        
+        Route::get('/profile', [AdminController::class, 'profile']); 
+        
         // Dashboard
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
         
