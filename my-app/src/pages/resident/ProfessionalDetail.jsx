@@ -25,10 +25,10 @@ const ProfessionalDetail = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities', badge: '3' },
+    { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages', badge: '5' },
+    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
@@ -72,70 +72,8 @@ const ProfessionalDetail = () => {
     }
   };
 
-  // Demo data
-  const demoProfessional = {
-    id: 1,
-    name: 'Rajesh Kumar',
-    profession: 'Plumber',
-    bio: 'Experienced plumber with 8+ years in residential and commercial plumbing. Specializing in repairs, installations, and emergency services. Licensed and insured. Available 24/7 for emergencies.',
-    image: 'https://i.pravatar.cc/300?img=12',
-    rating: 4.8,
-    total_reviews: 124,
-    total_bookings: 456,
-    experience: '8 years',
-    location: 'Andheri, Mumbai',
-    phone: '+91 98765 43210',
-    email: 'rajesh.kumar@example.com',
-    available: true,
-    verified: true,
-    response_time: '< 1 hour',
-    services: [
-      { id: 1, name: 'Plumbing Repair', price: 500, duration: '1-2 hours' },
-      { id: 2, name: 'Pipe Installation', price: 800, duration: '2-4 hours' },
-      { id: 3, name: 'Emergency Service', price: 1200, duration: '1-3 hours' },
-      { id: 4, name: 'Drain Cleaning', price: 600, duration: '1 hour' },
-    ],
-    portfolio: [
-      'https://images.unsplash.com/photo-1607400201889-565b1ee75f8e?w=300&h=300&fit=crop',
-      'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=300&h=300&fit=crop',
-      'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&h=300&fit=crop',
-    ],
-    certifications: [
-      'Licensed Plumber',
-      'Emergency Response Certified',
-      'Safety Training Complete',
-    ]
-  };
-
-  const demoReviews = [
-    {
-      id: 1,
-      user: { name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/150?img=1' },
-      rating: 5,
-      comment: 'Excellent service! Very professional and fixed the issue quickly. Highly recommended!',
-      date: '2024-03-01',
-      service: 'Plumbing Repair'
-    },
-    {
-      id: 2,
-      user: { name: 'David Brown', avatar: 'https://i.pravatar.cc/150?img=2' },
-      rating: 5,
-      comment: 'Great work on the pipe installation. Arrived on time and cleaned up after the job.',
-      date: '2024-02-28',
-      service: 'Pipe Installation'
-    },
-    {
-      id: 3,
-      user: { name: 'Lisa Anderson', avatar: 'https://i.pravatar.cc/150?img=3' },
-      rating: 4,
-      comment: 'Good service but took slightly longer than estimated. Overall satisfied.',
-      date: '2024-02-25',
-      service: 'Drain Cleaning'
-    },
-  ];
-
-  const displayProfessional = professional || demoProfessional;
-  const displayReviews = reviews.length > 0 ? reviews : demoReviews;
+  const displayProfessional = professional;
+  const displayReviews = reviews;
 
   if (loading && !professional) {
     return (

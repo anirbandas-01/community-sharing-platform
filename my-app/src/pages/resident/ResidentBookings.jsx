@@ -14,10 +14,10 @@ const ResidentBookings = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities', badge: '3' },
+    { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages', badge: '5' },
+    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
@@ -54,113 +54,7 @@ const ResidentBookings = () => {
     alert('Reschedule modal will open - Feature to be implemented');
   };
 
-  // Demo data
-  const demoBookings = [
-    {
-      id: 1,
-      service: 'House Cleaning',
-      professional: {
-        name: 'Jane Doe',
-        phone: '+91 98765 43210',
-        image: 'https://i.pravatar.cc/150?img=1',
-        profession: 'Cleaner'
-      },
-      date: '2026-03-10',
-      time: '10:00 AM',
-      duration: '2 hours',
-      location: 'Apartment 402, Sunrise Complex',
-      amount: '₹1,200',
-      status: 'confirmed',
-      notes: 'Please bring cleaning supplies',
-    },
-    {
-      id: 2,
-      service: 'Plumbing Repair',
-      professional: {
-        name: 'John Smith',
-        phone: '+91 98765 43211',
-        image: 'https://i.pravatar.cc/150?img=2',
-        profession: 'Plumber'
-      },
-      date: '2026-03-12',
-      time: '2:00 PM',
-      duration: '1 hour',
-      location: 'Apartment 402, Sunrise Complex',
-      amount: '₹800',
-      status: 'pending',
-      notes: 'Kitchen sink leaking',
-    },
-    {
-      id: 3,
-      service: 'AC Servicing',
-      professional: {
-        name: 'Mike Johnson',
-        phone: '+91 98765 43212',
-        image: 'https://i.pravatar.cc/150?img=3',
-        profession: 'AC Technician'
-      },
-      date: '2026-03-15',
-      time: '11:00 AM',
-      duration: '3 hours',
-      location: 'Apartment 402, Sunrise Complex',
-      amount: '₹1,500',
-      status: 'confirmed',
-      notes: 'Annual maintenance',
-    },
-    {
-      id: 4,
-      service: 'Electrical Work',
-      professional: {
-        name: 'Amit Sharma',
-        phone: '+91 98765 43213',
-        image: 'https://i.pravatar.cc/150?img=4',
-        profession: 'Electrician'
-      },
-      date: '2026-02-28',
-      time: '9:00 AM',
-      duration: '2 hours',
-      location: 'Apartment 402, Sunrise Complex',
-      amount: '₹1,000',
-      status: 'completed',
-      notes: 'Fixed wiring issue',
-    },
-    {
-      id: 5,
-      service: 'Painting',
-      professional: {
-        name: 'Ramesh Yadav',
-        phone: '+91 98765 43214',
-        image: 'https://i.pravatar.cc/150?img=5',
-        profession: 'Painter'
-      },
-      date: '2026-02-20',
-      time: '10:00 AM',
-      duration: '6 hours',
-      location: 'Apartment 402, Sunrise Complex',
-      amount: '₹3,500',
-      status: 'completed',
-      notes: 'Living room painting',
-    },
-    {
-      id: 6,
-      service: 'Carpentry',
-      professional: {
-        name: 'Suresh Patel',
-        phone: '+91 98765 43215',
-        image: 'https://i.pravatar.cc/150?img=6',
-        profession: 'Carpenter'
-      },
-      date: '2026-02-15',
-      time: '3:00 PM',
-      duration: '1 hour',
-      location: 'Apartment 402, Sunrise Complex',
-      amount: '₹600',
-      status: 'cancelled',
-      notes: 'Door repair - Cancelled by user',
-    },
-  ];
-
-  const displayBookings = bookings.length > 0 ? bookings : demoBookings;
+  const displayBookings = bookings;
 
   const filteredBookings = displayBookings.filter(booking => {
     if (activeTab === 'upcoming') {

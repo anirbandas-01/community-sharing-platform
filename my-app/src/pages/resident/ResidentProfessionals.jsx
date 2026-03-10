@@ -17,10 +17,10 @@ const ResidentProfessionals = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities', badge: '3' },
+    { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages', badge: '5' },
+    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
@@ -53,95 +53,7 @@ const ResidentProfessionals = () => {
     }
   };
 
-  // Demo data
-  const demoProfessionals = [
-    {
-      id: 1,
-      name: 'Rajesh Kumar',
-      profession: 'Plumber',
-      rating: 4.8,
-      reviews_count: 124,
-      price: '₹500',
-      experience: '8 years',
-      location: 'Andheri, Mumbai',
-      available: true,
-      image: 'https://i.pravatar.cc/150?img=12',
-      services: ['Pipe Repair', 'Installation', 'Emergency Service'],
-      verified: true,
-    },
-    {
-      id: 2,
-      name: 'Amit Sharma',
-      profession: 'Electrician',
-      rating: 4.9,
-      reviews_count: 156,
-      price: '₹600',
-      experience: '10 years',
-      location: 'Bandra, Mumbai',
-      available: true,
-      image: 'https://i.pravatar.cc/150?img=13',
-      services: ['Wiring', 'Appliance Repair', 'Installation'],
-      verified: true,
-    },
-    {
-      id: 3,
-      name: 'Suresh Patel',
-      profession: 'Carpenter',
-      rating: 4.7,
-      reviews_count: 98,
-      price: '₹700',
-      experience: '12 years',
-      location: 'Powai, Mumbai',
-      available: false,
-      image: 'https://i.pravatar.cc/150?img=14',
-      services: ['Furniture Making', 'Repair', 'Renovation'],
-      verified: true,
-    },
-    {
-      id: 4,
-      name: 'Ramesh Yadav',
-      profession: 'Painter',
-      rating: 4.6,
-      reviews_count: 87,
-      price: '₹450',
-      experience: '7 years',
-      location: 'Goregaon, Mumbai',
-      available: true,
-      image: 'https://i.pravatar.cc/150?img=15',
-      services: ['Interior Painting', 'Exterior Painting', 'Texture'],
-      verified: false,
-    },
-    {
-      id: 5,
-      name: 'Vijay Singh',
-      profession: 'AC Technician',
-      rating: 4.9,
-      reviews_count: 145,
-      price: '₹800',
-      experience: '9 years',
-      location: 'Malad, Mumbai',
-      available: true,
-      image: 'https://i.pravatar.cc/150?img=16',
-      services: ['AC Repair', 'Installation', 'Maintenance'],
-      verified: true,
-    },
-    {
-      id: 6,
-      name: 'Prakash Desai',
-      profession: 'Cleaner',
-      rating: 4.5,
-      reviews_count: 76,
-      price: '₹400',
-      experience: '5 years',
-      location: 'Kandivali, Mumbai',
-      available: true,
-      image: 'https://i.pravatar.cc/150?img=17',
-      services: ['House Cleaning', 'Deep Cleaning', 'Office Cleaning'],
-      verified: true,
-    },
-  ];
-
-  const displayProfessionals = professionals.length > 0 ? professionals : demoProfessionals;
+  const displayProfessionals = professionals;
 
   const filteredProfessionals = displayProfessionals.filter(pro =>
     (selectedCategory === 'all' || pro.profession.toLowerCase() === selectedCategory.toLowerCase()) &&

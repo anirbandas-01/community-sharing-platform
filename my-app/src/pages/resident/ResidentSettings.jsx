@@ -38,10 +38,10 @@ const ResidentSettings = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities', badge: '3' },
+    { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages', badge: '5' },
+    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];

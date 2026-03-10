@@ -20,10 +20,10 @@ const CommunityDetail = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities', badge: '3' },
+    { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages', badge: '5' },
+    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
@@ -68,69 +68,9 @@ const CommunityDetail = () => {
     }
   };
 
-  // Demo data
-  const demoCommunity = {
-    id: 1,
-    name: 'Sunrise Apartments',
-    description: 'Welcome to Sunrise Apartments community! We are a friendly neighborhood focused on creating a safe and vibrant living environment for all residents. Join us for regular events, discussions, and neighborhood support.',
-    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=400&fit=crop',
-    member_count: 234,
-    location: 'Sector 15, Mumbai, Maharashtra',
-    created_at: '2024-01-15',
-    admin: {
-      name: 'John Doe',
-      role: 'Community Manager',
-      avatar: 'https://i.pravatar.cc/150?img=12'
-    },
-    category: 'Residential',
-    rules: [
-      'Respect all community members',
-      'No spam or promotional content',
-      'Keep discussions relevant to the community',
-      'Report any issues to admins',
-      'Be helpful and supportive'
-    ]
-  };
-
-  const demoMembers = [
-    { id: 1, name: 'Sarah Wilson', role: 'Member', avatar: 'https://i.pravatar.cc/150?img=1', joined: '2024-02-01' },
-    { id: 2, name: 'David Brown', role: 'Moderator', avatar: 'https://i.pravatar.cc/150?img=2', joined: '2024-01-20' },
-    { id: 3, name: 'Lisa Anderson', role: 'Member', avatar: 'https://i.pravatar.cc/150?img=3', joined: '2024-02-15' },
-    { id: 4, name: 'Mike Johnson', role: 'Member', avatar: 'https://i.pravatar.cc/150?img=4', joined: '2024-03-01' },
-    { id: 5, name: 'Emily Davis', role: 'Member', avatar: 'https://i.pravatar.cc/150?img=5', joined: '2024-03-05' },
-    { id: 6, name: 'Robert Taylor', role: 'Member', avatar: 'https://i.pravatar.cc/150?img=6', joined: '2024-03-07' },
-  ];
-
-  const demoPosts = [
-    {
-      id: 1,
-      author: { name: 'John Doe', avatar: 'https://i.pravatar.cc/150?img=12' },
-      content: 'Reminder: Community meeting this Saturday at 5 PM in the clubhouse. Please attend!',
-      timestamp: '2 hours ago',
-      likes: 45,
-      comments: 8
-    },
-    {
-      id: 2,
-      author: { name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/150?img=1' },
-      content: 'Does anyone know a good plumber? Need some urgent repairs.',
-      timestamp: '5 hours ago',
-      likes: 12,
-      comments: 15
-    },
-    {
-      id: 3,
-      author: { name: 'David Brown', avatar: 'https://i.pravatar.cc/150?img=2' },
-      content: 'Great job on the garden maintenance team! The complex looks beautiful.',
-      timestamp: '1 day ago',
-      likes: 67,
-      comments: 12
-    },
-  ];
-
-  const displayCommunity = community || demoCommunity;
-  const displayMembers = members.length > 0 ? members : demoMembers;
-  const displayPosts = posts.length > 0 ? posts : demoPosts;
+  const displayCommunity = community;
+  const displayMembers = members;
+  const displayPosts = posts;
 
   if (loading && !community) {
     return (

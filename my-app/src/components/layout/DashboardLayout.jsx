@@ -151,10 +151,10 @@ const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) =>
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100"
                   >
-                  {user?.profile_image_url ? (
+                  {user?.profile_image ? (
                           <img
-                            src={user.profile_image_url}
-                            alt={user.name}
+                            src={user.profile_image}
+                            alt={user?.name || "user"}
                             className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
                           />
                         ) : (

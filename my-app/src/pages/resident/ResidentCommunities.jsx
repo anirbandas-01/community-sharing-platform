@@ -17,10 +17,10 @@ const ResidentCommunities = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities', badge: '3' },
+    { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages', badge: '5' },
+    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
@@ -78,76 +78,7 @@ const ResidentCommunities = () => {
 
   const displayCommunities = activeTab === 'my' ? myCommunities : filteredCommunities;
 
-  // Mock data for demo if API returns empty
-  const demoCommunitiesAll = [
-    {
-      id: 1,
-      name: 'Sunrise Apartments',
-      description: 'Residential community for Sunrise Apartment residents',
-      member_count: 234,
-      location: 'Sector 15, Mumbai',
-      admin_name: 'John Doe',
-      image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop',
-      category: 'Residential',
-    },
-    {
-      id: 2,
-      name: 'Tech Valley Professionals',
-      description: 'Network for tech professionals in the valley area',
-      member_count: 189,
-      location: 'Tech Valley, Bangalore',
-      admin_name: 'Jane Smith',
-      image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=300&fit=crop',
-      category: 'Professional',
-    },
-    {
-      id: 3,
-      name: 'Green Meadows Society',
-      description: 'Community for Green Meadows housing society members',
-      member_count: 156,
-      location: 'Green Meadows, Delhi',
-      admin_name: 'Mike Johnson',
-      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop',
-      category: 'Residential',
-    },
-    {
-      id: 4,
-      name: 'Downtown Fitness Group',
-      description: 'Fitness enthusiasts meeting for morning runs and workouts',
-      member_count: 142,
-      location: 'Downtown, Mumbai',
-      admin_name: 'Sarah Wilson',
-      image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop',
-      category: 'Fitness',
-    },
-    {
-      id: 5,
-      name: 'Parents Support Network',
-      description: 'Support group for parents with young children',
-      member_count: 98,
-      location: 'Multiple Locations',
-      admin_name: 'Lisa Anderson',
-      image: 'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=400&h=300&fit=crop',
-      category: 'Family',
-    },
-    {
-      id: 6,
-      name: 'Book Club Society',
-      description: 'Monthly book discussions and literary events',
-      member_count: 67,
-      location: 'Virtual & In-person',
-      admin_name: 'David Brown',
-      image: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=400&h=300&fit=crop',
-      category: 'Hobby',
-    },
-  ];
-
-  const demoCommunitiesMy = demoCommunitiesAll.slice(0, 3);
-
-  const displayData = (activeTab === 'my' ? 
-    (myCommunities.length > 0 ? myCommunities : demoCommunitiesMy) : 
-    (communities.length > 0 ? filteredCommunities : demoCommunitiesAll)
-  );
+  const displayData = (activeTab === 'my' ? myCommunities : filteredCommunities);
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
@@ -180,7 +111,7 @@ const ResidentCommunities = () => {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              My Communities ({myCommunities.length || 3})
+              My Communities ({myCommunities.length})
             </button>
           </div>
 
@@ -328,7 +259,7 @@ const ResidentCommunities = () => {
               <div>
                 <p className="text-sm text-gray-600">Total Members</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {myCommunities.reduce((sum, c) => sum + (c.member_count || 0), 0) || 579}
+                  {myCommunities.reduce((sum, c) => sum + (c.member_count || 0), 0)}
                 </p>
               </div>
             </div>

@@ -18,10 +18,10 @@ const ResidentMessages = () => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities', badge: '3' },
+    { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages', badge: '5' },
+    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
@@ -76,129 +76,8 @@ const ResidentMessages = () => {
     }
   };
 
-  // Demo data
-  const demoConversations = [
-    {
-      id: 1,
-      user: {
-        name: 'Rajesh Kumar',
-        role: 'Plumber',
-        avatar: 'https://i.pravatar.cc/150?img=12',
-        online: true
-      },
-      last_message: 'I can come tomorrow at 10 AM',
-      last_message_time: '2 mins ago',
-      unread_count: 2,
-      type: 'professional'
-    },
-    {
-      id: 2,
-      user: {
-        name: 'Sunrise Apartments',
-        role: 'Community Group',
-        avatar: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=150&h=150&fit=crop',
-        online: false
-      },
-      last_message: 'Meeting scheduled for Saturday',
-      last_message_time: '1 hour ago',
-      unread_count: 0,
-      type: 'group'
-    },
-    {
-      id: 3,
-      user: {
-        name: 'Amit Sharma',
-        role: 'Electrician',
-        avatar: 'https://i.pravatar.cc/150?img=13',
-        online: true
-      },
-      last_message: 'Thank you for the booking!',
-      last_message_time: '3 hours ago',
-      unread_count: 1,
-      type: 'professional'
-    },
-    {
-      id: 4,
-      user: {
-        name: 'Tech Valley Group',
-        role: 'Community Group',
-        avatar: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&h=150&fit=crop',
-        online: false
-      },
-      last_message: 'New event posted in the group',
-      last_message_time: '1 day ago',
-      unread_count: 0,
-      type: 'group'
-    },
-    {
-      id: 5,
-      user: {
-        name: 'Suresh Patel',
-        role: 'Carpenter',
-        avatar: 'https://i.pravatar.cc/150?img=14',
-        online: false
-      },
-      last_message: 'Work completed successfully',
-      last_message_time: '2 days ago',
-      unread_count: 0,
-      type: 'professional'
-    },
-  ];
-
-  const demoMessages = [
-    {
-      id: 1,
-      sender: 'them',
-      message: 'Hi! I got your booking request.',
-      time: '10:00 AM',
-      read: true
-    },
-    {
-      id: 2,
-      sender: 'me',
-      message: 'Great! Can you come tomorrow?',
-      time: '10:02 AM',
-      read: true
-    },
-    {
-      id: 3,
-      sender: 'them',
-      message: 'Yes, I have availability tomorrow.',
-      time: '10:05 AM',
-      read: true
-    },
-    {
-      id: 4,
-      sender: 'them',
-      message: 'What time works best for you?',
-      time: '10:05 AM',
-      read: true
-    },
-    {
-      id: 5,
-      sender: 'me',
-      message: 'How about 10 AM?',
-      time: '10:10 AM',
-      read: true
-    },
-    {
-      id: 6,
-      sender: 'them',
-      message: 'Perfect! I can come tomorrow at 10 AM',
-      time: '10:12 AM',
-      read: false
-    },
-    {
-      id: 7,
-      sender: 'them',
-      message: 'I\'ll bring all necessary tools.',
-      time: '10:12 AM',
-      read: false
-    },
-  ];
-
-  const displayConversations = conversations.length > 0 ? conversations : demoConversations;
-  const displayMessages = messages.length > 0 ? messages : demoMessages;
+  const displayConversations = conversations;
+  const displayMessages = messages;
 
   const filteredConversations = displayConversations.filter(conv =>
     conv.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
