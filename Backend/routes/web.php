@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\ChatbotController;
 
