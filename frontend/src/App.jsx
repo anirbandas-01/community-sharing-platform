@@ -36,6 +36,8 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminCommunities from './pages/admin/AdminCommunities';
 import AdminReports from './pages/admin/AdminReports';
 import AdminSettings from './pages/admin/AdminSettings';
+import ResidentReviews from './pages/resident/ResidentReviews';
+import ProfessionalReviews from './pages/professional/ProfessionalReviews';
 
 function App() {
   return (
@@ -102,6 +104,14 @@ function App() {
             }
           />
           
+          <Route
+            path="/resident/reviews"
+            element={
+              <ProtectedRoute allowedTypes={['resident']}>
+                <ResidentReviews />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/resident/messages"
@@ -159,6 +169,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+
+          <Route
+            path="/professional/reviews"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalReviews />
+              </ProtectedRoute>
+            }
+          />
+
 
           <Route
             path="/professional/profile"

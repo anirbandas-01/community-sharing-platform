@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\EnterpriseController;
 use App\Http\Controllers\Api\AdminController; 
 use App\Http\Controllers\Api\CommunitiesController;
 use App\Http\Controllers\Api\MessagesController;
+use App\Http\Controllers\Api\ReviewsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -155,6 +156,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Settings (PROTECTED)
     Route::get('/user/settings', [UserController::class, 'getSettings']);
     Route::post('/user/settings', [UserController::class, 'saveSettings']);
+
+
+    Route::post('/reviews', [ReviewsController::class, 'store']); // Create review
+    Route::get('/user/reviews', [ReviewsController::class, 'getUserReviews']); // Get my reviews
+    Route::put('/reviews/{id}', [ReviewsController::class, 'update']); // Update my review
+    Route::delete('/reviews/{id}', [ReviewsController::class, 'destroy']); // Delete my review
+    Route::post('/reviews/{id}/respond', [ReviewsController::class, 'respond']); // Professional responds
 });
   
 // Public Communities
@@ -167,3 +175,6 @@ Route::get('/communities/{id}/posts', [CommunitiesController::class, 'posts']);
 Route::get('/professionals', [ProfessionalsController::class, 'publicList']);
 Route::get('/professionals/{id}', [ProfessionalsController::class, 'publicShow']);
 Route::get('/professionals/{id}/reviews', [ProfessionalsController::class, 'reviews']);
+
+// Public review endpoint
+Route::get('/professionals/{id}/reviews', [ReviewsController::class, 'getProfessionalReviews']);

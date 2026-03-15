@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Phone, X, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Phone, X, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import api from '../../services/api';
 import { Home, Users, Briefcase, MessageCircle, Settings, User as UserIcon } from 'lucide-react';
+import ReviewForm from '../../components/reviews/ReviewForm';
 
 const ResidentBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming', 'past', 'cancelled'
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewingBooking, setReviewingBooking] = useState(null);
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
@@ -257,9 +260,25 @@ const ResidentBookings = () => {
 
                       {booking.status === 'completed' && (
                         <>
-                          <Button variant="primary" size="sm" className="w-full">
-                            ⭐ Rate Service
-                          </Button>
+                          {!booking.has_review ? (
+                            <Button 
+                              variant="primary" 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => {
+                                setReviewingBooking(booking);
+                                setShowReviewModal(true);
+                              }}
+                            >
+                              <Star className="w-4 h-4 mr-2" />
+                              Write Review
+                            </Button>
+                          ) : (
+                            <div className="p-3 bg-green-50 rounded-lg text-center">
+                              <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
+                              <p className="text-xs text-green-700 font-medium">Review Submitted</p>
+                            </div>
+                          )}
                           <Button variant="outline" size="sm" className="w-full">
                             Book Again
                           </Button>
@@ -304,6 +323,23 @@ const ResidentBookings = () => {
             <p className="text-2xl font-bold text-gray-900">₹7,600</p>
           </Card>
         </div>
+      )}
+
+      {/* Review Modal */}
+      {showReviewModal && reviewingBooking && (
+        <ReviewForm
+          professionalId={reviewingBooking.professional.id}
+          appointmentId={reviewingBooking.id}
+          onSuccess={() => {
+            setShowReviewModal(false);
+            setReviewingBooking(null);
+            fetchBookings(); // Refresh bookings to update has_review status
+          }}
+          onClose={() => {
+            setShowReviewModal(false);
+            setReviewingBooking(null);
+          }}
+        />
       )}
     </DashboardLayout>
   );

@@ -8,14 +8,18 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
 import { Home, Users, Settings, User as UserIcon } from 'lucide-react';
+import ReviewList from '../../components/reviews/ReviewList';
+import ReviewForm from '../../components/reviews/ReviewForm';
 
 const ProfessionalDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [professional, setProfessional] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const [bookingData, setBookingData] = useState({
     service_id: '',
     date: '',
@@ -47,6 +51,7 @@ const ProfessionalDetail = () => {
       
       setProfessional(proRes.data.professional);
       setReviews(reviewsRes.data.reviews || []);
+      setReviewStats(reviewsRes.data.stats || null);
     } catch (error) {
       console.error('Error fetching professional details:', error);
     } finally {
@@ -264,38 +269,25 @@ const ProfessionalDetail = () => {
 
           {/* Reviews */}
           <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Reviews ({displayReviews.length})</h2>
-            <div className="space-y-4">
-              {displayReviews.map((review) => (
-                <div key={review.id} className="pb-4 border-b border-gray-100 last:border-0">
-                  <div className="flex items-start gap-3 mb-2">
-                    <img
-                      src={review.user.avatar}
-                      alt={review.user.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-semibold text-gray-900">{review.user.name}</h4>
-                        <span className="text-sm text-gray-500">{review.date}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                            />
-                          ))}
-                        </div>
-                        <Badge variant="default" size="sm">{review.service}</Badge>
-                      </div>
-                      <p className="text-gray-600 text-sm">{review.comment}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                Reviews {reviewStats && `(${reviewStats.total_reviews})`}
+              </h2>
+              <Button 
+                variant="primary" 
+                size="sm"
+                onClick={() => setShowReviewForm(true)}
+              >
+                <Star className="w-4 h-4 mr-2" />
+                Write a Review
+              </Button>
             </div>
+            
+            <ReviewList 
+              reviews={displayReviews} 
+              stats={reviewStats}
+              loading={loading}
+            />
           </Card>
         </div>
       </div>
@@ -370,6 +362,19 @@ const ProfessionalDetail = () => {
             </form>
           </Card>
         </div>
+      )}
+
+      {/* Review Form Modal */}
+      {showReviewForm && (
+        <ReviewForm
+          professionalId={id}
+          appointmentId={null}
+          onSuccess={() => {
+            fetchProfessionalDetails();
+            setShowReviewForm(false);
+          }}
+          onClose={() => setShowReviewForm(false)}
+        />
       )}
     </DashboardLayout>
   );

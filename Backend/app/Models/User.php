@@ -123,4 +123,42 @@ public function communities()
         ->withPivot('role', 'status')
         ->withTimestamps();
 }
+
+   /**
+ * Reviews written by this user
+ */
+public function reviewsGiven()
+{
+    return $this->hasMany(Review::class, 'user_id');
+}
+ 
+/**
+ * Reviews received by this professional
+ */
+public function reviewsReceived()
+{
+    return $this->hasMany(Review::class, 'professional_id');
+}
+ 
+/**
+ * Get average rating for this professional
+ */
+public function getAverageRatingAttribute()
+{
+    if ($this->user_type !== 'professional') {
+        return null;
+    }
+    return round($this->reviewsReceived()->avg('rating'), 1);
+}
+ 
+/**
+ * Get total review count
+ */
+public function getTotalReviewsAttribute()
+{
+    if ($this->user_type !== 'professional') {
+        return 0;
+    }
+    return $this->reviewsReceived()->count();
+}
 }
