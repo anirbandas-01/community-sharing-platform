@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Star, MapPin, Clock, Filter, Calendar, MessageCircle } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
@@ -14,6 +15,7 @@ const ResidentProfessionals = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const navigate = useNavigate();
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
@@ -65,8 +67,8 @@ const ResidentProfessionals = () => {
   );
 
   const handleBookNow = (professional) => {
-    // Navigate to booking page or open modal
-    alert(`Booking ${professional.name} - This will open booking form`);
+    // Navigate to professional detail page
+     navigate(`/resident/professionals/${professional.id}`);
   };
 
   const handleMessage = (professional) => {

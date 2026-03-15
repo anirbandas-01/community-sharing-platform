@@ -3,93 +3,38 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Appointment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use App\Models\Appointment;
+use App\Models\User;
+use App\Models\Service;
+use App\Models\Review;  // ← ADD THIS
+use Illuminate\Support\Facades\Log;  // ← ADD THIS
 
 class ResidentController extends Controller
 {
     public function profile(Request $request)
     {
-        return response()->json(
-            $request->user()->residentProfile
-        );
+        return response()->json([
+            'user' => $request->user()
+        ]);
     }
 
     public function updateProfile(Request $request)
     {
-        $data = $request->validate([
-            'preferences' => 'nullable|array',
-            'notification_settings' => 'nullable|array'
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
         ]);
 
-        $profile = $request->user()->residentProfile()
-            ->updateOrCreate(
-                ['user_id' => $request->user()->id],
-                $data
-            );
+        $user = $request->user();
+        $user->update($request->only(['name', 'phone', 'city', 'address']));
 
         return response()->json([
-            'message' => 'Resident profile updated',
-            'profile' => $profile
+            'message' => 'Profile updated successfully',
+            'user' => $user
         ]);
-    }
-
-    public function searchProfessionals(Request $request)
-    {
-        try {
-            $query = $request->input('query');
-
-            // Log the search attempt
-            Log::info('Search professionals request', [
-                'query' => $query,
-                'user_id' => $request->user()?->id,
-                'user_type' => $request->user()?->user_type
-            ]);
-
-            if (!$query) {
-                return response()->json([
-                    'message' => 'Search query required',
-                    'data' => []
-                ], 400);
-            }
-
-            // Search for professionals
-            $professionals = User::where('user_type', 'professional')
-                ->whereHas('professionalProfile', function ($q) use ($query) {
-                    $q->where('specialization', 'LIKE', "%$query%")
-                      ->orWhere('bio', 'LIKE', "%$query%")
-                      ->orWhere('qualifications', 'LIKE', "%$query%");
-                })
-                ->with('professionalProfile')
-                ->get();
-
-            // Log results
-            Log::info('Search results', [
-                'query' => $query,
-                'count' => $professionals->count()
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Search completed',
-                'data' => $professionals,
-                'count' => $professionals->count()
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Search professionals error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Search failed: ' . $e->getMessage(),
-                'data' => []
-            ], 500);
-        }
     }
 
     /**
@@ -99,50 +44,86 @@ class ResidentController extends Controller
     {
         try {
             $appointments = Appointment::where('user_id', $request->user()->id)
-                ->with(['professional', 'service'])
+                ->with(['professional.professionalProfile', 'service'])
                 ->orderBy('appointment_time', 'desc')
-                ->get();
+                ->get()
+                ->map(function ($appointment) use ($request) {
+                    // Check if user has reviewed this appointment
+                    $hasReview = Review::where('user_id', $request->user()->id)
+                        ->where('appointment_id', $appointment->id)
+                        ->exists();
+
+                    return [
+                        'id' => $appointment->id,
+                        'service' => $appointment->service->name ?? 'Service',
+                        'professional' => [
+                            'id' => $appointment->professional->id,
+                            'name' => $appointment->professional->name,
+                            'profession' => $appointment->professional->professionalProfile->specialization ?? 'Professional',
+                            'image' => $appointment->professional->profile_image_url ?? 'https://i.pravatar.cc/150?img=12',
+                            'phone' => $appointment->professional->phone ?? 'N/A',
+                        ],
+                        'date' => $appointment->appointment_time->format('M d, Y'),
+                        'time' => $appointment->appointment_time->format('h:i A'),
+                        'duration' => '1-2 hours',
+                        'location' => $appointment->professional->city ?? 'Location',
+                        'amount' => '₹' . number_format($appointment->total_price ?? 500, 0),
+                        'status' => $appointment->status,
+                        'notes' => $appointment->notes,
+                        'has_review' => $hasReview, // ← NOW THIS WORKS
+                    ];
+                });
 
             return response()->json([
                 'success' => true,
-                'appointments' => $appointments
+                'bookings' => $appointments
             ]);
         } catch (\Exception $e) {
-            Log::error('Get appointments error', [
-                'error' => $e->getMessage()
+            Log::error('Get appointments error', [  // ← NOW THIS WORKS
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load appointments',
-                'appointments' => []
+                'bookings' => []
             ], 500);
         }
     }
 
     /**
-     * Create a new appointment/booking
+     * Create a new appointment
      */
     public function createAppointment(Request $request)
     {
         try {
             $validated = $request->validate([
                 'professional_id' => 'required|exists:users,id',
-                'service_id' => 'nullable|exists:services,id',
-                'appointment_time' => 'required|date|after:now',
-                'notes' => 'nullable|string',
-                'total_price' => 'nullable|numeric|min:0'
+                'service_id' => 'required|exists:services,id',
+                'date' => 'required|date|after:today',
+                'time' => 'required',
+                'notes' => 'nullable|string|max:500',
             ]);
 
-            $validated['user_id'] = $request->user()->id;
-            $validated['status'] = 'pending';
+            // Combine date and time
+            $appointmentTime = $validated['date'] . ' ' . $validated['time'];
 
-            $appointment = Appointment::create($validated);
-            $appointment->load(['professional', 'service']);
+            // Get service details
+            $service = Service::findOrFail($validated['service_id']);
+
+            $appointment = Appointment::create([
+                'user_id' => $request->user()->id,
+                'professional_id' => $validated['professional_id'],
+                'service_id' => $validated['service_id'],
+                'appointment_time' => $appointmentTime,
+                'status' => 'pending',
+                'notes' => $validated['notes'] ?? null,
+                'total_price' => $service->price ?? 500,
+            ]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Appointment created successfully',
+                'message' => 'Appointment booked successfully',
                 'appointment' => $appointment
             ], 201);
 
@@ -152,7 +133,6 @@ class ResidentController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
                 'message' => 'Failed to create appointment',
                 'error' => $e->getMessage()
             ], 500);
@@ -169,9 +149,8 @@ class ResidentController extends Controller
                 ->where('user_id', $request->user()->id)
                 ->firstOrFail();
 
-            if (in_array($appointment->status, ['cancelled', 'completed'])) {
+            if (in_array($appointment->status, ['completed', 'cancelled'])) {
                 return response()->json([
-                    'success' => false,
                     'message' => 'Cannot cancel this appointment'
                 ], 400);
             }
@@ -180,9 +159,7 @@ class ResidentController extends Controller
             $appointment->save();
 
             return response()->json([
-                'success' => true,
-                'message' => 'Appointment cancelled successfully',
-                'appointment' => $appointment
+                'message' => 'Appointment cancelled successfully'
             ]);
 
         } catch (\Exception $e) {
@@ -191,8 +168,72 @@ class ResidentController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
                 'message' => 'Failed to cancel appointment'
+            ], 500);
+        }
+    }
+
+    /**
+     * Search professionals
+     */
+    public function searchProfessionals(Request $request)
+    {
+        try {
+            $query = User::where('user_type', 'professional')
+                ->with(['professionalProfile', 'services']);
+
+            // Search by name or specialization
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhereHas('professionalProfile', function ($subQ) use ($search) {
+                          $subQ->where('specialization', 'LIKE', "%{$search}%");
+                      });
+                });
+            }
+
+            // Filter by profession
+            if ($request->profession) {
+                $query->whereHas('professionalProfile', function ($q) use ($request) {
+                    $q->where('specialization', 'LIKE', "%{$request->profession}%");
+                });
+            }
+
+            // Filter by city
+            if ($request->city) {
+                $query->where('city', $request->city);
+            }
+
+            $professionals = $query->get()->map(function ($pro) {
+                return [
+                    'id' => $pro->id,
+                    'name' => $pro->name,
+                    'profession' => $pro->professionalProfile->specialization ?? 'Professional',
+                    'rating' => $pro->average_rating ?? 4.5,
+                    'reviews_count' => $pro->total_reviews ?? 0,
+                    'price' => '₹500',
+                    'experience' => ($pro->professionalProfile->experience_years ?? 0) . ' years',
+                    'location' => $pro->city ?? 'Location',
+                    'verified' => true,
+                    'available' => true,
+                    'image' => $pro->profile_image_url ?? 'https://i.pravatar.cc/150?img=1',
+                    'services' => $pro->services->pluck('name')->toArray(),
+                ];
+            });
+
+            return response()->json([
+                'professionals' => $professionals
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Search professionals error', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to search professionals',
+                'professionals' => []
             ], 500);
         }
     }

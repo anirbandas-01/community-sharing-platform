@@ -1,12 +1,19 @@
+import { useState, useEffect } from 'react'; // ← ADD THIS
 import { Home, Users, Briefcase, MessageCircle, Calendar, Settings, User as UserIcon } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api'; // ← ADD THIS
 
 const ResidentDashboard = () => {
   const { user } = useAuth();
+  
+  // ← ADD THESE STATE VARIABLES
+  const [upcomingBookings, setUpcomingBookings] = useState([]);
+  const [featuredProfessionals, setFeaturedProfessionals] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
@@ -25,23 +32,36 @@ const ResidentDashboard = () => {
     { label: 'Saved Services', value: '8', change: '2 new', color: 'warning' },
   ];
 
-  const upcomingBookings = [
-    { id: 1, service: 'House Cleaning', professional: 'Jane Doe', date: '2026-03-10', time: '10:00 AM', status: 'confirmed' },
-    { id: 2, service: 'Plumbing Repair', professional: 'John Smith', date: '2026-03-12', time: '2:00 PM', status: 'pending' },
-    { id: 3, service: 'AC Servicing', professional: 'Mike Johnson', date: '2026-03-15', time: '11:00 AM', status: 'confirmed' },
-  ];
+  // ← FETCH BOOKINGS
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await api.get('/user/bookings');
+        const upcoming = (response.data.bookings || [])
+          .filter(b => ['pending', 'confirmed'].includes(b.status))
+          .slice(0, 3);
+        setUpcomingBookings(upcoming);
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+      }
+    };
+    
+    fetchBookings();
+  }, []);
 
-  const recentActivity = [
-    { action: 'Joined Community', detail: 'Sunrise Apartments', time: '2 hours ago', icon: Users, color: 'blue' },
-    { action: 'Booked Service', detail: 'House Cleaning with Jane', time: '1 day ago', icon: Calendar, color: 'green' },
-    { action: 'New Message', detail: 'From Mike Johnson', time: '2 days ago', icon: MessageCircle, color: 'purple' },
-  ];
-
-  const featuredProfessionals = [
-    { id: 1, name: 'Sarah Wilson', profession: 'Electrician', rating: 4.8, reviews: 124, price: '₹500/hr', image: 'https://i.pravatar.cc/150?img=1' },
-    { id: 2, name: 'David Brown', profession: 'Carpenter', rating: 4.9, reviews: 98, price: '₹600/hr', image: 'https://i.pravatar.cc/150?img=2' },
-    { id: 3, name: 'Lisa Anderson', profession: 'Painter', rating: 4.7, reviews: 156, price: '₹450/hr', image: 'https://i.pravatar.cc/150?img=3' },
-  ];
+  // ← FETCH PROFESSIONALS
+  useEffect(() => {
+    const fetchProfessionals = async () => {
+      try {
+        const response = await api.get('/professionals');
+        setFeaturedProfessionals((response.data.professionals || []).slice(0, 3));
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+    
+    fetchProfessionals();
+  }, []);
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
@@ -74,59 +94,86 @@ const ResidentDashboard = () => {
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Upcoming Bookings</h2>
-              <Button variant="ghost" size="sm">View All</Button>
+              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/resident/bookings'}>
+                View All
+              </Button>
             </div>
-            <div className="space-y-4">
-              {upcomingBookings.map((booking) => (
-                <div key={booking.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center text-white font-bold">
-                      {booking.date.split('-')[2]}
+            
+            {upcomingBookings.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No upcoming bookings</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {upcomingBookings.map((booking) => (
+                  <div key={booking.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center text-white font-bold">
+                        {booking.date?.split(' ')[1] || '?'}
+                      </div>
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900">{booking.service || 'Service'}</h3>
+                      <p className="text-sm text-gray-600">with {booking.professional?.name || 'Professional'}</p>
+                      <p className="text-xs text-gray-500 mt-1">{booking.date} at {booking.time}</p>
+                    </div>
+                    <Badge variant={booking.status === 'confirmed' ? 'success' : 'warning'}>
+                      {booking.status}
+                    </Badge>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900">{booking.service}</h3>
-                    <p className="text-sm text-gray-600">with {booking.professional}</p>
-                    <p className="text-xs text-gray-500 mt-1">{booking.date} at {booking.time}</p>
-                  </div>
-                  <Badge variant={booking.status === 'confirmed' ? 'success' : 'warning'}>
-                    {booking.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
 
           {/* Featured Professionals */}
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Featured Professionals</h2>
-              <Button variant="ghost" size="sm">Browse All</Button>
+              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/resident/professionals'}>
+                Browse All
+              </Button>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              {featuredProfessionals.map((pro) => (
-                <div key={pro.id} className="p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all cursor-pointer">
-                  <div className="flex items-start gap-3 mb-3">
-                    <img src={pro.image} alt={pro.name} className="w-12 h-12 rounded-full object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900">{pro.name}</h3>
-                      <p className="text-sm text-gray-600">{pro.profession}</p>
+            
+            {featuredProfessionals.length === 0 ? (
+              <div className="text-center py-8">
+                <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No professionals available</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {featuredProfessionals.map((pro) => (
+                  <div key={pro.id} className="p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all cursor-pointer">
+                    <div className="flex items-start gap-3 mb-3">
+                      <img src={pro.image} alt={pro.name} className="w-12 h-12 rounded-full object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900">{pro.name}</h3>
+                        <p className="text-sm text-gray-600">{pro.profession}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-900">{pro.rating}</span>
-                      <span className="text-xs text-gray-500">({pro.reviews})</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                        <span className="text-sm font-medium text-gray-900">{pro.rating}</span>
+                        <span className="text-xs text-gray-500">({pro.total_reviews || pro.reviews_count || 0})</span>
+                      </div>
+                      <span className="text-sm font-semibold text-primary-600">{pro.price}</span>
                     </div>
-                    <span className="text-sm font-semibold text-primary-600">{pro.price}</span>
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      className="w-full mt-3"
+                      onClick={() => window.location.href = `/resident/professionals/${pro.id}`}
+                    >
+                      Book Now
+                    </Button>
                   </div>
-                  <Button variant="primary" size="sm" className="w-full mt-3">Book Now</Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
 
@@ -136,41 +183,22 @@ const ResidentDashboard = () => {
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              <Button variant="primary" className="w-full justify-start">
+              <Button variant="primary" className="w-full justify-start" onClick={() => window.location.href = '/resident/professionals'}>
                 <Briefcase className="w-5 h-5 mr-2" />
                 Find Professional
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/communities'}>
                 <Users className="w-5 h-5 mr-2" />
                 Join Community
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/messages'}>
                 <MessageCircle className="w-5 h-5 mr-2" />
                 Start Chat
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/bookings'}>
                 <Calendar className="w-5 h-5 mr-2" />
                 View Calendar
               </Button>
-            </div>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
-            <div className="space-y-4">
-              {recentActivity.map((activity, idx) => (
-                <div key={idx} className="flex gap-3">
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-${activity.color}-100 flex items-center justify-center`}>
-                    <activity.icon className={`w-5 h-5 text-${activity.color}-600`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-sm text-gray-600">{activity.detail}</p>
-                    <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           </Card>
 
