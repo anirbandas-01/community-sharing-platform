@@ -151,21 +151,34 @@ const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) =>
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100"
                   >
-                  {user?.profile_image ? (
+                  {user?.profile_image  && user.profile_image !== 'null' && user.profile_image !== ''? (
                           <img
-                            src={user.profile_image}
+                            src={ user.profile_image.startsWith('http') 
+                            ? user.profile_image 
+                            : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://127.0.0.1:8000'}${user.profile_image}`
+                             }
                             alt={user?.name || "user"}
                             className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+                            onError={(e) => {
+                            // If image fails to load, hide it and show initials
+                            console.error('Failed to load profile image:', user.profile_image);
+                            e.target.style.display = 'none';
+                            const fallback = e.target.parentElement.querySelector('.profile-fallback');
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
                           />
-                        ) : (
-                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${typeColors[userType]} flex items-center justify-center text-white font-medium text-sm`}>
+                        ) : null }
+                        {/* Fallback Initials */}
+                       <div 
+                            className={`profile-fallback w-8 h-8 rounded-full bg-gradient-to-br ${typeColors[userType]} flex items-center justify-center text-white font-medium text-sm`}
+                            style={{ display: (user?.profile_image && user.profile_image !== 'null' && user.profile_image !== '') ? 'none' : 'flex' }}
+                            >
                             {getInitials(user?.name)}
-                          </div>
-                        )}
-                    <div className="hidden sm:block text-left">
-                      <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-                      <p className="text-xs text-gray-500 capitalize">{user?.user_type || userType}</p>
-                    </div>
+                       </div>
+                       <div className="hidden sm:block text-left">
+                         <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
+                         <p className="text-xs text-gray-500 capitalize">{user?.user_type || userType}</p>
+                       </div>
                   </button>
 
                   {/* Dropdown */}
