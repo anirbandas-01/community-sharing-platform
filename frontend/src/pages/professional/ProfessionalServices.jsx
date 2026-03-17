@@ -248,44 +248,101 @@ const ProfessionalServices = () => {
       </Card>
 
       {/* Add Service Modal - Placeholder */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-2xl w-full">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Add New Service</h2>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <form className="space-y-4">
-              <Input label="Service Name" placeholder="E.g., Plumbing Repair" required />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  rows="3"
-                  placeholder="Describe your service..."
-                ></textarea>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Price (₹)" type="number" placeholder="500" required />
-                <Input label="Duration" placeholder="1-2 hours" required />
-              </div>
-              <Input label="Category" placeholder="Repair, Installation, etc." required />
-              <div className="flex gap-3 pt-4">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" className="flex-1">
-                  Add Service
-                </Button>
-              </div>
-            </form>
-          </Card>
+      {/* Add Service Modal */}
+{showAddModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <Card className="max-w-2xl w-full">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Add New Service</h2>
+        <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const serviceData = {
+          name: formData.get('name'),
+          description: formData.get('description'),
+          price: parseFloat(formData.get('price')),
+          duration: parseInt(formData.get('duration')) || 60,
+          category: formData.get('category')
+        };
+        
+        try {
+          await api.post('/professional/services', serviceData);
+          setShowAddModal(false);
+          fetchServices();
+          alert('Service added successfully!');
+          e.target.reset();
+        } catch (error) {
+          console.error('Error adding service:', error);
+          alert(error.response?.data?.message || 'Failed to add service');
+        }
+      }} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Service Name *</label>
+          <input
+            name="name"
+            type="text"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="E.g., Plumbing Repair"
+            required
+          />
         </div>
-      )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <textarea
+            name="description"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            rows="3"
+            placeholder="Describe your service..."
+          ></textarea>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
+            <input
+              name="price"
+              type="number"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+            <input
+              name="duration"
+              type="number"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="60"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <input
+            name="category"
+            type="text"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="Repair, Installation, etc."
+          />
+        </div>
+        <div className="flex gap-3 pt-4">
+          <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" className="flex-1">
+            Add Service
+          </Button>
+        </div>
+      </form>
+    </Card>
+  </div>
+)}
     </DashboardLayout>
   );
 };
