@@ -12,6 +12,7 @@ const ProfessionalServices = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [profile, setProfile] = useState(null); // ADD THIS
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/professional/dashboard' },
@@ -26,6 +27,7 @@ const ProfessionalServices = () => {
 
   useEffect(() => {
     fetchServices();
+    fetchProfile(); // ADD THIS
   }, []);
 
   const fetchServices = async () => {
@@ -38,6 +40,27 @@ const ProfessionalServices = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ADD THIS FUNCTION
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get('/professional/profile');
+      setProfile(response.data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  // ADD THIS FUNCTION - Profile completion check before adding service
+  const handleAddServiceClick = () => {
+    // Check if profile is complete
+    if (profile && !profile.profile_complete) {
+      alert('Please complete your profile before adding services. Go to Profile section to fill in all required fields:\n\n- Name\n- Phone\n- City\n- Specialization\n- Experience\n- Hourly Rate\n- Bio');
+      window.location.href = '/professional/profile';
+      return;
+    }
+    setShowAddModal(true);
   };
 
   const handleDeleteService = async (serviceId) => {
@@ -63,6 +86,17 @@ const ProfessionalServices = () => {
 
   const displayServices = services;
 
+  // UPDATED: Calculate real average rating - NO DUMMY DATA
+  const calculateAverageRating = () => {
+    if (displayServices.length === 0) return 'N/A';
+    
+    const servicesWithRating = displayServices.filter(s => s.rating);
+    if (servicesWithRating.length === 0) return 'No ratings';
+    
+    const total = servicesWithRating.reduce((sum, s) => sum + (s.rating || 0), 0);
+    return (total / servicesWithRating.length).toFixed(1);
+  };
+
   return (
     <DashboardLayout menuItems={menuItems} userType="professional">
       {/* Header */}
@@ -71,7 +105,8 @@ const ProfessionalServices = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Services</h1>
           <p className="text-gray-600">Manage your service offerings</p>
         </div>
-        <Button variant="primary" onClick={() => setShowAddModal(true)}>
+        {/* UPDATED: Use handleAddServiceClick instead of direct setShowAddModal */}
+        <Button variant="primary" onClick={handleAddServiceClick}>
           <Plus className="w-5 h-5 mr-2" />
           Add Service
         </Button>
@@ -123,7 +158,10 @@ const ProfessionalServices = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Avg Rating</p>
-              <p className="text-2xl font-bold text-gray-900">4.8</p>
+              {/* UPDATED: Real rating calculation - NO DUMMY DATA (was 4.8) */}
+              <p className="text-2xl font-bold text-gray-900">
+                {calculateAverageRating()}
+              </p>
             </div>
           </div>
         </Card>
@@ -142,7 +180,8 @@ const ProfessionalServices = () => {
           <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No Services Yet</h3>
           <p className="text-gray-600 mb-6">Add your first service to start receiving bookings</p>
-          <Button variant="primary" onClick={() => setShowAddModal(true)}>
+          {/* UPDATED: Use handleAddServiceClick */}
+          <Button variant="primary" onClick={handleAddServiceClick}>
             <Plus className="w-5 h-5 mr-2" />
             Add Service
           </Button>
@@ -203,9 +242,12 @@ const ProfessionalServices = () => {
                     <span className="text-gray-600">
                       <span className="font-semibold text-gray-900">{service.bookings_count}</span> bookings
                     </span>
+                    {/* UPDATED: Show real rating or "No ratings" - NO DUMMY DATA */}
                     <div className="flex items-center gap-1">
                       <span className="text-yellow-400">⭐</span>
-                      <span className="font-medium text-gray-900">{service.rating}</span>
+                      <span className="font-medium text-gray-900">
+                        {service.rating || 'No ratings'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -247,102 +289,108 @@ const ProfessionalServices = () => {
         </div>
       </Card>
 
-      {/* Add Service Modal - Placeholder */}
       {/* Add Service Modal */}
-{showAddModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <Card className="max-w-2xl w-full">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Add New Service</h2>
-        <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <form onSubmit={async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const serviceData = {
-          name: formData.get('name'),
-          description: formData.get('description'),
-          price: parseFloat(formData.get('price')),
-          duration: parseInt(formData.get('duration')) || 60,
-          category: formData.get('category')
-        };
-        
-        try {
-          await api.post('/professional/services', serviceData);
-          setShowAddModal(false);
-          fetchServices();
-          alert('Service added successfully!');
-          e.target.reset();
-        } catch (error) {
-          console.error('Error adding service:', error);
-          alert(error.response?.data?.message || 'Failed to add service');
-        }
-      }} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Service Name *</label>
-          <input
-            name="name"
-            type="text"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="E.g., Plumbing Repair"
-            required
-          />
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="max-w-2xl w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Add New Service</h2>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              const serviceData = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                price: parseFloat(formData.get('price')),
+                duration: parseInt(formData.get('duration')) || 60,
+                category: formData.get('category')
+              };
+              
+              try {
+                await api.post('/professional/services', serviceData);
+                setShowAddModal(false);
+                fetchServices();
+                alert('Service added successfully!');
+                e.target.reset();
+              } catch (error) {
+                console.error('Error adding service:', error);
+                // UPDATED: Handle profile incomplete error
+                if (error.response?.data?.profile_incomplete) {
+                  alert(error.response.data.message);
+                  setShowAddModal(false);
+                  window.location.href = '/professional/profile';
+                } else {
+                  alert(error.response?.data?.message || 'Failed to add service');
+                }
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Service Name *</label>
+                <input
+                  name="name"
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="E.g., Plumbing Repair"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  name="description"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  rows="3"
+                  placeholder="Describe your service..."
+                ></textarea>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
+                  <input
+                    name="price"
+                    type="number"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                  <input
+                    name="duration"
+                    type="number"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="60"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <input
+                  name="category"
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Repair, Installation, etc."
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" className="flex-1">
+                  Add Service
+                </Button>
+              </div>
+            </form>
+          </Card>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-          <textarea
-            name="description"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            rows="3"
-            placeholder="Describe your service..."
-          ></textarea>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
-            <input
-              name="price"
-              type="number"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
-            <input
-              name="duration"
-              type="number"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="60"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <input
-            name="category"
-            type="text"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="Repair, Installation, etc."
-          />
-        </div>
-        <div className="flex gap-3 pt-4">
-          <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary" className="flex-1">
-            Add Service
-          </Button>
-        </div>
-      </form>
-    </Card>
-  </div>
-)}
+      )}
     </DashboardLayout>
   );
 };

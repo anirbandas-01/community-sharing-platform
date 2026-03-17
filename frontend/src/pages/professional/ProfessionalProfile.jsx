@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Briefcase, Clock, DollarSign, Award, Edit2, Save, X } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Clock, DollarSign, Award, Edit2, Save, X, AlertCircle } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -48,6 +48,8 @@ const ProfessionalProfile = () => {
       setProfile(formData);
       setIsEditing(false);
       alert('Profile updated successfully!');
+      // Refetch to get updated profile_complete status
+      fetchProfile();
     } catch (error) {
       console.error('Error updating profile:', error);
       alert(error.response?.data?.message || 'Failed to update profile');
@@ -63,11 +65,28 @@ const ProfessionalProfile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // UPDATED: Use REAL stats from API data - NO DUMMY DATA
   const stats = [
-    { label: 'Total Bookings', value: '156', icon: '📅' },
-    { label: 'Rating', value: '4.8 ⭐', icon: '⭐' },
-    { label: 'Reviews', value: '124', icon: '💬' },
-    { label: 'Earnings', value: '₹45,200', icon: '💰' },
+    { 
+      label: 'Total Bookings', 
+      value: profile?.total_bookings || '0', 
+      icon: '📅' 
+    },
+    { 
+      label: 'Rating', 
+      value: profile?.average_rating ? `${profile.average_rating} ⭐` : 'No ratings', 
+      icon: '⭐' 
+    },
+    { 
+      label: 'Reviews', 
+      value: profile?.total_reviews || '0', 
+      icon: '💬' 
+    },
+    { 
+      label: 'Earnings', 
+      value: profile?.total_earnings ? `₹${profile.total_earnings.toLocaleString()}` : '₹0', 
+      icon: '💰' 
+    },
   ];
 
   if (loading) {
@@ -123,6 +142,31 @@ const ProfessionalProfile = () => {
         )}
       </div>
 
+      {/* Profile Completion Warning - ADDED */}
+      {profile && !profile.profile_complete && (
+        <Card className="mb-6 bg-yellow-50 border-yellow-200">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-yellow-900 mb-1">Complete Your Profile</h3>
+              <p className="text-sm text-yellow-800 mb-3">
+                You need to complete your profile before you can add services and receive bookings.
+                Please fill in all required fields below.
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {!profile.name && <Badge variant="warning">Name required</Badge>}
+                {!profile.phone && <Badge variant="warning">Phone required</Badge>}
+                {!profile.city && <Badge variant="warning">City required</Badge>}
+                {!profile.specialization && <Badge variant="warning">Specialization required</Badge>}
+                {(!profile.experience_years || profile.experience_years === 0) && <Badge variant="warning">Experience required</Badge>}
+                {(!profile.hourly_rate || profile.hourly_rate === 0) && <Badge variant="warning">Hourly rate required</Badge>}
+                {!profile.bio && <Badge variant="warning">Bio required</Badge>}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Profile Card */}
         <div className="lg:col-span-1">
@@ -141,24 +185,24 @@ const ProfessionalProfile = () => {
                   </div>
                 )}
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
-              <p className="text-gray-600 mb-3">{profile.specialization}</p>
-              <Badge variant="success">Verified Professional</Badge>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name || 'Name not set'}</h2>
+              <p className="text-gray-600 mb-3">{profile.specialization || 'Specialization not set'}</p>
+              {profile.is_verified && <Badge variant="success">Verified Professional</Badge>}
             </div>
 
             {/* Quick Stats */}
             <div className="space-y-3 mb-6 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Experience</span>
-                <span className="font-semibold text-gray-900">{profile.experience_years} years</span>
+                <span className="font-semibold text-gray-900">{profile.experience_years || 0} years</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Hourly Rate</span>
-                <span className="font-semibold text-gray-900">₹{profile.hourly_rate}</span>
+                <span className="font-semibold text-gray-900">₹{profile.hourly_rate || 0}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Consultation Fee</span>
-                <span className="font-semibold text-gray-900">₹{profile.consultation_fee}</span>
+                <span className="font-semibold text-gray-900">₹{profile.consultation_fee || 0}</span>
               </div>
             </div>
 
@@ -166,7 +210,7 @@ const ProfessionalProfile = () => {
             <div className="space-y-3 mb-6 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Phone className="w-5 h-5" />
-                <span>{profile.phone}</span>
+                <span>{profile.phone || 'Not set'}</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail className="w-5 h-5" />
@@ -174,7 +218,7 @@ const ProfessionalProfile = () => {
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <MapPin className="w-5 h-5" />
-                <span>{profile.city}</span>
+                <span>{profile.city || 'Not set'}</span>
               </div>
             </div>
 
@@ -198,7 +242,7 @@ const ProfessionalProfile = () => {
             <h2 className="text-xl font-bold text-gray-900 mb-6">Basic Information</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <Input
-                label="Full Name"
+                label="Full Name *"
                 name="name"
                 value={isEditing ? formData.name : profile.name}
                 onChange={handleChange}
@@ -215,7 +259,7 @@ const ProfessionalProfile = () => {
                 icon={Mail}
               />
               <Input
-                label="Phone"
+                label="Phone *"
                 name="phone"
                 value={isEditing ? formData.phone : profile.phone}
                 onChange={handleChange}
@@ -223,7 +267,7 @@ const ProfessionalProfile = () => {
                 icon={Phone}
               />
               <Input
-                label="City"
+                label="City *"
                 name="city"
                 value={isEditing ? formData.city : profile.city}
                 onChange={handleChange}
@@ -238,7 +282,7 @@ const ProfessionalProfile = () => {
             <h2 className="text-xl font-bold text-gray-900 mb-6">Professional Details</h2>
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <Input
-                label="Specialization"
+                label="Specialization *"
                 name="specialization"
                 value={isEditing ? formData.specialization : profile.specialization}
                 onChange={handleChange}
@@ -246,7 +290,7 @@ const ProfessionalProfile = () => {
                 icon={Briefcase}
               />
               <Input
-                label="Experience (years)"
+                label="Experience (years) *"
                 name="experience_years"
                 type="number"
                 value={isEditing ? formData.experience_years : profile.experience_years}
@@ -255,7 +299,7 @@ const ProfessionalProfile = () => {
                 icon={Clock}
               />
               <Input
-                label="Hourly Rate (₹)"
+                label="Hourly Rate (₹) *"
                 name="hourly_rate"
                 type="number"
                 value={isEditing ? formData.hourly_rate : profile.hourly_rate}
@@ -290,7 +334,7 @@ const ProfessionalProfile = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bio
+                Bio *
               </label>
               <textarea
                 name="bio"
@@ -299,6 +343,7 @@ const ProfessionalProfile = () => {
                 disabled={!isEditing}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-50"
                 rows="4"
+                placeholder="Tell clients about yourself, your expertise, and what makes you unique..."
               />
             </div>
           </Card>
@@ -307,9 +352,13 @@ const ProfessionalProfile = () => {
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Services Offered</h2>
             <div className="flex flex-wrap gap-2">
-              {profile.services_offered?.map((service, idx) => (
-                <Badge key={idx} variant="primary">{service}</Badge>
-              ))}
+              {profile.services_offered && profile.services_offered.length > 0 ? (
+                profile.services_offered.map((service, idx) => (
+                  <Badge key={idx} variant="primary">{service}</Badge>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No services listed</p>
+              )}
             </div>
           </Card>
 
@@ -317,12 +366,16 @@ const ProfessionalProfile = () => {
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Availability</h2>
             <div className="space-y-2">
-              {profile.availability?.map((slot, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-gray-700">
-                  <Clock className="w-4 h-4 text-primary-600" />
-                  <span>{slot}</span>
-                </div>
-              ))}
+              {profile.availability && profile.availability.length > 0 ? (
+                profile.availability.map((slot, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-gray-700">
+                    <Clock className="w-4 h-4 text-primary-600" />
+                    <span>{slot}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No availability set</p>
+              )}
             </div>
           </Card>
 

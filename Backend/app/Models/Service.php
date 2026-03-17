@@ -41,6 +41,18 @@ class Service extends Model
         return $this->hasMany(Appointment::class);
     }
 
+        public function reviews()
+    {
+        return $this->hasManyThrough(
+            Review::class,
+            Appointment::class,
+            'service_id', // Foreign key on appointments table
+            'appointment_id', // Foreign key on reviews table
+            'id', // Local key on services table
+            'id' // Local key on appointments table
+        );
+    }
+    
     /**
      * Scope for active services only
      */
@@ -48,4 +60,5 @@ class Service extends Model
     {
         return $query->where('is_active', true);
     }
+
 }
