@@ -12,6 +12,7 @@ class ProfessionalProfile extends Model
         'user_id',
         'bio',
         'specialization',
+        'experience_years',
         'qualifications',
         'hourly_rate',
         'consultation_fee',

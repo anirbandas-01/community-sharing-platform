@@ -479,12 +479,12 @@ class ProfessionalsController extends Controller
                     'category' => $service->category,
                     'is_active' => $service->is_active,
                     'status' => $service->is_active ? 'active' : 'inactive',
-                    'bookings' => $service->appointments_count,
+                    'bookings_count' => $service->appointments_count,
                     'rating' => 0,
                     'created_at' => $service->created_at
                 ];
             });
-        return response()->json($services);
+        return response()->json(['services' => $services]);
         }catch(\Exception $e) {
             return response()->json([
                 'message' => 'Error loading services',

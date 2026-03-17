@@ -22,6 +22,8 @@ class User extends Authenticatable
         'phone',
         'aadhaar',
         'city',
+        'address',
+        'bio',
         'profile_image',
     ];
 
@@ -41,7 +43,6 @@ class User extends Authenticatable
         'password' => 'hashed', 
     ];
     
-    protected $appends = ['profile_image_url'];
 
     public function residentProfile()
     {
@@ -94,13 +95,7 @@ class User extends Authenticatable
         return $this->user_type === 'resident';
     }
 
-    public function getProfileImageUrlAttribute()
-    {
-        if ($this->profile_image) {
-            return asset('uploads/profiles/' . $this->profile_image);
-        }
-        return null;
-    }
+
     public function enterprise()
     {
         return $this->hasOne(Enterprise::class);

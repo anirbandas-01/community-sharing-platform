@@ -7,10 +7,20 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use App\Services\SupabaseStorageService;
 
 class AuthController extends Controller
 {
-   public function register(Request $request)
+    protected $supabaseStorage;
+
+    public function __construct(SupabaseStorageService $supabaseStorage)
+    {
+        $this->supabaseStorage = $supabaseStorage;
+    }
+
+   /* public function register(Request $request)
     {
         $request->validate([
             'name'          => 'required|string|max:255',
@@ -20,7 +30,7 @@ class AuthController extends Controller
             'phone'         => 'required|digits:10|unique:users,phone',
             'aadhaar'       => 'required|digits:12|unique:users,aadhaar',
             'city'          => 'required|string|max:255',
-            'profile_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'profile_image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
         // ---------- IMAGE UPLOAD ----------
@@ -57,10 +67,76 @@ return response()->json([
     'user' => $user,
     'redirect_url' => $redirectUrl
 ], 201);
+    } */
+
+
+  public function register(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|string|min:8|confirmed',
+                'user_type' => 'required|in:resident,professional,business',
+                'phone' => 'required|string|max:20',
+                'city' => 'required|string|max:100',
+                'aadhaar' => 'required|string|size:12',
+                'profile_image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+            ]);
+          if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Handle profile image upload to Supabase
+            $profileImageUrl = null;
+            if ($request->hasFile('profile_image')) {
+                try {
+                    $profileImageUrl = $this->supabaseStorage->upload(
+                        $request->file('profile_image'),
+                        'profiles'
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Profile image upload failed: ' . $e->getMessage());
+                    // Continue registration even if image upload fails
+                }
+            }
+
+            // Create user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'user_type' => $request->user_type,
+                'phone' => $request->phone,
+                'city' => $request->city,
+                'aadhaar' => $request->aadhaar,
+                'profile_image' => $profileImageUrl, // Full Supabase URL
+            ]);
+
+            // Create token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Determine redirect URL
+            $redirectUrl = "/{$user->user_type}/dashboard";
+
+            return response()->json([
+              'message' => 'Registration successful',
+                'user' => $user,
+                'token' => $token,
+                'redirect_url' => $redirectUrl
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Registration error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Registration failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-
-
-
 
 
 

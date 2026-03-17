@@ -6,9 +6,18 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use App\Services\SupabaseStorageService;
 
 class UserController extends Controller
 {
+
+   protected $supabaseStorage;
+
+    public function __construct(SupabaseStorageService $supabaseStorage)
+    {
+        $this->supabaseStorage = $supabaseStorage;
+    } 
     public function profile(Request $request)
     {
         return response()->json([
@@ -17,7 +26,7 @@ class UserController extends Controller
     }
 
 
-    public function updateProfile(Request $request)
+    /* public function updateProfile(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -36,7 +45,95 @@ class UserController extends Controller
             'message' => 'Profile updated successfully',
             'user' => $user
         ]);
-    } 
+    } */ 
+
+
+     public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'city' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'bio' => 'nullable|string|max:1000',
+            'profile_image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+        ]);
+
+        $user = $request->user();
+
+        // Handle profile image upload
+        if ($request->hasFile('profile_image')) {
+            try {   
+           // Delete old image if exists
+                if ($user->profile_image) {
+                    $oldPath = $this->supabaseStorage->extractPath($user->profile_image);
+                    if ($oldPath) {
+                        $this->supabaseStorage->delete($oldPath);
+                    }
+                }
+
+                // Upload new image
+                $profileImageUrl = $this->supabaseStorage->upload(
+                    $request->file('profile_image'),
+                    'profiles'
+                );
+
+                $user->profile_image = $profileImageUrl;
+            } catch (\Exception $e) {
+                Log::error('Profile image update failed: ' . $e->getMessage());
+                return response()->json([
+                    'message' => 'Failed to upload profile image',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+        }
+        // Update other fields
+        $user->update($request->only(['name', 'phone', 'city', 'address', 'bio']));
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user
+        ]);
+    }
+
+    public function uploadPhoto(Request $request)
+    {
+        $request->validate([
+            'photo' => 'required|image|mimes:jpg,jpeg,png|max:2048'
+        ]);
+
+        $user = $request->user();
+
+        try {
+            // Delete old image if exists
+            if ($user->profile_image) {
+                $oldPath = $this->supabaseStorage->extractPath($user->profile_image);
+                if ($oldPath)  {
+                    $this->supabaseStorage->delete($oldPath);
+                }
+            }
+
+            // Upload new image
+            $profileImageUrl = $this->supabaseStorage->upload(
+                $request->file('photo'),
+                'profiles'
+            );
+
+            $user->profile_image = $profileImageUrl;
+            $user->save();
+
+            return response()->json([
+                'message' => 'Profile photo uploaded successfully',
+                'profile_image' => $profileImageUrl
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Photo upload error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to upload photo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     public function changePassword(Request $request)
     {
@@ -63,7 +160,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function uploadPhoto (Request $request)
+    /* public function uploadPhoto (Request $request)
     {
         $request->validate([
             'photo' => 'required|image|mimes:jpg,jpeg,png|max:2048'
@@ -84,7 +181,7 @@ class UserController extends Controller
             'message' => 'Profile photo uploaded successfully',
             'profile_image' => asset('storage/' .$path)
         ]);
-    }
+    } */
 
 
 
