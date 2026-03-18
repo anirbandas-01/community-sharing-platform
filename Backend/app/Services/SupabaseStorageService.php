@@ -12,13 +12,13 @@ use Illuminate\Support\Facades\Log;
 class SupabaseStorageService
 {
     protected $url;
-    protected $key;
+    protected $serviceKey; // Use service key, not anon key
     protected $bucket;
 
     public function __construct()
     {
         $this->url = config('supabase.url');
-        $this->key = config('supabase.key');
+        $this->serviceKey = config('supabase.service_key'); // Changed to service_key
         $this->bucket = config('supabase.storage_bucket');
     }
 
@@ -30,26 +30,36 @@ class SupabaseStorageService
             $filename = time() . '_' . Str::random(10) . '.' . $extension;
             $path = $folder . '/' . $filename;
 
-            // ✅ FIX: Get file contents as BINARY, not JSON
+            // Get file contents as binary
             $fileContents = file_get_contents($file->getRealPath());
 
-            // ✅ FIX: Use attach() instead of sending raw body
+            // Upload using SERVICE_ROLE key (bypasses RLS policies)
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->key,
+                'Authorization' => 'Bearer ' . $this->serviceKey,  // Service key
+                'apikey' => $this->serviceKey,                      // Service key
                 'Content-Type' => $file->getMimeType(),
             ])
-            ->withBody($fileContents, $file->getMimeType())  // ✅ Changed this
+            ->withBody($fileContents, $file->getMimeType())
             ->post("{$this->url}/storage/v1/object/{$this->bucket}/{$path}");
+
+            Log::info('Supabase upload attempt', [
+                'url' => "{$this->url}/storage/v1/object/{$this->bucket}/{$path}",
+                'status' => $response->status(),
+                'bucket' => $this->bucket,
+                'path' => $path,
+                'mime_type' => $file->getMimeType(),
+            ]);
 
             if ($response->successful()) {
                 return $this->getPublicUrl($path);
             }
 
-            // Better error logging
+            // Enhanced error logging
             Log::error('Supabase upload failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
-                'path' => $path
+                'path' => $path,
+                'bucket' => $this->bucket,
             ]);
 
             throw new \Exception('Upload failed: ' . $response->body());
@@ -68,7 +78,8 @@ class SupabaseStorageService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->key,
+                'Authorization' => 'Bearer ' . $this->serviceKey,
+                'apikey' => $this->serviceKey,
             ])->delete(
                 "{$this->url}/storage/v1/object/{$this->bucket}/{$path}"
             );
