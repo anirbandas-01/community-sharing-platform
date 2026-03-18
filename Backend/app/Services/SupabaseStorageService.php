@@ -1,10 +1,13 @@
 <?php
+// File: Backend/app/Services/SupabaseStorageService.php
 
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+
 
 class SupabaseStorageService
 {
@@ -19,9 +22,6 @@ class SupabaseStorageService
         $this->bucket = config('supabase.storage_bucket');
     }
 
-    /**
-     * Upload a file to Supabase Storage
-     */
     public function upload(UploadedFile $file, string $folder = 'profiles')
     {
         try {
@@ -30,40 +30,40 @@ class SupabaseStorageService
             $filename = time() . '_' . Str::random(10) . '.' . $extension;
             $path = $folder . '/' . $filename;
 
-            // Get file contents
+            // ✅ FIX: Get file contents as BINARY, not JSON
             $fileContents = file_get_contents($file->getRealPath());
 
-            // Upload to Supabase
+            // ✅ FIX: Use attach() instead of sending raw body
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->key,
                 'Content-Type' => $file->getMimeType(),
-            ])->post(
-                "{$this->url}/storage/v1/object/{$this->bucket}/{$path}",
-                $fileContents
-            );
+            ])
+            ->withBody($fileContents, $file->getMimeType())  // ✅ Changed this
+            ->post("{$this->url}/storage/v1/object/{$this->bucket}/{$path}");
 
             if ($response->successful()) {
                 return $this->getPublicUrl($path);
             }
 
+            // Better error logging
+            Log::error('Supabase upload failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'path' => $path
+            ]);
+
             throw new \Exception('Upload failed: ' . $response->body());
         } catch (\Exception $e) {
-            \Log::error('Supabase upload error: ' . $e->getMessage());
+            Log::error('Supabase upload error: ' . $e->getMessage());
             throw $e;
         }
     }
 
-    /**
-     * Get public URL for a file
-     */
     public function getPublicUrl(string $path)
     {
         return "{$this->url}/storage/v1/object/public/{$this->bucket}/{$path}";
     }
 
-    /**
-     * Delete a file from Supabase Storage
-     */
     public function delete(string $path)
     {
         try {
@@ -75,14 +75,11 @@ class SupabaseStorageService
 
             return $response->successful();
         } catch (\Exception $e) {
-            \Log::error('Supabase delete error: ' . $e->getMessage());
+            Log::error('Supabase delete error: ' . $e->getMessage());
             return false;
         }
     }
 
-    /**
-     * Extract path from full URL
-     */
     public function extractPath(string $url)
     {
         if (empty($url)) {

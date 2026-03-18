@@ -54,8 +54,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:500',
-            'bio' => 'nullable|string|max:1000',
             'profile_image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
@@ -88,7 +88,7 @@ class UserController extends Controller
             }
         }
         // Update other fields
-        $user->update($request->only(['name', 'phone', 'city', 'address', 'bio']));
+        $user->update($request->only(['name', 'phone', 'city','state', 'address']));
 
         return response()->json([
             'message' => 'Profile updated successfully',

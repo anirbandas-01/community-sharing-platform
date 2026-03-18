@@ -20,56 +20,6 @@ class AuthController extends Controller
         $this->supabaseStorage = $supabaseStorage;
     }
 
-   /* public function register(Request $request)
-    {
-        $request->validate([
-            'name'          => 'required|string|max:255',
-            'email'         => 'required|email|unique:users,email',
-            'password'      => 'required|min:8|confirmed',
-            'user_type'     => 'required|in:resident,professional,business',
-            'phone'         => 'required|digits:10|unique:users,phone',
-            'aadhaar'       => 'required|digits:12|unique:users,aadhaar',
-            'city'          => 'required|string|max:255',
-            'profile_image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
-        ]);
-
-        // ---------- IMAGE UPLOAD ----------
-        $image = $request->file('profile_image');
-        $imageName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-        $image->move(public_path('uploads/profiles'), $imageName);
-        // ----------------------------------
-
-        $user = User::create([
-            'name'          => $request->name,
-            'email'         => $request->email,
-            'password'      => Hash::make($request->password), // ✅ bcrypt hash
-            'user_type'     => $request->user_type,
-            'phone'         => $request->phone,
-            'aadhaar'       => $request->aadhaar,
-            'city'          => $request->city,
-            'profile_image' => $imageName,
-            'profile_image_url' => asset('uploads/profiles/' . $imageName),
-        ]);
-
-        // ✅ Create token immediately
-$token = $user->createToken('auth-token')->plainTextToken;
-
-// ✅ Redirect based on role
-$redirectUrl = match($user->user_type) {
-    'professional' => '/professional/dashboard',
-    'resident' => '/resident/dashboard',
-    default => '/'
-};
-
-return response()->json([
-    'message' => 'User registered successfully',
-    'token' => $token,
-    'user' => $user,
-    'redirect_url' => $redirectUrl
-], 201);
-    } */
-
-
   public function register(Request $request)
     {
         try {
@@ -80,8 +30,10 @@ return response()->json([
                 'user_type' => 'required|in:resident,professional,business',
                 'phone' => 'required|string|max:20',
                 'city' => 'required|string|max:100',
+                'state' => 'required|string|max:100',
+                'address' => 'required|string|max:500',
                 'aadhaar' => 'required|string|size:12',
-                'profile_image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+                'profile_image' => 'required|image|mimes:jpeg,jpg,png|max:2048',
             ]);
           if ($validator->fails()) {
                 return response()->json([
@@ -98,9 +50,14 @@ return response()->json([
                         $request->file('profile_image'),
                         'profiles'
                     );
+                 Log::info('Profile image uploaded successfully', ['url' => $profileImageUrl]);
                 } catch (\Exception $e) {
                     Log::error('Profile image upload failed: ' . $e->getMessage());
                     // Continue registration even if image upload fails
+                    return response()->json([
+                    'message' => 'Profile image upload failed',
+                    'error' => $e->getMessage()
+                ], 500);
                 }
             }
 
@@ -112,8 +69,10 @@ return response()->json([
                 'user_type' => $request->user_type,
                 'phone' => $request->phone,
                 'city' => $request->city,
+                'state' => $request->state,            
+                'address' => $request->address,
                 'aadhaar' => $request->aadhaar,
-                'profile_image' => $profileImageUrl, // Full Supabase URL
+                'profile_image' => $profileImageUrl, 
             ]);
 
             // Create token

@@ -175,7 +175,7 @@ const ProfessionalProfile = () => {
             <div className="text-center mb-6">
               <div className="relative inline-block">
                 <img
-                  src={profile.profile_image || 'https://i.pravatar.cc/300?img=12'}
+                  src={profile.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&size=300&background=6366f1&color=fff&bold=true`}
                   alt={profile.name}
                   className="w-32 h-32 rounded-full object-cover mx-auto mb-4 border-4 border-white shadow-lg"
                 />

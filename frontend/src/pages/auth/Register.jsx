@@ -21,6 +21,8 @@ const Register = () => {
     password_confirmation: '',
     user_type: '',
     city: '',
+    state: '', 
+    address: '',
     aadhaar: '',
     profile_image: null,
     terms: false,
@@ -298,6 +300,26 @@ const Register = () => {
                   icon={MapPin}
                   placeholder="Mumbai"
                   value={formData.city}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="State"
+                  name="state"
+                  icon={MapPin}
+                  placeholder="Maharashtra"
+                  value={formData.state}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="Address"
+                  name="address"
+                  icon={MapPin}
+                  placeholder="123 Main Street, Area Name"
+                  value={formData.address}
                   onChange={handleChange}
                   required
                 />

@@ -22,8 +22,8 @@ class User extends Authenticatable
         'phone',
         'aadhaar',
         'city',
-        'address',
-        'bio',
+        'state',      
+        'address', 
         'profile_image',
     ];
 

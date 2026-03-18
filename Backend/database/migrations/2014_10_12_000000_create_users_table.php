@@ -20,8 +20,10 @@ return new class extends Migration
             $table->enum('user_type', ['resident', 'professional', 'business', 'admin']);
 
             $table->string('phone')->nullable();
+            $table->string('aadhaar', 12)->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
+            $table->string('address')->nullable();
             $table->string('profile_image')->nullable();
             
             $table->timestamp('email_verified_at')->nullable();
