@@ -39,6 +39,23 @@ const ProfessionalDashboard = () => {
     }
   };
 
+  // ← ADD THIS FUNCTION
+  const handleConfirmBooking = async (jobId) => {
+    try {
+      await api.put(`/professional/appointments/${jobId}`, { 
+        status: 'confirmed' 
+      });
+      
+      // Refresh dashboard to show updated status
+      fetchDashboard();
+      
+      alert('Booking confirmed successfully!');
+    } catch (error) {
+      console.error('Error confirming booking:', error);
+      alert(error.response?.data?.message || 'Failed to confirm booking');
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout menuItems={menuItems} userType="professional">
@@ -167,8 +184,15 @@ const ProfessionalDashboard = () => {
                       </div>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => window.location.href = '/professional/bookings'}>Details</Button>
+                        {/* ← FIXED: Added onClick handler */}
                         {job.status === 'pending' && (
-                          <Button variant="primary" size="sm">Confirm</Button>
+                          <Button 
+                            variant="primary" 
+                            size="sm"
+                            onClick={() => handleConfirmBooking(job.id)}
+                          >
+                            Confirm
+                          </Button>
                         )}
                       </div>
                     </div>
