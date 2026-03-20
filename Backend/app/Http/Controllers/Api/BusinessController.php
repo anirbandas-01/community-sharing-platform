@@ -11,6 +11,68 @@ use App\Models\Enterprise;
 class BusinessController extends Controller
 {
     /**
+     * Get business dashboard data
+     */
+    public function getDashboard(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Get products for this business
+            $products = Product::where('user_id', $user->id)->get();
+            
+            // Calculate stats
+            $totalProducts = $products->count();
+            $lowStockCount = $products->where('stock', '<=', function($product) {
+                return $product->min_stock;
+            })->where('stock', '>', 0)->count();
+            $outOfStockCount = $products->where('stock', 0)->count();
+            $totalValue = $products->sum(function($product) {
+                return $product->stock * $product->price;
+            });
+            
+            // Get low stock items
+            $lowStockItems = $products->filter(function($product) {
+                return $product->stock > 0 && $product->stock <= $product->min_stock;
+            })->take(5)->map(function($product) {
+                return [
+                    'name' => $product->name,
+                    'current' => $product->stock,
+                    'minimum' => $product->min_stock
+                ];
+            })->values();
+            
+            // Mock data for orders and revenue (you can implement these later)
+            return response()->json([
+                'revenue' => [
+                    'total' => 0,
+                    'change' => '+0%'
+                ],
+                'orders' => [
+                    'pending' => 0,
+                    'new_today' => 0,
+                    'recent' => []
+                ],
+                'products' => [
+                    'total' => $totalProducts,
+                    'low_stock' => $lowStockCount,
+                    'low_stock_items' => $lowStockItems,
+                    'top' => []
+                ],
+                'customers' => [
+                    'total' => 0,
+                    'new_month' => 0
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error loading dashboard',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get all products for the authenticated business user
      */
     public function getProducts(Request $request)
@@ -24,8 +86,10 @@ class BusinessController extends Controller
                         'id' => $product->id,
                         'name' => $product->name,
                         'category' => $product->category,
+                        'sku' => $product->sku ?: 'SKU-' . str_pad($product->id, 5, '0', STR_PAD_LEFT),
                         'price' => $product->price,
                         'stock' => $product->stock,
+                        'min_stock' => $product->min_stock ?: 10,
                         'photo' => $product->photo ? asset('storage/' . $product->photo) : null,
                         'created_at' => $product->created_at,
                     ];
@@ -53,6 +117,8 @@ class BusinessController extends Controller
                 'category' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
+                'min_stock' => 'nullable|integer|min:0',
+                'sku' => 'nullable|string|max:255',
                 'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 
@@ -67,6 +133,8 @@ class BusinessController extends Controller
                 'category' => $validated['category'],
                 'price' => $validated['price'],
                 'stock' => $validated['stock'],
+                'min_stock' => $validated['min_stock'] ?? 10,
+                'sku' => $validated['sku'] ?? null,
                 'photo' => $photoPath,
             ]);
 
@@ -76,8 +144,10 @@ class BusinessController extends Controller
                     'id' => $product->id,
                     'name' => $product->name,
                     'category' => $product->category,
+                    'sku' => $product->sku,
                     'price' => $product->price,
                     'stock' => $product->stock,
+                    'min_stock' => $product->min_stock,
                     'photo' => $product->photo ? asset('storage/' . $product->photo) : null,
                 ]
             ], 201);
@@ -109,8 +179,10 @@ class BusinessController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
                 'category' => $product->category,
+                'sku' => $product->sku,
                 'price' => $product->price,
                 'stock' => $product->stock,
+                'min_stock' => $product->min_stock,
                 'photo' => $product->photo ? asset('storage/' . $product->photo) : null,
             ]);
         } catch (\Exception $e) {
@@ -142,6 +214,8 @@ class BusinessController extends Controller
                 'category' => 'sometimes|string|max:255',
                 'price' => 'sometimes|numeric|min:0',
                 'stock' => 'sometimes|integer|min:0',
+                'min_stock' => 'sometimes|integer|min:0',
+                'sku' => 'sometimes|string|max:255',
                 'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 

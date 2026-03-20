@@ -120,6 +120,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('role:business')->group(function () {
+        
+        //dashboard
+        Route::get('/business/dashboard', [BusinessController::class, 'getDashboard']);
+        
+        
         // Products/Inventory
         Route::get('/business/products', [BusinessController::class, 'getProducts']);
         Route::post('/business/products', [BusinessController::class, 'createProduct']);
