@@ -120,6 +120,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('role:business')->group(function () {
+        // Profile
+        Route::get('/business/profile', [BusinessController::class, 'getProfile']);
+        Route::put('/business/profile', [BusinessController::class, 'updateProfile']);
         
         //dashboard
         Route::get('/business/dashboard', [BusinessController::class, 'getDashboard']);
@@ -136,10 +139,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/enterprise/register', [EnterpriseController::class, 'store']);
         Route::get('/enterprise/show', [EnterpriseController::class, 'show']);
 
-        // Orders (placeholder)
+        /* // Orders (placeholder)
         Route::get('/business/orders', function () {
             return response()->json(['orders' => []]);
-        });
+        }); */
+
+        // Orders
+        Route::get('/orders', [App\Http\Controllers\Api\BusinessController::class, 'getOrders']);
+        Route::put('/orders/{id}', [App\Http\Controllers\Api\BusinessController::class, 'updateOrder']);
+
+        // Sales
+        Route::get('/sales', [App\Http\Controllers\Api\BusinessController::class, 'getSales']);
     });
    
     // User Communities (PROTECTED - requires auth)

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Store, Clock, Edit2, Save, X } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Store, Edit2, Save, X, Building2 } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { Home, Package, ShoppingCart, TrendingUp, MessageCircle, BarChart3, Settings } from 'lucide-react';
 
 const BusinessProfile = () => {
+  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -33,6 +35,7 @@ const BusinessProfile = () => {
     try {
       setLoading(true);
       const response = await api.get('/business/profile');
+      console.log('Profile response:', response.data);
       setProfile(response.data);
       setFormData(response.data);
     } catch (error) {
@@ -44,8 +47,16 @@ const BusinessProfile = () => {
 
   const handleSave = async () => {
     try {
-      await api.put('/business/profile', formData);
-      setProfile(formData);
+      const updateData = {
+        name: formData.name,
+        phone: formData.phone,
+        city: formData.city,
+        state: formData.state,
+        address: formData.address,
+      };
+
+      await api.put('/business/profile', updateData);
+      setProfile({ ...profile, ...updateData });
       setIsEditing(false);
       alert('Profile updated successfully!');
     } catch (error) {
@@ -119,28 +130,59 @@ const BusinessProfile = () => {
         <div className="lg:col-span-1">
           <Card>
             <div className="text-center mb-6">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4">
-                {profile.name?.charAt(0) || 'B'}
-              </div>
+              {profile.profile_image ? (
+                <img
+                  src={profile.profile_image}
+                  alt={profile.name}
+                  className="w-32 h-32 rounded-full object-cover mx-auto mb-4"
+                />
+              ) : (
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4">
+                  {profile.name?.charAt(0) || 'B'}
+                </div>
+              )}
               <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
-              <p className="text-gray-600 mb-3">{profile.category}</p>
+              <p className="text-gray-600 mb-3 capitalize">{profile.user_type}</p>
               <Badge variant="success">Verified Business</Badge>
             </div>
 
             <div className="space-y-3 mb-6 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Phone className="w-5 h-5" />
-                <span>{profile.phone}</span>
+                <span>{profile.phone || 'Not set'}</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail className="w-5 h-5" />
                 <span>{profile.email}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <MapPin className="w-5 h-5" />
-                <span>{profile.address}</span>
+              <div className="flex items-start gap-3 text-sm text-gray-600">
+                <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <span>{profile.address || profile.city || 'Not set'}</span>
               </div>
             </div>
+
+            {profile.enterprise && (
+              <div className="pt-6 border-t border-gray-200">
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 className="w-5 h-5 text-primary-600" />
+                  <h3 className="font-semibold text-gray-900">Enterprise Info</h3>
+                </div>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div>
+                    <span className="font-medium">Company:</span> {profile.enterprise.company_name}
+                  </div>
+                  <div>
+                    <span className="font-medium">Industry:</span> {profile.enterprise.industry_type}
+                  </div>
+                  <div>
+                    <span className="font-medium">Status:</span> 
+                    <Badge variant={profile.enterprise.status === 'approved' ? 'success' : 'warning'} size="sm" className="ml-2">
+                      {profile.enterprise.status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
 
@@ -157,14 +199,6 @@ const BusinessProfile = () => {
                 icon={Store}
               />
               <Input
-                label="Category"
-                name="category"
-                value={isEditing ? formData.category : profile.category}
-                onChange={handleChange}
-                disabled={!isEditing}
-                icon={Store}
-              />
-              <Input
                 label="Phone"
                 name="phone"
                 value={isEditing ? formData.phone : profile.phone}
@@ -176,49 +210,76 @@ const BusinessProfile = () => {
                 label="Email"
                 name="email"
                 type="email"
-                value={isEditing ? formData.email : profile.email}
-                onChange={handleChange}
-                disabled={!isEditing}
+                value={profile.email}
+                disabled
                 icon={Mail}
               />
               <Input
-                label="Address"
-                name="address"
-                value={isEditing ? formData.address : profile.address}
+                label="City"
+                name="city"
+                value={isEditing ? formData.city : profile.city}
                 onChange={handleChange}
                 disabled={!isEditing}
                 icon={MapPin}
-                className="md:col-span-2"
               />
-            </div>
-          </Card>
-
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Business Details</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <textarea
-                name="description"
-                value={isEditing ? formData.description : profile.description}
+              <Input
+                label="State"
+                name="state"
+                value={isEditing ? formData.state : profile.state}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-50"
-                rows="4"
+                icon={MapPin}
               />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea
+                  name="address"
+                  value={isEditing ? formData.address : profile.address}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-50"
+                  rows="3"
+                  placeholder="Enter your business address"
+                />
+              </div>
             </div>
           </Card>
 
-          <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Operating Hours</h2>
-            <div className="space-y-2">
-              {profile.operating_hours?.map((slot, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-gray-700">
-                  <Clock className="w-4 h-4 text-primary-600" />
-                  <span>{slot}</span>
+          {profile.enterprise && (
+            <Card>
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Enterprise Details</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                  <p className="text-gray-900">{profile.enterprise.company_name}</p>
                 </div>
-              ))}
-            </div>
-          </Card>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Registration Number</label>
+                  <p className="text-gray-900">{profile.enterprise.registration_number}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Industry Type</label>
+                  <p className="text-gray-900">{profile.enterprise.industry_type}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Annual Revenue</label>
+                  <p className="text-gray-900">{profile.enterprise.annual_revenue}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Contact Person</label>
+                  <p className="text-gray-900">{profile.enterprise.contact_person}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                  <p className="text-gray-900">{profile.enterprise.designation}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <p className="text-gray-900">{profile.enterprise.description}</p>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </DashboardLayout>
