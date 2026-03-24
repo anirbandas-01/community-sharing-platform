@@ -172,6 +172,7 @@ class AuthController extends Controller
         'redirect_url' => match($user->user_type) {
             'professional' => '/professional/dashboard',
             'resident' => '/resident/dashboard',
+            'business' => '/business/dashboard',
             default => '/'
         }
     ]);

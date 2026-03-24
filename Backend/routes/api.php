@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\CommunitiesController;
 use App\Http\Controllers\Api\MessagesController;
 use App\Http\Controllers\Api\ReviewsController;
+use App\Http\Controllers\Api\ChatbotController;
+use Illuminate\Support\Facades\Http;
 
 /*
 |--------------------------------------------------------------------------
@@ -192,3 +194,41 @@ Route::get('/professionals/{id}/reviews', [ProfessionalsController::class, 'revi
 
 // Public review endpoint
 Route::get('/professionals/{id}/reviews', [ReviewsController::class, 'getProfessionalReviews']);
+
+Route::prefix('chatbot')->group(function () {
+    Route::post('/message', [ChatbotController::class, 'sendMessage']);
+    Route::get('/suggestions', [ChatbotController::class, 'getSuggestedQuestions']);
+    Route::get('/health', [ChatbotController::class, 'healthCheck']); // Optional: health check
+});
+
+// Add this temporarily at the bottom of routes/api.php
+Route::get('/test-gemini', function() {
+    $apiKey = config('services.gemini.api_key');
+    
+    try {
+        $response = Http::timeout(30)
+            ->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}",
+                [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => 'Say hello']
+                            ]
+                        ]
+                    ]
+                ]
+            );
+        
+        return response()->json([
+            'status' => $response->status(),
+            'successful' => $response->successful(),
+            'data' => $response->json()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+

@@ -38,6 +38,8 @@ import AdminReports from './pages/admin/AdminReports';
 import AdminSettings from './pages/admin/AdminSettings';
 import ResidentReviews from './pages/resident/ResidentReviews';
 import ProfessionalReviews from './pages/professional/ProfessionalReviews';
+import AddProduct from './pages/business/AddProduct';
+import ChatBot from './components/chatbot/ChatBot';
 
 function App() {
   return (
@@ -290,6 +292,16 @@ function App() {
             }
           />
 
+          <Route
+            path="/business/inventory/add"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+
+
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<Login />} />
@@ -342,6 +354,8 @@ function App() {
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        <ChatBot />
       </BrowserRouter>
     </AuthProvider>
   );
