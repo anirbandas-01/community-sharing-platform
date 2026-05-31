@@ -25,6 +25,16 @@ const ResidentProfile = () => {
     profile_image: null,
   });
 
+  // FIX: real stats state instead of hardcoded values
+  const [statsData, setStatsData] = useState({
+    communities: 0,
+    totalBookings: 0,
+    completedBookings: 0,
+    totalSpent: 0,
+    memberSince: '',
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
     { icon: Users, label: 'My Communities', path: '/resident/communities' },
@@ -37,6 +47,7 @@ const ResidentProfile = () => {
 
   useEffect(() => {
     fetchProfile();
+    fetchStats();
   }, []);
 
   const fetchProfile = async () => {
@@ -61,9 +72,58 @@ const ResidentProfile = () => {
     }
   };
 
+  // FIX: fetch real stats from existing endpoints
+  const fetchStats = async () => {
+    try {
+      setLoadingStats(true);
+
+      const [bookingsRes, communitiesRes, profileRes] = await Promise.allSettled([
+        api.get('/user/bookings'),
+        api.get('/user/communities'),
+        api.get('/user/profile'),
+      ]);
+
+      const bookings = bookingsRes.status === 'fulfilled'
+        ? (bookingsRes.value.data.bookings || [])
+        : [];
+
+      const communities = communitiesRes.status === 'fulfilled'
+        ? (communitiesRes.value.data.communities || [])
+        : [];
+
+      const profileData = profileRes.status === 'fulfilled'
+        ? (profileRes.value.data.user || profileRes.value.data)
+        : {};
+
+      // Calculate total spent from completed bookings
+      const completedBookings = bookings.filter(b => b.status === 'completed');
+      const totalSpent = completedBookings.reduce((sum, b) => {
+        // amount comes as "₹500" string, strip the symbol and parse
+        const raw = String(b.amount || '0').replace(/[^0-9.]/g, '');
+        return sum + (parseFloat(raw) || 0);
+      }, 0);
+
+      // Member since from created_at
+      const memberSince = profileData.created_at
+        ? new Date(profileData.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })
+        : '';
+
+      setStatsData({
+        communities: communities.length,
+        totalBookings: bookings.length,
+        completedBookings: completedBookings.length,
+        totalSpent,
+        memberSince,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    
     if (files) {
       const file = files[0];
       if (file) {
@@ -80,7 +140,6 @@ const ResidentProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const fd = new FormData();
       Object.keys(formData).forEach((key) => {
@@ -91,11 +150,9 @@ const ResidentProfile = () => {
       if (formData.profile_image) {
         fd.append('profile_image', formData.profile_image);
       }
-
       await api.post('/user/profile/update', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-
       await checkAuth();
       setEditing(false);
       alert('Profile updated successfully!');
@@ -112,36 +169,50 @@ const ResidentProfile = () => {
     fetchProfile();
   };
 
-  // Stats data
+  // FIX: stats now use real data from statsData
   const stats = [
-    { label: 'Communities Joined', value: '3', icon: Users, color: 'blue' },
-    { label: 'Total Bookings', value: '12', icon: Calendar, color: 'green' },
-    { label: 'Messages', value: '28', icon: MessageCircle, color: 'purple' },
-    { label: 'Total Spent', value: '₹7,600', icon: CreditCard, color: 'orange' },
+    {
+      label: 'Communities Joined',
+      value: loadingStats ? '—' : statsData.communities,
+      icon: Users,
+      color: 'blue',
+    },
+    {
+      label: 'Total Bookings',
+      value: loadingStats ? '—' : statsData.totalBookings,
+      icon: Calendar,
+      color: 'green',
+    },
+    {
+      label: 'Completed',
+      value: loadingStats ? '—' : statsData.completedBookings,
+      icon: MessageCircle,
+      color: 'purple',
+    },
+    {
+      label: 'Total Spent',
+      value: loadingStats ? '—' : `₹${statsData.totalSpent.toLocaleString()}`,
+      icon: CreditCard,
+      color: 'orange',
+    },
   ];
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
         <p className="text-gray-600">Manage your account information</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column - Profile Card */}
+        {/* Left Column */}
         <div className="lg:col-span-1">
           <Card>
-            {/* Profile Image */}
             <div className="text-center mb-6">
               <div className="relative inline-block">
                 <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 mx-auto mb-4">
                   {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={imagePreview} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500 to-secondary-500 text-white text-4xl font-bold">
                       {user?.name?.charAt(0) || 'U'}
@@ -151,12 +222,7 @@ const ResidentProfile = () => {
                 {editing && (
                   <label className="absolute bottom-4 right-0 bg-primary-600 text-white p-2 rounded-full cursor-pointer hover:bg-primary-700 transition-colors">
                     <Camera className="w-5 h-5" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
+                    <input type="file" accept="image/*" onChange={handleChange} className="sr-only" />
                   </label>
                 )}
               </div>
@@ -164,7 +230,6 @@ const ResidentProfile = () => {
               <Badge variant="primary">Resident</Badge>
             </div>
 
-            {/* Quick Info */}
             <div className="space-y-3 mb-6">
               <div className="flex items-center gap-3 text-gray-600">
                 <Mail className="w-5 h-5" />
@@ -172,19 +237,25 @@ const ResidentProfile = () => {
               </div>
               <div className="flex items-center gap-3 text-gray-600">
                 <Phone className="w-5 h-5" />
-                <span className="text-sm">{formData.phone}</span>
+                <span className="text-sm">{formData.phone || 'Not set'}</span>
               </div>
               <div className="flex items-center gap-3 text-gray-600">
                 <MapPin className="w-5 h-5" />
                 <span className="text-sm">{formData.city || 'Not specified'}</span>
               </div>
+              {/* FIX: real member since date */}
               <div className="flex items-center gap-3 text-gray-600">
                 <Calendar className="w-5 h-5" />
-                <span className="text-sm">Member since 2024</span>
+                <span className="text-sm">
+                  {loadingStats
+                    ? 'Loading...'
+                    : statsData.memberSince
+                      ? `Member since ${statsData.memberSince}`
+                      : 'Member'}
+                </span>
               </div>
             </div>
 
-            {/* Edit Button */}
             {!editing && (
               <Button variant="primary" className="w-full" onClick={() => setEditing(true)}>
                 <Edit2 className="w-5 h-5 mr-2" />
@@ -193,7 +264,6 @@ const ResidentProfile = () => {
             )}
           </Card>
 
-          {/* Bio Card */}
           <Card className="mt-6">
             <h3 className="font-semibold text-gray-900 mb-3">Bio</h3>
             {editing ? (
@@ -206,16 +276,13 @@ const ResidentProfile = () => {
                 placeholder="Tell us about yourself..."
               />
             ) : (
-              <p className="text-gray-600 text-sm">
-                {formData.bio || 'No bio added yet.'}
-              </p>
+              <p className="text-gray-600 text-sm">{formData.bio || 'No bio added yet.'}</p>
             )}
           </Card>
         </div>
 
-        {/* Right Column - Details & Stats */}
+        {/* Right Column */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Personal Information */}
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">Personal Information</h3>
@@ -235,63 +302,19 @@ const ResidentProfile = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
-                <Input
-                  label="Full Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={!editing}
-                  required
-                />
-                <Input
-                  label="Email"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={!editing}
-                  required
-                />
+                <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} disabled={!editing} required />
+                <Input label="Email" type="email" name="email" value={formData.email} onChange={handleChange} disabled={!editing} required />
               </div>
-
               <div className="grid md:grid-cols-2 gap-4">
-                <Input
-                  label="Phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  disabled={!editing}
-                  required
-                />
-                <Input
-                  label="City"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  disabled={!editing}
-                />
+                <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} disabled={!editing} required />
+                <Input label="City" name="city" value={formData.city} onChange={handleChange} disabled={!editing} />
               </div>
-
-              <Input
-                label="Address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                disabled={!editing}
-              />
-
-              <Input
-                label="Aadhaar Number"
-                name="aadhaar"
-                value={formData.aadhaar}
-                onChange={handleChange}
-                disabled={!editing}
-                maxLength="12"
-              />
+              <Input label="Address" name="address" value={formData.address} onChange={handleChange} disabled={!editing} />
+              <Input label="Aadhaar Number" name="aadhaar" value={formData.aadhaar} onChange={handleChange} disabled={!editing} maxLength="12" />
             </form>
           </Card>
 
-          {/* Activity Stats */}
+          {/* FIX: Activity stats use real data */}
           <Card>
             <h3 className="text-xl font-bold text-gray-900 mb-6">Activity Overview</h3>
             <div className="grid md:grid-cols-2 gap-6">
@@ -312,7 +335,6 @@ const ResidentProfile = () => {
             </div>
           </Card>
 
-          {/* Account Settings */}
           <Card>
             <h3 className="text-xl font-bold text-gray-900 mb-6">Account Settings</h3>
             <div className="space-y-4">
@@ -326,7 +348,6 @@ const ResidentProfile = () => {
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                 </label>
               </div>
-
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div>
                   <h4 className="font-semibold text-gray-900">SMS Notifications</h4>
@@ -337,7 +358,6 @@ const ResidentProfile = () => {
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                 </label>
               </div>
-
               <div className="pt-4 border-t border-gray-200">
                 <Button variant="outline" className="text-red-600 hover:bg-red-50 border-red-300">
                   Change Password

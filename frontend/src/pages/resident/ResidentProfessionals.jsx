@@ -9,6 +9,26 @@ import Input from '../../components/ui/Input';
 import api from '../../services/api';
 import { Home, Users, Briefcase, Settings, User as UserIcon } from 'lucide-react';
 
+// FIX: reusable rating display — shows stars + count when rating exists, "New" badge when null
+const RatingDisplay = ({ rating, reviewsCount, size = 'sm' }) => {
+  if (!rating) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+        New
+      </span>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1">
+      <Star className={`${size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'} text-yellow-400 fill-current`} />
+      <span className={`${size === 'sm' ? 'text-sm' : 'text-base'} font-medium text-gray-900`}>{rating}</span>
+      {reviewsCount !== undefined && (
+        <span className="text-xs text-gray-500">({reviewsCount})</span>
+      )}
+    </div>
+  );
+};
+
 const ResidentProfessionals = () => {
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,39 +75,32 @@ const ResidentProfessionals = () => {
     }
   };
 
-  const displayProfessionals = professionals;
-
-  const filteredProfessionals = displayProfessionals.filter(pro =>
+  const filteredProfessionals = professionals.filter(pro =>
     (selectedCategory === 'all' || pro.profession.toLowerCase() === selectedCategory.toLowerCase()) &&
-    (searchTerm === '' || 
-     pro.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     pro.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     pro.services?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+    (searchTerm === '' ||
+      pro.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pro.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pro.services?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
     )
   );
 
   const handleBookNow = (professional) => {
-    // Navigate to professional detail page
-     navigate(`/resident/professionals/${professional.id}`);
+    navigate(`/resident/professionals/${professional.id}`);
   };
 
   const handleMessage = (professional) => {
-    // Navigate to chat or open chat modal
     alert(`Opening chat with ${professional.name}`);
   };
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Professionals</h1>
         <p className="text-gray-600">Book trusted professionals in your area</p>
       </div>
 
-      {/* Search and Filters */}
       <div className="mb-6 space-y-4">
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search Bar */}
           <div className="flex-1">
             <Input
               icon={Search}
@@ -96,19 +109,12 @@ const ResidentProfessionals = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          {/* Filter Button (Mobile) */}
-          <Button
-            variant="outline"
-            className="lg:hidden"
-            onClick={() => setShowFilters(!showFilters)}
-          >
+          <Button variant="outline" className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="w-5 h-5 mr-2" />
             Filters
           </Button>
         </div>
 
-        {/* Category Filters */}
         <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
           <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
             {categories.map((category) => (
@@ -131,14 +137,12 @@ const ResidentProfessionals = () => {
         </div>
       </div>
 
-      {/* Results Count */}
       <div className="mb-4">
         <p className="text-gray-600">
           Found <span className="font-semibold text-gray-900">{filteredProfessionals.length}</span> professionals
         </p>
       </div>
 
-      {/* Professionals Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
@@ -159,14 +163,9 @@ const ResidentProfessionals = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProfessionals.map((pro) => (
             <Card key={pro.id} hover className="flex flex-col">
-              {/* Professional Header */}
               <div className="flex items-start gap-4 mb-4">
                 <div className="relative">
-                  <img
-                    src={pro.image}
-                    alt={pro.name}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
+                  <img src={pro.image} alt={pro.name} className="w-16 h-16 rounded-full object-cover" />
                   {pro.verified && (
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -178,10 +177,9 @@ const ResidentProfessionals = () => {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 text-lg">{pro.name}</h3>
                   <p className="text-sm text-gray-600">{pro.profession}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-medium text-gray-900">{pro.rating}</span>
-                    <span className="text-xs text-gray-500">({pro.reviews_count} reviews)</span>
+                  {/* FIX: use RatingDisplay — shows "New" when rating is null */}
+                  <div className="mt-1">
+                    <RatingDisplay rating={pro.rating} reviewsCount={pro.reviews_count} />
                   </div>
                 </div>
                 {pro.available ? (
@@ -191,7 +189,6 @@ const ResidentProfessionals = () => {
                 )}
               </div>
 
-              {/* Services */}
               <div className="mb-4">
                 <div className="flex flex-wrap gap-2">
                   {pro.services?.slice(0, 3).map((service, idx) => (
@@ -202,7 +199,6 @@ const ResidentProfessionals = () => {
                 </div>
               </div>
 
-              {/* Info */}
               <div className="space-y-2 mb-4 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
@@ -214,30 +210,17 @@ const ResidentProfessionals = () => {
                 </div>
               </div>
 
-              {/* Price */}
               <div className="mb-4">
                 <p className="text-sm text-gray-600">Starting from</p>
                 <p className="text-2xl font-bold text-primary-600">{pro.price}<span className="text-sm font-normal text-gray-600">/hr</span></p>
               </div>
 
-              {/* Actions */}
               <div className="mt-auto flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleMessage(pro)}
-                >
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => handleMessage(pro)}>
                   <MessageCircle className="w-4 h-4 mr-1" />
                   Chat
                 </Button>
-                <Button 
-                  variant="primary" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => handleBookNow(pro)}
-                  disabled={!pro.available}
-                >
+                <Button variant="primary" size="sm" className="flex-1" onClick={() => handleBookNow(pro)} disabled={!pro.available}>
                   <Calendar className="w-4 h-4 mr-1" />
                   Book Now
                 </Button>
@@ -247,7 +230,6 @@ const ResidentProfessionals = () => {
         </div>
       )}
 
-      {/* Why Choose Section */}
       <div className="mt-12 grid md:grid-cols-3 gap-6">
         <Card>
           <div className="text-center">

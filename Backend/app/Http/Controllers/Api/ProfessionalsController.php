@@ -60,7 +60,7 @@ class ProfessionalsController extends Controller
                     'id' => $pro->id,
                     'name' => $pro->name,
                     'profession' => $pro->professionalProfile->specialization ?? 'Professional',
-                    'rating' => $avgRating ? round($avgRating, 1) : 4.5,
+                    'rating' => $avgRating ? round($avgRating, 1) : null,
                     'reviews_count' => $totalReviews,
                     'total_reviews' => $totalReviews, // Alternative field name
                     'experience' => ($pro->professionalProfile->experience_years ?? 0) . ' years',
@@ -115,7 +115,7 @@ class ProfessionalsController extends Controller
                     'name' => $professional->name,
                     'profession' => $professional->professionalProfile->specialization ?? 'Professional',
                     'bio' => $professional->professionalProfile->bio ?? 'Professional service provider',
-                    'rating' => $avgRating ? round($avgRating, 1) : 4.5,
+                    'rating' => $avgRating ? round($avgRating, 1) : null,
                     'total_reviews' => $totalReviews,
                     'total_bookings' => $totalBookings,
                     'experience' => ($professional->professionalProfile->experience_years ?? 0) . ' years',
@@ -650,7 +650,7 @@ class ProfessionalsController extends Controller
                     'pending' => $pendingEarnings,
                 ],
                 'rating' => [
-                    'average' => $averageRating ? round($averageRating, 1) : 0,
+                    'average' => $averageRating ? round($averageRating, 1) : null,
                     'total' => $totalReviews,
                 ],
                 'appointments' => [
@@ -752,7 +752,7 @@ class ProfessionalsController extends Controller
             return response()->json([
                 'reviews' => $reviews,
                 'stats' => [
-                    'average_rating' => $averageRating ? round($averageRating, 1) : 0,
+                    'average_rating' => $averageRating ? round($averageRating, 1) : null,
                     'total_reviews' => $totalReviews,
                     'rating_breakdown' => $ratingBreakdown,
                 ],

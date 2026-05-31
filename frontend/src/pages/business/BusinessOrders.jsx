@@ -32,7 +32,8 @@ const BusinessOrders = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/business/orders');
+      // FIX: was '/business/orders', backend route is '/orders'
+      const response = await api.get('/orders');
       setOrders(response.data.orders || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -43,7 +44,8 @@ const BusinessOrders = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      await api.put(`/business/orders/${orderId}`, { status: newStatus });
+      // FIX: was '/business/orders/{id}', backend route is '/orders/{id}'
+      await api.put(`/orders/${orderId}`, { status: newStatus });
       fetchOrders();
       setShowDetailsModal(false);
       alert(`Order ${newStatus} successfully!`);

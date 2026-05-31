@@ -62,16 +62,46 @@ const AdminDashboard = () => {
     );
   }
 
+  
+  const stats_data = dashboard.stats || {};
+  const recentUsers = dashboard.recent_users || [];
+  const activityData = dashboard.user_growth || [];
+
   const stats = [
-    { label: 'Total Users', value: dashboard.users?.total || 0, change: dashboard.users?.new_today ? `+${dashboard.users.new_today} today` : '', icon: Users, color: 'blue' },
-    { label: 'Active Communities', value: dashboard.communities?.active || 0, change: dashboard.communities?.pending ? `${dashboard.communities.pending} pending` : '', icon: Building2, color: 'green' },
-    { label: 'Professionals', value: dashboard.professionals?.total || 0, change: dashboard.professionals?.verified ? `${dashboard.professionals.verified} verified` : '', icon: UserCheck, color: 'purple' },
-    { label: 'Businesses', value: dashboard.businesses?.total || 0, change: dashboard.businesses?.active ? `${dashboard.businesses.active} active` : '', icon: Building2, color: 'orange' },
+    {
+      label: 'Total Users',
+      value: stats_data.total_users ?? 0,
+      change: stats_data.new_users_today ? `+${stats_data.new_users_today} today` : '',
+      icon: Users,
+      color: 'blue',
+    },
+    {
+      label: 'Active Communities',
+      value: stats_data.active_communities ?? 0,
+      change: '',
+      icon: Building2,
+      color: 'green',
+    },
+    {
+      label: 'Professionals',
+      value: stats_data.professionals ?? 0,
+      change: '',
+      icon: UserCheck,
+      color: 'purple',
+    },
+    {
+      label: 'Businesses',
+      value: stats_data.businesses ?? 0,
+      change: '',
+      icon: Building2,
+      color: 'orange',
+    },
   ];
 
-  const recentUsers = dashboard.users?.recent || [];
-  const pendingCommunities = dashboard.communities?.pending_list || [];
-  const systemAlerts = dashboard.alerts || [];
+  // Pending communities: communities with status === 'pending' from a separate API if needed
+  // For now we show the pending_verifications count from stats
+  const pendingVerifications = stats_data.pending_verifications ?? 0;
+  const systemAlerts = [];
 
   const getUserTypeColor = (type) => {
     const colors = {
@@ -92,6 +122,7 @@ const AdminDashboard = () => {
         <p className="text-gray-600">Platform overview and management</p>
       </div>
 
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, idx) => {
           const Icon = stat.icon;
@@ -108,7 +139,7 @@ const AdminDashboard = () => {
                     <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">{stat.change}</p>
+                {stat.change ? <p className="text-xs text-gray-500">{stat.change}</p> : null}
               </div>
             </Card>
           );
@@ -116,6 +147,7 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
+        {/* Left: Recent Users + User Growth */}
         <div className="lg:col-span-2 space-y-8">
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -139,14 +171,14 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {recentUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4 text-sm font-medium text-gray-900">{user.name}</td>
-                        <td className="px-4 py-4 text-sm text-gray-600">{user.email}</td>
+                    {recentUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 text-sm font-medium text-gray-900">{u.name}</td>
+                        <td className="px-4 py-4 text-sm text-gray-600">{u.email}</td>
                         <td className="px-4 py-4">
-                          <Badge variant={getUserTypeColor(user.user_type)} size="sm" className="capitalize">{user.user_type}</Badge>
+                          <Badge variant={getUserTypeColor(u.user_type)} size="sm" className="capitalize">{u.user_type}</Badge>
                         </td>
-                        <td className="px-4 py-4 text-sm text-gray-600">{user.created_at}</td>
+                        <td className="px-4 py-4 text-sm text-gray-600">{u.created_at}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -155,29 +187,36 @@ const AdminDashboard = () => {
             )}
           </Card>
 
+          {/* User Growth Chart (last 7 days) */}
           <Card>
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Platform Activity</h2>
-            <div className="space-y-4">
-              {dashboard.activity?.length > 0 ? (
-                dashboard.activity.map((activity, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <div className="w-2 h-2 bg-primary-600 rounded-full mt-2"></div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{activity.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Platform Activity (Last 7 Days)</h2>
+            {activityData.length === 0 ? (
+              <div className="text-center py-8">
+                <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No activity data</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activityData.map((day, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-700 font-medium">{day.date}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary-500 rounded-full"
+                          style={{ width: `${Math.min((day.count / (Math.max(...activityData.map(d => d.count)) || 1)) * 100, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900 w-6 text-right">{day.count}</span>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">No recent activity</p>
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
 
+        {/* Right: Quick Actions + Pending Verifications */}
         <div className="space-y-8">
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
@@ -197,7 +236,7 @@ const AdminDashboard = () => {
             </div>
           </Card>
 
-          {pendingCommunities.length > 0 && (
+          {pendingVerifications > 0 && (
             <Card className="border-2 border-yellow-200 bg-yellow-50">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
@@ -205,41 +244,37 @@ const AdminDashboard = () => {
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">Pending Approvals</h2>
               </div>
-              <div className="space-y-3">
-                {pendingCommunities.map((community, idx) => (
-                  <div key={idx} className="p-3 bg-white rounded-lg border border-yellow-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">{community.name}</span>
-                      <Badge variant="warning" size="sm">Pending</Badge>
-                    </div>
-                    <div className="text-xs text-gray-600">Created: {community.created_at}</div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="warning" size="sm" className="w-full mt-4" onClick={() => window.location.href = '/admin/communities'}>
+              <p className="text-sm text-gray-700 mb-4">
+                {pendingVerifications} {pendingVerifications === 1 ? 'community needs' : 'communities need'} review.
+              </p>
+              <Button variant="warning" size="sm" className="w-full" onClick={() => window.location.href = '/admin/communities'}>
                 Review All
               </Button>
             </Card>
           )}
 
-          {systemAlerts.length > 0 && (
-            <Card className="border-2 border-red-200 bg-red-50">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-lg font-bold text-gray-900">System Alerts</h2>
+          {/* Platform Summary */}
+          <Card>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Platform Summary</h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Communities</span>
+                <span className="font-semibold text-gray-900">{stats_data.total_communities ?? 0}</span>
               </div>
-              <div className="space-y-2">
-                {systemAlerts.map((alert, idx) => (
-                  <div key={idx} className="p-3 bg-white rounded-lg border border-red-200">
-                    <p className="text-sm text-gray-900">{alert.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">{alert.time}</p>
-                  </div>
-                ))}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Services</span>
+                <span className="font-semibold text-gray-900">{stats_data.total_services ?? 0}</span>
               </div>
-            </Card>
-          )}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Appointments</span>
+                <span className="font-semibold text-gray-900">{stats_data.total_appointments ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">New Users This Week</span>
+                <span className="font-semibold text-green-600">+{stats_data.new_users_week ?? 0}</span>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </DashboardLayout>

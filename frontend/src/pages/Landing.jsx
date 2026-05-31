@@ -192,7 +192,7 @@ const Landing = () => {
           <h2 className="text-4xl font-bold text-white mb-6">Ready to Join Your Community?</h2>
           <p className="text-xl text-primary-100 mb-8">Start connecting with your neighbors today</p>
           <Link to="/register">
-            <Button variant="secondary" size="xl" className="bg-white text-primary-600 hover:bg-gray-100">
+            <Button variant="secondary" size="xl" className="bg-white !text-primary-600 hover:!bg-gray-200">
               Create Free Account
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>

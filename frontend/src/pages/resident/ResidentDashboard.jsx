@@ -1,19 +1,22 @@
-import { useState, useEffect } from 'react'; // ← ADD THIS
+import { useState, useEffect } from 'react';
 import { Home, Users, Briefcase, MessageCircle, Calendar, Settings, User as UserIcon } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api'; // ← ADD THIS
+import api from '../../services/api';
 
 const ResidentDashboard = () => {
   const { user } = useAuth();
-  
-  // ← ADD THESE STATE VARIABLES
+
   const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [featuredProfessionals, setFeaturedProfessionals] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
+  const [myCommunities, setMyCommunities] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+  const [loadingProfessionals, setLoadingProfessionals] = useState(true);
+  const [loadingCommunities, setLoadingCommunities] = useState(true);
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
@@ -25,43 +28,88 @@ const ResidentDashboard = () => {
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
 
-  const stats = [
-    { label: 'Active Communities', value: '3', change: '+2 this month', color: 'primary' },
-    { label: 'Total Bookings', value: '12', change: '4 pending', color: 'secondary' },
-    { label: 'Messages', value: '28', change: '5 unread', color: 'success' },
-    { label: 'Saved Services', value: '8', change: '2 new', color: 'warning' },
-  ];
-
-  // ← FETCH BOOKINGS
+  // Fetch bookings — used for both upcoming list and stats
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        setLoadingBookings(true);
         const response = await api.get('/user/bookings');
-        const upcoming = (response.data.bookings || [])
-          .filter(b => ['pending', 'confirmed'].includes(b.status))
-          .slice(0, 3);
-        setUpcomingBookings(upcoming);
+        const bookings = response.data.bookings || [];
+        setAllBookings(bookings);
+        setUpcomingBookings(
+          bookings
+            .filter(b => ['pending', 'confirmed'].includes(b.status))
+            .slice(0, 3)
+        );
       } catch (error) {
         console.error('Error fetching bookings:', error);
+      } finally {
+        setLoadingBookings(false);
       }
     };
-    
     fetchBookings();
   }, []);
 
-  // ← FETCH PROFESSIONALS
+  // Fetch professionals
   useEffect(() => {
     const fetchProfessionals = async () => {
       try {
+        setLoadingProfessionals(true);
         const response = await api.get('/professionals');
         setFeaturedProfessionals((response.data.professionals || []).slice(0, 3));
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error fetching professionals:', error);
+      } finally {
+        setLoadingProfessionals(false);
       }
     };
-    
     fetchProfessionals();
   }, []);
+
+  // Fetch joined communities
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        setLoadingCommunities(true);
+        const response = await api.get('/user/communities');
+        setMyCommunities(response.data.communities || []);
+      } catch (error) {
+        console.error('Error fetching communities:', error);
+      } finally {
+        setLoadingCommunities(false);
+      }
+    };
+    fetchCommunities();
+  }, []);
+
+  // FIX: derive stats from real data instead of hardcoded values
+  const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
+  const stats = [
+    {
+      label: 'Active Communities',
+      value: loadingCommunities ? '—' : myCommunities.length,
+      change: loadingCommunities ? '' : `${myCommunities.length} joined`,
+      color: 'primary',
+    },
+    {
+      label: 'Total Bookings',
+      value: loadingBookings ? '—' : allBookings.length,
+      change: loadingBookings ? '' : `${pendingBookings} pending`,
+      color: 'secondary',
+    },
+    {
+      label: 'Upcoming',
+      value: loadingBookings ? '—' : upcomingBookings.length,
+      change: loadingBookings ? '' : upcomingBookings.length === 0 ? 'None scheduled' : 'Scheduled',
+      color: 'success',
+    },
+    {
+      label: 'Completed',
+      value: loadingBookings ? '—' : allBookings.filter(b => b.status === 'completed').length,
+      change: '',
+      color: 'warning',
+    },
+  ];
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
@@ -73,7 +121,7 @@ const ResidentDashboard = () => {
         <p className="text-gray-600">Here's what's happening in your community today</p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid — real data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, idx) => (
           <Card key={idx} hover className="relative overflow-hidden">
@@ -88,7 +136,7 @@ const ResidentDashboard = () => {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column - 2/3 width */}
+        {/* Left Column */}
         <div className="lg:col-span-2 space-y-8">
           {/* Upcoming Bookings */}
           <Card>
@@ -98,11 +146,23 @@ const ResidentDashboard = () => {
                 View All
               </Button>
             </div>
-            
-            {upcomingBookings.length === 0 ? (
+
+            {loadingBookings ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+              </div>
+            ) : upcomingBookings.length === 0 ? (
               <div className="text-center py-8">
                 <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-600">No upcoming bookings</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => window.location.href = '/resident/professionals'}
+                >
+                  Find a Professional
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -135,8 +195,12 @@ const ResidentDashboard = () => {
                 Browse All
               </Button>
             </div>
-            
-            {featuredProfessionals.length === 0 ? (
+
+            {loadingProfessionals ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+              </div>
+            ) : featuredProfessionals.length === 0 ? (
               <div className="text-center py-8">
                 <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-600">No professionals available</p>
@@ -144,9 +208,16 @@ const ResidentDashboard = () => {
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {featuredProfessionals.map((pro) => (
-                  <div key={pro.id} className="p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all cursor-pointer">
+                  <div
+                    key={pro.id}
+                    className="p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:shadow-md transition-all cursor-pointer"
+                  >
                     <div className="flex items-start gap-3 mb-3">
-                      <img src={pro.image} alt={pro.name} className="w-12 h-12 rounded-full object-cover" />
+                      <img
+                        src={pro.image}
+                        alt={pro.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900">{pro.name}</h3>
                         <p className="text-sm text-gray-600">{pro.profession}</p>
@@ -158,13 +229,15 @@ const ResidentDashboard = () => {
                           <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                         </svg>
                         <span className="text-sm font-medium text-gray-900">{pro.rating}</span>
-                        <span className="text-xs text-gray-500">({pro.total_reviews || pro.reviews_count || 0})</span>
+                        <span className="text-xs text-gray-500">
+                          ({pro.total_reviews || pro.reviews_count || 0})
+                        </span>
                       </div>
                       <span className="text-sm font-semibold text-primary-600">{pro.price}</span>
                     </div>
-                    <Button 
-                      variant="primary" 
-                      size="sm" 
+                    <Button
+                      variant="primary"
+                      size="sm"
                       className="w-full mt-3"
                       onClick={() => window.location.href = `/resident/professionals/${pro.id}`}
                     >
@@ -177,7 +250,7 @@ const ResidentDashboard = () => {
           </Card>
         </div>
 
-        {/* Right Column - 1/3 width */}
+        {/* Right Column */}
         <div className="space-y-8">
           {/* Quick Actions */}
           <Card>
@@ -202,15 +275,41 @@ const ResidentDashboard = () => {
             </div>
           </Card>
 
-          {/* Community Highlights */}
-          <Card className="bg-gradient-to-br from-primary-500 to-secondary-500 text-white">
-            <h3 className="font-bold text-lg mb-2">🎉 Community Event</h3>
-            <p className="text-sm opacity-90 mb-4">
-              Join us for the Spring Community Meetup this Saturday at 5 PM!
-            </p>
-            <Button variant="secondary" size="sm" className="bg-white text-primary-600 hover:bg-gray-100">
-              RSVP Now
-            </Button>
+          {/* My Communities summary */}
+          <Card>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">My Communities</h2>
+            {loadingCommunities ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="w-6 h-6 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+              </div>
+            ) : myCommunities.length === 0 ? (
+              <div className="text-center py-6">
+                <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 mb-3">No communities joined yet</p>
+                <Button variant="outline" size="sm" onClick={() => window.location.href = '/resident/communities'}>
+                  Browse Communities
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {myCommunities.slice(0, 3).map((community) => (
+                  <div key={community.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {community.name?.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{community.name}</p>
+                      <p className="text-xs text-gray-500">{community.member_count} members</p>
+                    </div>
+                  </div>
+                ))}
+                {myCommunities.length > 3 && (
+                  <Button variant="ghost" size="sm" className="w-full" onClick={() => window.location.href = '/resident/communities'}>
+                    View all {myCommunities.length} communities
+                  </Button>
+                )}
+              </div>
+            )}
           </Card>
         </div>
       </div>

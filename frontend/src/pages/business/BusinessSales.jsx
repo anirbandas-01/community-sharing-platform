@@ -29,7 +29,8 @@ const BusinessSales = () => {
   const fetchSalesData = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/business/sales?period=${period}`);
+      // FIX: was '/business/sales', backend route is '/sales'
+      const response = await api.get(`/sales?period=${period}`);
       setSalesData(response.data);
     } catch (error) {
       console.error('Error fetching sales:', error);
@@ -98,7 +99,7 @@ const BusinessSales = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">₹{salesData.revenue?.total?.toLocaleString() || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">₹{(salesData.revenue?.total || 0).toLocaleString()}</p>
             </div>
           </div>
         </Card>
@@ -154,6 +155,7 @@ const BusinessSales = () => {
             </div>
           ) : (
             <div className="text-center py-8">
+              <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">No sales data for this period</p>
             </div>
           )}
@@ -178,6 +180,7 @@ const BusinessSales = () => {
             </div>
           ) : (
             <div className="text-center py-8">
+              <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">No product sales yet</p>
             </div>
           )}

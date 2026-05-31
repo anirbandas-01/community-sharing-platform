@@ -11,7 +11,7 @@ import ReviewForm from '../../components/reviews/ReviewForm';
 const ResidentBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming', 'past', 'cancelled'
+  const [activeTab, setActiveTab] = useState('upcoming');
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewingBooking, setReviewingBooking] = useState(null);
 
@@ -43,7 +43,6 @@ const ResidentBookings = () => {
 
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
-
     try {
       await api.post(`/bookings/${bookingId}/cancel`);
       fetchBookings();
@@ -54,19 +53,13 @@ const ResidentBookings = () => {
   };
 
   const handleReschedule = (bookingId) => {
-    alert('Reschedule modal will open - Feature to be implemented');
+    alert('Reschedule feature coming soon');
   };
 
-  const displayBookings = bookings;
-
-  const filteredBookings = displayBookings.filter(booking => {
-    if (activeTab === 'upcoming') {
-      return ['pending', 'confirmed'].includes(booking.status);
-    } else if (activeTab === 'past') {
-      return booking.status === 'completed';
-    } else {
-      return booking.status === 'cancelled';
-    }
+  const filteredBookings = bookings.filter(booking => {
+    if (activeTab === 'upcoming') return ['pending', 'confirmed'].includes(booking.status);
+    if (activeTab === 'past') return booking.status === 'completed';
+    return booking.status === 'cancelled';
   });
 
   const getStatusConfig = (status) => {
@@ -79,9 +72,19 @@ const ResidentBookings = () => {
     return configs[status] || configs.pending;
   };
 
+  // FIX: calculate total spent from real completed bookings
+  // amount field comes as "₹500" string — strip symbol and parse
+  const parseAmount = (amount) => {
+    if (!amount) return 0;
+    const raw = String(amount).replace(/[^0-9.]/g, '');
+    return parseFloat(raw) || 0;
+  };
+
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+  const totalSpent = completedBookings.reduce((sum, b) => sum + parseAmount(b.amount), 0);
+
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">My Bookings</h1>
         <p className="text-gray-600">Manage all your service bookings</p>
@@ -92,9 +95,9 @@ const ResidentBookings = () => {
         <div className="border-b border-gray-200">
           <nav className="flex gap-8">
             {[
-              { id: 'upcoming', label: 'Upcoming', count: displayBookings.filter(b => ['pending', 'confirmed'].includes(b.status)).length },
-              { id: 'past', label: 'Past', count: displayBookings.filter(b => b.status === 'completed').length },
-              { id: 'cancelled', label: 'Cancelled', count: displayBookings.filter(b => b.status === 'cancelled').length },
+              { id: 'upcoming', label: 'Upcoming', count: bookings.filter(b => ['pending', 'confirmed'].includes(b.status)).length },
+              { id: 'past', label: 'Past', count: bookings.filter(b => b.status === 'completed').length },
+              { id: 'cancelled', label: 'Cancelled', count: bookings.filter(b => b.status === 'cancelled').length },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -139,7 +142,9 @@ const ResidentBookings = () => {
             {activeTab === 'cancelled' && "You don't have any cancelled bookings"}
           </p>
           {activeTab === 'upcoming' && (
-            <Button variant="primary">Find Professionals</Button>
+            <Button variant="primary" onClick={() => window.location.href = '/resident/professionals'}>
+              Find Professionals
+            </Button>
           )}
         </Card>
       ) : (
@@ -151,7 +156,7 @@ const ResidentBookings = () => {
             return (
               <Card key={booking.id} hover className="p-0 overflow-hidden">
                 <div className="flex flex-col lg:flex-row">
-                  {/* Left Section - Professional Info */}
+                  {/* Left Section */}
                   <div className="flex-1 p-6">
                     <div className="flex items-start gap-4 mb-4">
                       <img
@@ -174,7 +179,6 @@ const ResidentBookings = () => {
                       </div>
                     </div>
 
-                    {/* Booking Details */}
                     <div className="grid sm:grid-cols-2 gap-3 text-sm">
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="w-4 h-4" />
@@ -194,7 +198,6 @@ const ResidentBookings = () => {
                       </div>
                     </div>
 
-                    {/* Notes */}
                     {booking.notes && (
                       <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-700">
@@ -204,14 +207,13 @@ const ResidentBookings = () => {
                     )}
                   </div>
 
-                  {/* Right Section - Amount & Actions */}
+                  {/* Right Section */}
                   <div className="lg:w-64 bg-gray-50 p-6 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-gray-200">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Total Amount</p>
                       <p className="text-3xl font-bold text-gray-900 mb-6">{booking.amount}</p>
                     </div>
 
-                    {/* Actions based on status */}
                     <div className="space-y-2">
                       {booking.status === 'pending' && (
                         <>
@@ -219,9 +221,9 @@ const ResidentBookings = () => {
                             <MessageCircle className="w-4 h-4 mr-2" />
                             Contact
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="w-full text-red-600 hover:bg-red-50"
                             onClick={() => handleCancelBooking(booking.id)}
                           >
@@ -237,18 +239,18 @@ const ResidentBookings = () => {
                             <MessageCircle className="w-4 h-4 mr-2" />
                             Chat
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="w-full"
                             onClick={() => handleReschedule(booking.id)}
                           >
                             <Calendar className="w-4 h-4 mr-2" />
                             Reschedule
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="w-full text-red-600 hover:bg-red-50"
                             onClick={() => handleCancelBooking(booking.id)}
                           >
@@ -261,9 +263,9 @@ const ResidentBookings = () => {
                       {booking.status === 'completed' && (
                         <>
                           {!booking.has_review ? (
-                            <Button 
-                              variant="primary" 
-                              size="sm" 
+                            <Button
+                              variant="primary"
+                              size="sm"
                               className="w-full"
                               onClick={() => {
                                 setReviewingBooking(booking);
@@ -299,28 +301,31 @@ const ResidentBookings = () => {
         </div>
       )}
 
-      {/* Summary Stats */}
-      {filteredBookings.length > 0 && (
+      {/* FIX: Summary stats use real calculated values */}
+      {bookings.length > 0 && (
         <div className="mt-8 grid md:grid-cols-4 gap-4">
           <Card>
             <p className="text-sm text-gray-600 mb-1">Total Bookings</p>
-            <p className="text-2xl font-bold text-gray-900">{displayBookings.length}</p>
+            <p className="text-2xl font-bold text-gray-900">{bookings.length}</p>
           </Card>
           <Card>
             <p className="text-sm text-gray-600 mb-1">Upcoming</p>
             <p className="text-2xl font-bold text-blue-600">
-              {displayBookings.filter(b => ['pending', 'confirmed'].includes(b.status)).length}
+              {bookings.filter(b => ['pending', 'confirmed'].includes(b.status)).length}
             </p>
           </Card>
           <Card>
             <p className="text-sm text-gray-600 mb-1">Completed</p>
             <p className="text-2xl font-bold text-green-600">
-              {displayBookings.filter(b => b.status === 'completed').length}
+              {completedBookings.length}
             </p>
           </Card>
           <Card>
             <p className="text-sm text-gray-600 mb-1">Total Spent</p>
-            <p className="text-2xl font-bold text-gray-900">₹7,600</p>
+            {/* FIX: was hardcoded ₹7,600 — now calculated from real completed booking amounts */}
+            <p className="text-2xl font-bold text-gray-900">
+              ₹{totalSpent.toLocaleString()}
+            </p>
           </Card>
         </div>
       )}
@@ -333,7 +338,7 @@ const ResidentBookings = () => {
           onSuccess={() => {
             setShowReviewModal(false);
             setReviewingBooking(null);
-            fetchBookings(); // Refresh bookings to update has_review status
+            fetchBookings();
           }}
           onClose={() => {
             setShowReviewModal(false);
