@@ -57,6 +57,12 @@ Route::prefix('admin')->group(function () {
         // Verifications
         Route::get('/verifications', [AdminController::class, 'getPendingVerifications']);
         Route::put('/verifications/{id}', [AdminController::class, 'updateVerificationStatus']);
+
+        Route::get('/settings', [AdminController::class, 'getSettings']);
+        Route::post('/settings', [AdminController::class, 'saveSettings']);
+
+        Route::get('/reports', [AdminController::class, 'getReports']);
+
     });
 });
 Route::middleware('auth:sanctum')->group(function () {
