@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CommunitiesController;
 use App\Http\Controllers\Api\MessagesController;
 use App\Http\Controllers\Api\ReviewsController;
 use App\Http\Controllers\Api\ChatbotController;
+use App\Http\Controllers\Api\CommunityPostsController;
 use Illuminate\Support\Facades\Http;
 
 /*
@@ -174,6 +175,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/messages/conversations', [MessagesController::class, 'conversations']);
     Route::get('/messages/conversations/{id}', [MessagesController::class, 'messages']);
     Route::post('/messages', [MessagesController::class, 'send']);
+
+    // Community Posts (PROTECTED)
+    Route::get('/communities/{id}/posts', [CommunityPostsController::class, 'index']);
+    Route::post('/communities/{id}/posts', [CommunityPostsController::class, 'store']);
+    Route::post('/communities/{id}/posts/{postId}/like', [CommunityPostsController::class, 'like']);
+
+    // Start DM Conversation
+    Route::post('/messages/start', [CommunityPostsController::class, 'startConversation']);
     
     // Settings (PROTECTED)
     Route::get('/user/settings', [UserController::class, 'getSettings']);
@@ -191,7 +200,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/communities', [CommunitiesController::class, 'index']);
 Route::get('/communities/{id}', [CommunitiesController::class, 'show']);
 Route::get('/communities/{id}/members', [CommunitiesController::class, 'members']);
-Route::get('/communities/{id}/posts', [CommunitiesController::class, 'posts']);
+
 
 // Public Professionals
 Route::get('/professionals', [ProfessionalsController::class, 'publicList']);
