@@ -25,6 +25,8 @@ class User extends Authenticatable
         'state',      
         'address', 
         'profile_image',
+        'reset_token',              
+        'reset_token_expires_at',
     ];
 
     /**
@@ -33,6 +35,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'reset_token',
     ];
 
     /**
@@ -41,6 +44,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed', 
+        'reset_token_expires_at'  => 'datetime',
     ];
     
 

@@ -40,6 +40,7 @@ import ResidentReviews from './pages/resident/ResidentReviews';
 import ProfessionalReviews from './pages/professional/ProfessionalReviews';
 import AddProduct from './pages/business/AddProduct';
 import ChatBot from './components/chatbot/ChatBot';
+import ForgotPassword from './pages/auth/ForgotPassword';
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+           <Route path="/forgot-password" element={<ForgotPassword />} />
           
           {/* Resident Routes */}
           <Route

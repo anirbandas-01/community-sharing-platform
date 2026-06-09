@@ -87,7 +87,7 @@ const Bubble = memo(function Bubble({ msg, isMe, showAvatar, onLike }) {
             {msg.author?.role && <span style={{ marginLeft: 4, opacity: 0.65 }}>· {msg.author.role}</span>}
           </div>
         )}
-        <div style={{ padding: '9px 13px', borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', background: isMe ? '#6366f1' : 'var(--color-background-secondary)', color: isMe ? '#fff' : 'var(--color-text-primary)', fontSize: 13, lineHeight: 1.55, border: isMe ? 'none' : '0.5px solid var(--color-border-tertiary)', wordBreak: 'break-word' }}>
+        <div style={{ padding: '9px 13px', borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px', background: isMe ? '#6366f1' : 'var(--color-background-secondary)', color: isMe ? '#fff' : 'var(--color-text-primary)', fontSize: 13, lineHeight: 1.55, border: isMe ? 'none' : '0.5px solid var(--color-border-tertiary)', wordBreak: 'break-word', opacity: msg.pending ? 0.6 : 1 }}>
           {msg.message || msg.content}
         </div>
         <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, textAlign: isMe ? 'right' : 'left', paddingLeft: isMe ? 0 : 2 }}>{msg.time}</div>
@@ -257,19 +257,34 @@ export default function MessagingCenter({ menuItems, userType, DashboardLayout }
     const text = dmInput.trim();
     setDmInput('');
     setDmSending(true);
+
+    // ── Optimistic: show instantly with a temp id ──
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      message: text,
+      sender: 'me',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      pending: true,
+    };
+    dmSeenIds.current.add(tempId);
+    setDmMessages(prev => [...prev, optimisticMsg]);
+    scrollBottom();
+
     try {
       const res = await api.post('/messages', { conversation_id: activeDmId, message: text });
       if (res.data.data) {
         const msg = res.data.data;
-        // Only add if we haven't seen this id yet (prevents poll double-add)
-        if (!dmSeenIds.current.has(msg.id)) {
-          dmSeenIds.current.add(msg.id);
-          setDmMessages(prev => [...prev, msg]);
-          scrollBottom();
-        }
+        // Replace the optimistic bubble with the real one from server
+        dmSeenIds.current.delete(tempId);
+        dmSeenIds.current.add(msg.id);
+        setDmMessages(prev => prev.map(m => m.id === tempId ? msg : m));
       }
       fetchConversations();
     } catch {
+      // Remove the optimistic bubble and restore input on failure
+      dmSeenIds.current.delete(tempId);
+      setDmMessages(prev => prev.filter(m => m.id !== tempId));
       setDmInput(text);
     } finally {
       setDmSending(false);
@@ -327,17 +342,33 @@ export default function MessagingCenter({ menuItems, userType, DashboardLayout }
     const text = communityInput.trim();
     setCommunityInput('');
     setCommunitySending(true);
+
+    // Optimistic: show instantly
+    const tempId = `temp_${Date.now()}`;
+    const optimisticPost = {
+      id: tempId,
+      content: text,
+      sender: 'me',
+      time: 'just now',
+      likes: 0,
+      pending: true,
+      author: { id: null, name: 'You', avatar: null, role: '' },
+    };
+    commSeenIds.current.add(tempId);
+    setCommunityMessages(prev => [...prev, optimisticPost]);
+    scrollBottom();
+
     try {
       const res = await api.post(`/communities/${activeCommunityId}/posts`, { content: text });
       if (res.data.post) {
         const p = res.data.post;
-        if (!commSeenIds.current.has(p.id)) {
-          commSeenIds.current.add(p.id);
-          setCommunityMessages(prev => [...prev, p]);
-          scrollBottom();
-        }
+        commSeenIds.current.delete(tempId);
+        commSeenIds.current.add(p.id);
+        setCommunityMessages(prev => prev.map(m => m.id === tempId ? p : m));
       }
     } catch (err) {
+      commSeenIds.current.delete(tempId);
+      setCommunityMessages(prev => prev.filter(m => m.id !== tempId));
       setCommunityInput(text);
       if (err.response?.status === 403) alert('Join this community to post.');
     } finally {
@@ -582,12 +613,6 @@ export default function MessagingCenter({ menuItems, userType, DashboardLayout }
 
       </div>
 
-      {/* Reverb tip */}
-      <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 10 }}>
-        Polling every 3s (DM) / 5s (community). For instant delivery, install{' '}
-        <a href="https://reverb.laravel.com" target="_blank" rel="noreferrer" style={{ color: 'var(--color-text-info)' }}>Laravel Reverb</a>{' '}
-        and replace polling with <code>Echo.channel()</code>.
-      </p>
     </DashboardLayout>
   );
 }

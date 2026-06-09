@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\MessagesController;
 use App\Http\Controllers\Api\ReviewsController;
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\CommunityPostsController;
+use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Http;
 
 /*
@@ -31,6 +32,10 @@ use Illuminate\Support\Facades\Http;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Password reset — public routes (no auth required)
+Route::post('/forgot-password', [PasswordResetController::class, 'validateEmail']);
+Route::post('/reset-password',  [PasswordResetController::class, 'resetPassword']);
 
 // Admin Routes (add after other routes)
 Route::prefix('admin')->group(function () {
