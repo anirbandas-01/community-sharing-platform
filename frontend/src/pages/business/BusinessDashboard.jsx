@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Home, Package, ShoppingCart, TrendingUp, MessageCircle, Settings, User as UserIcon, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // FIX #7
+import {
+  Home, Package, ShoppingCart, TrendingUp, MessageCircle,
+  Settings, User as UserIcon, BarChart3,
+} from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -7,25 +11,24 @@ import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
+const menuItems = [
+  { icon: Home,         label: 'Dashboard', path: '/business/dashboard' },
+  { icon: Package,      label: 'Inventory',  path: '/business/inventory' },
+  { icon: ShoppingCart, label: 'Orders',     path: '/business/orders' },
+  { icon: TrendingUp,   label: 'Sales',      path: '/business/sales' },
+  { icon: MessageCircle,label: 'Messages',   path: '/business/messages' },
+  { icon: BarChart3,    label: 'Analytics',  path: '/business/analytics' },
+  { icon: UserIcon,     label: 'Profile',    path: '/business/profile' },
+  { icon: Settings,     label: 'Settings',   path: '/business/settings' },
+];
+
 const BusinessDashboard = () => {
+  const navigate = useNavigate(); // FIX #7
   const { user } = useAuth();
   const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]     = useState(true);
 
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/business/dashboard' },
-    { icon: Package, label: 'Inventory', path: '/business/inventory' },
-    { icon: ShoppingCart, label: 'Orders', path: '/business/orders' },
-    { icon: TrendingUp, label: 'Sales', path: '/business/sales' },
-    { icon: MessageCircle, label: 'Messages', path: '/business/messages' },
-    { icon: BarChart3, label: 'Analytics', path: '/business/analytics' },
-    { icon: UserIcon, label: 'Profile', path: '/business/profile' },
-    { icon: Settings, label: 'Settings', path: '/business/settings' },
-  ];
-
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+  useEffect(() => { fetchDashboard(); }, []);
 
   const fetchDashboard = async () => {
     try {
@@ -44,7 +47,7 @@ const BusinessDashboard = () => {
       <DashboardLayout menuItems={menuItems} userType="business">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading dashboard...</p>
           </div>
         </div>
@@ -66,28 +69,43 @@ const BusinessDashboard = () => {
   }
 
   const stats = [
-    { label: 'Total Revenue', value: `₹${dashboard.revenue?.total?.toLocaleString() || 0}`, change: dashboard.revenue?.change || '', icon: '💰' },
-    { label: 'Pending Orders', value: dashboard.orders?.pending || 0, change: dashboard.orders?.new_today ? `${dashboard.orders.new_today} new today` : '', icon: '📦' },
-    { label: 'Products Listed', value: dashboard.products?.total || 0, change: dashboard.products?.low_stock ? `${dashboard.products.low_stock} low stock` : '', icon: '🏪' },
-    { label: 'Total Customers', value: dashboard.customers?.total || 0, change: dashboard.customers?.new_month ? `+${dashboard.customers.new_month} this month` : '', icon: '👥' },
+    {
+      label: 'Total Revenue',
+      value: `₹${(dashboard.revenue?.total || 0).toLocaleString()}`,
+      change: dashboard.revenue?.change || '',
+      icon: '💰',
+    },
+    {
+      label: 'Pending Orders',
+      value: dashboard.orders?.pending || 0,
+      change: dashboard.orders?.new_today ? `${dashboard.orders.new_today} new today` : '',
+      icon: '📦',
+    },
+    {
+      label: 'Products Listed',
+      value: dashboard.products?.total || 0,
+      change: dashboard.products?.low_stock ? `${dashboard.products.low_stock} low stock` : '',
+      icon: '🏪',
+    },
+    {
+      label: 'Total Customers',
+      value: dashboard.customers?.total || 0,
+      change: dashboard.customers?.new_month ? `+${dashboard.customers.new_month} this month` : '',
+      icon: '👥',
+    },
   ];
 
-  const recentOrders = dashboard.orders?.recent || [];
-  const topProducts = dashboard.products?.top || [];
+  const recentOrders  = dashboard.orders?.recent || [];
+  const topProducts   = dashboard.products?.top || [];
   const lowStockItems = dashboard.products?.low_stock_items || [];
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: 'warning',
-      processing: 'info',
-      shipped: 'primary',
-      delivered: 'success',
-    };
-    return colors[status] || 'default';
-  };
+  const getStatusColor = (status) =>
+    ({ pending: 'warning', processing: 'info', shipped: 'primary', delivered: 'success' }[status] || 'default');
 
   return (
     <DashboardLayout menuItems={menuItems} userType="business">
+
+      {/* Welcome */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Welcome back, {user?.name?.split(' ')[0] || 'Business Owner'}! 🏪
@@ -95,6 +113,7 @@ const BusinessDashboard = () => {
         <p className="text-gray-600">Manage your inventory and track your sales</p>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, idx) => (
           <Card key={idx} hover className="relative overflow-hidden">
@@ -109,11 +128,18 @@ const BusinessDashboard = () => {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
+
+        {/* ── Left column ── */}
         <div className="lg:col-span-2 space-y-8">
+
+          {/* Recent Orders */}
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/business/orders'}>View All</Button>
+              {/* FIX #7: navigate() */}
+              <Button variant="ghost" size="sm" onClick={() => navigate('/business/orders')}>
+                View All
+              </Button>
             </div>
             {recentOrders.length === 0 ? (
               <div className="text-center py-8">
@@ -137,7 +163,9 @@ const BusinessDashboard = () => {
                         <td className="px-4 py-4 text-sm font-medium text-gray-900">{order.id}</td>
                         <td className="px-4 py-4 text-sm text-gray-600">{order.customer}</td>
                         <td className="px-4 py-4 text-sm font-semibold text-gray-900">₹{order.total}</td>
-                        <td className="px-4 py-4"><Badge variant={getStatusColor(order.status)}>{order.status}</Badge></td>
+                        <td className="px-4 py-4">
+                          <Badge variant={getStatusColor(order.status)}>{order.status}</Badge>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -146,6 +174,7 @@ const BusinessDashboard = () => {
             )}
           </Card>
 
+          {/* Top Selling Products */}
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-6">Top Selling Products</h2>
             {topProducts.length === 0 ? (
@@ -174,25 +203,42 @@ const BusinessDashboard = () => {
           </Card>
         </div>
 
+        {/* ── Right column ── */}
         <div className="space-y-8">
+
+          {/* Quick Actions */}
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              <Button variant="primary" className="w-full justify-start" onClick={() => window.location.href = '/business/inventory'}>
+              {/* FIX #7: navigate() for all three buttons */}
+              <Button
+                variant="primary"
+                className="w-full justify-start"
+                onClick={() => navigate('/business/inventory/add')}
+              >
                 <Package className="w-5 h-5 mr-2" />
                 Add Product
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/business/orders'}>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => navigate('/business/orders')}
+              >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 View Orders
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/business/sales'}>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => navigate('/business/sales')}
+              >
                 <TrendingUp className="w-5 h-5 mr-2" />
                 Sales Report
               </Button>
             </div>
           </Card>
 
+          {/* Low Stock Alert */}
           {lowStockItems.length > 0 && (
             <Card className="border-2 border-red-200 bg-red-50">
               <div className="flex items-center gap-2 mb-4">
@@ -204,7 +250,7 @@ const BusinessDashboard = () => {
               <div className="space-y-3">
                 {lowStockItems.map((item, idx) => (
                   <div key={idx} className="p-3 bg-white rounded-lg border border-red-200">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-gray-900">{item.name}</span>
                       <Badge variant="danger" size="sm">Low</Badge>
                     </div>
@@ -212,12 +258,19 @@ const BusinessDashboard = () => {
                   </div>
                 ))}
               </div>
-              <Button variant="danger" size="sm" className="w-full mt-4" onClick={() => window.location.href = '/business/inventory'}>
+              {/* FIX #7: navigate() */}
+              <Button
+                variant="danger"
+                size="sm"
+                className="w-full mt-4"
+                onClick={() => navigate('/business/inventory')}
+              >
                 Restock Items
               </Button>
             </Card>
           )}
         </div>
+
       </div>
     </DashboardLayout>
   );

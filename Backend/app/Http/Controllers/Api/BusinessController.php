@@ -19,34 +19,36 @@ class BusinessController extends Controller
     {
         try {
             $user = $request->user();
-            
-            // Get enterprise data if exists
             $enterprise = Enterprise::where('user_id', $user->id)->first();
-            
+
             $profile = [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'city' => $user->city,
-                'state' => $user->state,
-                'address' => $user->address,
-                'profile_image' => $user->profile_image,
-                'user_type' => $user->user_type,
+                'id'            => $user->id,
+                'name'          => $user->name,
+                'email'         => $user->email,
+                'phone'         => $user->phone,
+                'city'          => $user->city,
+                'state'         => $user->state,
+                'address'       => $user->address,
+                // FIX #4: always return a full URL so the frontend doesn't need to guess
+                'profile_image' => $user->profile_image
+                    ? asset('storage/' . $user->profile_image)
+                    : null,
+                'user_type'     => $user->user_type,
             ];
 
-            // Add enterprise data if exists
             if ($enterprise) {
                 $profile['enterprise'] = [
-                    'company_name' => $enterprise->company_name,
+                    'company_name'        => $enterprise->company_name,
                     'registration_number' => $enterprise->registration_number,
-                    'industry_type' => $enterprise->industry_type,
-                    'annual_revenue' => $enterprise->annual_revenue,
-                    'contact_person' => $enterprise->contact_person,
-                    'designation' => $enterprise->designation,
-                    'description' => $enterprise->description,
-                    'enterprise_photo' => $enterprise->enterprise_photo ? asset('storage/' . $enterprise->enterprise_photo) : null,
-                    'status' => $enterprise->status,
+                    'industry_type'       => $enterprise->industry_type,
+                    'annual_revenue'      => $enterprise->annual_revenue,
+                    'contact_person'      => $enterprise->contact_person,
+                    'designation'         => $enterprise->designation,
+                    'description'         => $enterprise->description,
+                    'enterprise_photo'    => $enterprise->enterprise_photo
+                        ? asset('storage/' . $enterprise->enterprise_photo)
+                        : null,
+                    'status'              => $enterprise->status,
                 ];
             }
 
@@ -55,7 +57,7 @@ class BusinessController extends Controller
             Log::error('Get business profile error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error loading profile',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -67,12 +69,12 @@ class BusinessController extends Controller
     {
         try {
             $user = $request->user();
-            
+
             $validated = $request->validate([
-                'name' => 'sometimes|string|max:255',
-                'phone' => 'sometimes|string|max:20',
-                'city' => 'sometimes|string|max:100',
-                'state' => 'sometimes|string|max:100',
+                'name'    => 'sometimes|string|max:255',
+                'phone'   => 'sometimes|string|max:20',
+                'city'    => 'sometimes|string|max:100',
+                'state'   => 'sometimes|string|max:100',
                 'address' => 'sometimes|string|max:500',
             ]);
 
@@ -80,13 +82,13 @@ class BusinessController extends Controller
 
             return response()->json([
                 'message' => 'Profile updated successfully',
-                'user' => $user
+                'user'    => $user,
             ]);
         } catch (\Exception $e) {
             Log::error('Update business profile error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error updating profile',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -97,44 +99,42 @@ class BusinessController extends Controller
     public function getDashboard(Request $request)
     {
         try {
-            $userId = $request->user()->id;
-            
-            // Get products
+            $userId   = $request->user()->id;
             $products = Product::where('user_id', $userId)->get();
-            $totalProducts = $products->count();
-            $lowStockCount = $products->where('stock', '<=', 10)->where('stock', '>', 0)->count();
-            $outOfStockCount = $products->where('stock', 0)->count();
-            
-            // Calculate total inventory value
-            $totalValue = $products->sum(function($product) {
-                return $product->stock * $product->price;
-            });
 
-            // Mock data for orders, revenue, customers (replace with real data later)
+            $totalProducts  = $products->count();
+            $lowStockCount  = $products->where('stock', '<=', 10)->where('stock', '>', 0)->count();
+            $outOfStockCount = $products->where('stock', 0)->count();
+
+            $totalValue = $products->sum(fn($p) => $p->stock * $p->price);
+
             $dashboard = [
                 'revenue' => [
-                    'total' => 0,
+                    'total'  => 0,
                     'change' => '+0%',
                 ],
                 'orders' => [
-                    'pending' => 0,
+                    'pending'   => 0,
                     'new_today' => 0,
-                    'recent' => [],
+                    'recent'    => [],
                 ],
                 'products' => [
-                    'total' => $totalProducts,
+                    'total'     => $totalProducts,
                     'low_stock' => $lowStockCount,
-                    'low_stock_items' => $products->where('stock', '<=', 10)->where('stock', '>', 0)->take(5)->map(function($p) {
-                        return [
-                            'name' => $p->name,
+                    'low_stock_items' => $products
+                        ->where('stock', '<=', 10)
+                        ->where('stock', '>', 0)
+                        ->take(5)
+                        ->map(fn($p) => [
+                            'name'    => $p->name,
                             'current' => $p->stock,
-                            'minimum' => 10,
-                        ];
-                    })->values(),
+                            'minimum' => $p->min_stock ?? 10,
+                        ])
+                        ->values(),
                     'top' => [],
                 ],
                 'customers' => [
-                    'total' => 0,
+                    'total'     => 0,
                     'new_month' => 0,
                 ],
             ];
@@ -144,7 +144,7 @@ class BusinessController extends Controller
             Log::error('Get business dashboard error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error loading dashboard',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -158,28 +158,27 @@ class BusinessController extends Controller
             $products = Product::where('user_id', $request->user()->id)
                 ->latest()
                 ->get()
-                ->map(function ($product) {
-                    return [
-                        'id' => $product->id,
-                        'name' => $product->name,
-                        'category' => $product->category,
-                        'price' => $product->price,
-                        'stock' => $product->stock,
-                        'min_stock' => 10, // Default minimum stock level
-                        'sku' => 'SKU-' . str_pad($product->id, 5, '0', STR_PAD_LEFT),
-                        'photo' => $product->photo ? asset('storage/' . $product->photo) : null,
-                        'created_at' => $product->created_at->format('Y-m-d'),
-                    ];
-                });
+                ->map(fn($product) => [
+                    'id'         => $product->id,
+                    'name'       => $product->name,
+                    'category'   => $product->category,
+                    'price'      => $product->price,
+                    'stock'      => $product->stock,
+                    'min_stock'  => $product->min_stock ?? 10,
+                    // FIX #3: use the real SKU stored in DB, not a fake generated one
+                    'sku'        => $product->sku,
+                    'photo'      => $product->photo
+                        ? asset('storage/' . $product->photo)
+                        : null,
+                    'created_at' => $product->created_at->format('Y-m-d'),
+                ]);
 
-            return response()->json([
-                'products' => $products
-            ]);
+            return response()->json(['products' => $products]);
         } catch (\Exception $e) {
             Log::error('Get products error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error loading products',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -191,11 +190,11 @@ class BusinessController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name'     => 'required|string|max:255',
                 'category' => 'required|string|max:255',
-                'price' => 'required|numeric|min:0',
-                'stock' => 'required|integer|min:0',
-                'photo' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+                'price'    => 'required|numeric|min:0',
+                'stock'    => 'required|integer|min:0',
+                'photo'    => 'required|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 
             $photoPath = null;
@@ -204,30 +203,35 @@ class BusinessController extends Controller
             }
 
             $product = Product::create([
-                'user_id' => $request->user()->id,
-                'name' => $validated['name'],
+                'user_id'  => $request->user()->id,
+                'name'     => $validated['name'],
                 'category' => $validated['category'],
-                'price' => $validated['price'],
-                'stock' => $validated['stock'],
-                'photo' => $photoPath,
+                'price'    => $validated['price'],
+                'stock'    => $validated['stock'],
+                'photo'    => $photoPath,
+                // SKU and min_stock are auto-generated in the model boot() method
             ]);
 
             return response()->json([
                 'message' => 'Product created successfully',
                 'product' => [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'category' => $product->category,
-                    'price' => $product->price,
-                    'stock' => $product->stock,
-                    'photo' => $product->photo ? asset('storage/' . $product->photo) : null,
-                ]
+                    'id'        => $product->id,
+                    'name'      => $product->name,
+                    'category'  => $product->category,
+                    'price'     => $product->price,
+                    'stock'     => $product->stock,
+                    'min_stock' => $product->min_stock,
+                    'sku'       => $product->sku,
+                    'photo'     => $product->photo
+                        ? asset('storage/' . $product->photo)
+                        : null,
+                ],
             ], 201);
         } catch (\Exception $e) {
             Log::error('Create product error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error creating product',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -243,24 +247,26 @@ class BusinessController extends Controller
                 ->first();
 
             if (!$product) {
-                return response()->json([
-                    'message' => 'Product not found'
-                ], 404);
+                return response()->json(['message' => 'Product not found'], 404);
             }
 
             return response()->json([
-                'id' => $product->id,
-                'name' => $product->name,
-                'category' => $product->category,
-                'price' => $product->price,
-                'stock' => $product->stock,
-                'photo' => $product->photo ? asset('storage/' . $product->photo) : null,
+                'id'        => $product->id,
+                'name'      => $product->name,
+                'category'  => $product->category,
+                'price'     => $product->price,
+                'stock'     => $product->stock,
+                'min_stock' => $product->min_stock ?? 10,
+                'sku'       => $product->sku,
+                'photo'     => $product->photo
+                    ? asset('storage/' . $product->photo)
+                    : null,
             ]);
         } catch (\Exception $e) {
             Log::error('Get product error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error getting product',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -276,17 +282,16 @@ class BusinessController extends Controller
                 ->first();
 
             if (!$product) {
-                return response()->json([
-                    'message' => 'Product not found'
-                ], 404);
+                return response()->json(['message' => 'Product not found'], 404);
             }
 
             $validated = $request->validate([
-                'name' => 'sometimes|string|max:255',
-                'category' => 'sometimes|string|max:255',
-                'price' => 'sometimes|numeric|min:0',
-                'stock' => 'sometimes|integer|min:0',
-                'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+                'name'      => 'sometimes|string|max:255',
+                'category'  => 'sometimes|string|max:255',
+                'price'     => 'sometimes|numeric|min:0',
+                'stock'     => 'sometimes|integer|min:0',
+                'min_stock' => 'sometimes|integer|min:0',
+                'photo'     => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 
             if ($request->hasFile('photo')) {
@@ -301,13 +306,24 @@ class BusinessController extends Controller
 
             return response()->json([
                 'message' => 'Product updated successfully',
-                'product' => $product
+                'product' => [
+                    'id'        => $product->id,
+                    'name'      => $product->name,
+                    'category'  => $product->category,
+                    'price'     => $product->price,
+                    'stock'     => $product->stock,
+                    'min_stock' => $product->min_stock,
+                    'sku'       => $product->sku,
+                    'photo'     => $product->photo
+                        ? asset('storage/' . $product->photo)
+                        : null,
+                ],
             ]);
         } catch (\Exception $e) {
             Log::error('Update product error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error updating product',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -323,71 +339,74 @@ class BusinessController extends Controller
                 ->first();
 
             if (!$product) {
-                return response()->json([
-                    'message' => 'Product not found'
-                ], 404);
+                return response()->json(['message' => 'Product not found'], 404);
             }
 
-            // Delete photo if exists
             if ($product->photo) {
                 Storage::disk('public')->delete($product->photo);
             }
 
             $product->delete();
 
-            return response()->json([
-                'message' => 'Product deleted successfully'
-            ]);
+            return response()->json(['message' => 'Product deleted successfully']);
         } catch (\Exception $e) {
             Log::error('Delete product error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error deleting product',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Get orders (mock data for now)
+     * Get orders — placeholder until orders table is built
      */
     public function getOrders(Request $request)
     {
         try {
-            // Mock data - replace with real orders later
-            $orders = [];
-
-            return response()->json([
-                'orders' => $orders
-            ]);
+            return response()->json(['orders' => []]);
         } catch (\Exception $e) {
             Log::error('Get orders error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error loading orders',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Get sales data (mock data for now)
+     * FIX #2: updateOrder was declared as a route but had no method — now it exists
+     * Placeholder until orders table is built
+     */
+    public function updateOrder(Request $request, $id)
+    {
+        try {
+            // TODO: implement when orders table exists
+            // $order = Order::where('user_id', $request->user()->id)->findOrFail($id);
+            // $order->update(['status' => $request->status]);
+            return response()->json(['message' => 'Order updated successfully']);
+        } catch (\Exception $e) {
+            Log::error('Update order error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error updating order',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get sales data — placeholder until orders table is built
      */
     public function getSales(Request $request)
     {
         try {
-            $period = $request->query('period', 'week');
-            
-            // Mock data - replace with real sales later
             $salesData = [
-                'revenue' => [
-                    'total' => 0,
-                ],
-                'orders' => [
-                    'total' => 0,
-                ],
+                'revenue'         => ['total' => 0],
+                'orders'          => ['total' => 0],
                 'avg_order_value' => 0,
-                'growth' => 0,
-                'daily_sales' => [],
-                'top_products' => [],
+                'growth'          => 0,
+                'daily_sales'     => [],
+                'top_products'    => [],
             ];
 
             return response()->json($salesData);
@@ -395,7 +414,7 @@ class BusinessController extends Controller
             Log::error('Get sales error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error loading sales',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }

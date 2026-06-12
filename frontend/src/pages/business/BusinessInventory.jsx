@@ -1,33 +1,35 @@
 import { useState, useEffect } from 'react';
 import { Package, Plus, Search, Edit2, Trash2, AlertTriangle, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
-import { Home, ShoppingCart, BarChart3, MessageCircle, Settings, User as UserIcon, TrendingUp } from 'lucide-react';
+import {
+  Home, ShoppingCart, BarChart3, MessageCircle, Settings, User as UserIcon, TrendingUp,
+} from 'lucide-react';
+
+const menuItems = [
+  { icon: Home,         label: 'Dashboard', path: '/business/dashboard' },
+  { icon: Package,      label: 'Inventory',  path: '/business/inventory' },
+  { icon: ShoppingCart, label: 'Orders',     path: '/business/orders' },
+  { icon: TrendingUp,   label: 'Sales',      path: '/business/sales' },
+  { icon: MessageCircle,label: 'Messages',   path: '/business/messages' },
+  { icon: BarChart3,    label: 'Analytics',  path: '/business/analytics' },
+  { icon: UserIcon,     label: 'Profile',    path: '/business/profile' },
+  { icon: Settings,     label: 'Settings',   path: '/business/settings' },
+];
 
 const BusinessInventory = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate(); // FIX #7: useNavigate instead of window.location.href
+  const [products, setProducts]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [searchTerm, setSearchTerm]   = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/business/dashboard' },
-    { icon: Package, label: 'Inventory', path: '/business/inventory' },
-    { icon: ShoppingCart, label: 'Orders', path: '/business/orders' },
-    { icon: TrendingUp, label: 'Sales', path: '/business/sales' },
-    { icon: MessageCircle, label: 'Messages', path: '/business/messages' },
-    { icon: BarChart3, label: 'Analytics', path: '/business/analytics' },
-    { icon: UserIcon, label: 'Profile', path: '/business/profile' },
-    { icon: Settings, label: 'Settings', path: '/business/settings' },
-  ];
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
 
   const fetchProducts = async () => {
     try {
@@ -43,7 +45,6 @@ const BusinessInventory = () => {
 
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
-
     try {
       await api.delete(`/business/products/${productId}`);
       fetchProducts();
@@ -54,39 +55,42 @@ const BusinessInventory = () => {
   };
 
   const getStockStatus = (current, minimum) => {
-    if (current === 0) return { status: 'out_of_stock', color: 'danger', text: 'Out of Stock' };
-    if (current <= minimum) return { status: 'low_stock', color: 'warning', text: 'Low Stock' };
-    return { status: 'in_stock', color: 'success', text: 'In Stock' };
+    if (current === 0)          return { status: 'out_of_stock', color: 'danger',  text: 'Out of Stock' };
+    if (current <= minimum)     return { status: 'low_stock',    color: 'warning', text: 'Low Stock' };
+    return                             { status: 'in_stock',     color: 'success', text: 'In Stock' };
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (filterStatus === 'all') return matchesSearch;
-    
-    const stockStatus = getStockStatus(product.stock, product.min_stock).status;
-    return matchesSearch && stockStatus === filterStatus;
+    return matchesSearch && getStockStatus(product.stock, product.min_stock).status === filterStatus;
   });
 
-  const totalValue = products.reduce((sum, p) => sum + (p.stock * p.price), 0);
-  const lowStockCount = products.filter(p => p.stock > 0 && p.stock <= p.min_stock).length;
-  const outOfStockCount = products.filter(p => p.stock === 0).length;
+  const totalValue      = products.reduce((sum, p) => sum + p.stock * p.price, 0);
+  const lowStockCount   = products.filter((p) => p.stock > 0 && p.stock <= p.min_stock).length;
+  const outOfStockCount = products.filter((p) => p.stock === 0).length;
 
   return (
     <DashboardLayout menuItems={menuItems} userType="business">
+
+      {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Inventory Management</h1>
           <p className="text-gray-600">Track and manage your product inventory</p>
         </div>
-        <Button variant="primary" onClick={() => window.location.href = '/business/inventory/add'}>
+        {/* FIX #7: navigate() instead of window.location.href */}
+        <Button variant="primary" onClick={() => navigate('/business/inventory/add')}>
           <Plus className="w-5 h-5 mr-2" />
           Add Product
         </Button>
       </div>
 
+      {/* Summary cards */}
       <div className="grid md:grid-cols-4 gap-6 mb-8">
         <Card>
           <div className="flex items-center gap-3">
@@ -134,40 +138,45 @@ const BusinessInventory = () => {
         </Card>
       </div>
 
+      {/* Search + filters */}
       <Card className="mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <Input
               icon={Search}
-              placeholder="Search products by name, SKU, or category..."
+              placeholder="Search by name, SKU, or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {[
-              { id: 'all', label: 'All', count: products.length },
-              { id: 'in_stock', label: 'In Stock', count: products.filter(p => p.stock > p.min_stock).length },
-              { id: 'low_stock', label: 'Low Stock', count: lowStockCount },
+              { id: 'all',          label: 'All',          count: products.length },
+              { id: 'in_stock',     label: 'In Stock',     count: products.filter((p) => p.stock > p.min_stock).length },
+              { id: 'low_stock',    label: 'Low Stock',    count: lowStockCount },
               { id: 'out_of_stock', label: 'Out of Stock', count: outOfStockCount },
-            ].map((filter) => (
+            ].map((f) => (
               <button
-                key={filter.id}
-                onClick={() => setFilterStatus(filter.id)}
+                key={f.id}
+                onClick={() => setFilterStatus(f.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
-                  ${filterStatus === filter.id ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  ${filterStatus === f.id
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
-                {filter.label} ({filter.count})
+                {f.label} ({f.count})
               </button>
             ))}
           </div>
         </div>
       </Card>
 
+      {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading inventory...</p>
           </div>
         </div>
@@ -176,9 +185,11 @@ const BusinessInventory = () => {
           <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No Products Found</h3>
           <p className="text-gray-600 mb-6">
-            {searchTerm || filterStatus !== 'all' ? 'Try adjusting your search or filters' : 'Add your first product to get started'}
+            {searchTerm || filterStatus !== 'all'
+              ? 'Try adjusting your search or filters'
+              : 'Add your first product to get started'}
           </p>
-          <Button variant="primary" onClick={() => window.location.href = '/business/inventory/add'}>
+          <Button variant="primary" onClick={() => navigate('/business/inventory/add')}>
             <Plus className="w-5 h-5 mr-2" />
             Add Product
           </Button>
@@ -201,19 +212,33 @@ const BusinessInventory = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProducts.map((product) => {
                   const stockStatus = getStockStatus(product.stock, product.min_stock);
-
                   return (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{product.name}</div>
+                        <div className="flex items-center gap-3">
+                          {product.photo ? (
+                            <img
+                              src={product.photo}
+                              alt={product.name}
+                              className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                              <Package className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="font-medium text-gray-900">{product.name}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{product.sku}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge variant="default" size="sm">{product.category}</Badge>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₹{product.price}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                        ₹{Number(product.price).toLocaleString()}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 font-medium">{product.stock} units</div>
+                        <div className="text-sm font-medium text-gray-900">{product.stock} units</div>
                         <div className="text-xs text-gray-500">Min: {product.min_stock}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -221,12 +246,18 @@ const BusinessInventory = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                         <div className="flex justify-end gap-2">
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                          {/* FIX #1: edit button now navigates to EditProduct page */}
+                          <button
+                            onClick={() => navigate(`/business/inventory/edit/${product.id}`)}
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                            title="Edit product"
+                          >
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDeleteProduct(product.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                            title="Delete product"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -240,6 +271,7 @@ const BusinessInventory = () => {
           </div>
         </Card>
       )}
+
     </DashboardLayout>
   );
 };
