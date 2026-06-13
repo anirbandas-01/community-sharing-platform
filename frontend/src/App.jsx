@@ -41,6 +41,7 @@ import ProfessionalReviews from './pages/professional/ProfessionalReviews';
 import AddProduct from './pages/business/AddProduct';
 import ChatBot from './components/chatbot/ChatBot';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import EditProduct from './pages/business/EditProduct';
 
 function App() {
   return (
@@ -267,14 +268,14 @@ function App() {
             }
           />
 
-          <Route
+          {/* <Route
             path="/business/analytics"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <BusinessInventory />
+                <BusinessAnalytics />
               </ProtectedRoute>
             }
-          />
+          /> */}
 
           <Route
             path="/business/profile"
@@ -299,6 +300,15 @@ function App() {
             element={
               <ProtectedRoute allowedTypes={['business']}>
                 <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/business/inventory/edit/:id"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <EditProduct />
               </ProtectedRoute>
             }
           />

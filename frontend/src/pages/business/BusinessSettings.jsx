@@ -80,8 +80,8 @@ const BusinessSettings = () => {
 
   // FIX #13: null-safe — works even if settings is null or {}
   const toggleSetting = (key) => {
-    setSettings((prev) => ({ ...(prev ?? {}), [key]: !(prev ?? {})[key] });
-  };
+  setSettings((prev) => ({ ...(prev ?? {}), [key]: !((prev ?? {})[key]) }));
+};
 
   if (loading) {
     return (

@@ -91,22 +91,5 @@ class EnterpriseController extends Controller
         return Enterprise::latest()->get();
     }
 
-    protected $table = 'enterprise';
-
-    protected $fillable = [
-        'user_id','business_name','category','status'
-    ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function products()
-    {
-        return $this->hasMany(Product::class);
-    }
-
-
 }
 
