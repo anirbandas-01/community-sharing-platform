@@ -42,6 +42,8 @@ import AddProduct from './pages/business/AddProduct';
 import ChatBot from './components/chatbot/ChatBot';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import EditProduct from './pages/business/EditProduct';
+import EnterpriseRegister from './pages/business/EnterpriseRegister';
+import EnterpriseProtectedRoute from './components/EnterpriseProtectedRoute';
 
 function App() {
   return (
@@ -236,7 +238,9 @@ function App() {
             path="/business/inventory"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <BusinessInventory />
+                <EnterpriseProtectedRoute>
+                  <BusinessInventory />
+                </EnterpriseProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -245,7 +249,9 @@ function App() {
             path="/business/orders"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <BusinessOrders />
+                <EnterpriseProtectedRoute>
+                 <BusinessOrders />
+                </EnterpriseProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -254,7 +260,9 @@ function App() {
             path="/business/sales"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <BusinessSales />
+                <EnterpriseProtectedRoute>
+                  <BusinessSales />
+                </EnterpriseProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -263,7 +271,9 @@ function App() {
             path="/business/messages"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <BusinessMessages />
+                <EnterpriseProtectedRoute>
+                 <BusinessMessages />
+                </EnterpriseProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -290,7 +300,9 @@ function App() {
             path="/business/settings"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <BusinessSettings />
+                <EnterpriseProtectedRoute>
+                 <BusinessSettings />
+                </EnterpriseProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -299,7 +311,9 @@ function App() {
             path="/business/inventory/add"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <AddProduct />
+                <EnterpriseProtectedRoute>
+                  <AddProduct />
+                </EnterpriseProtectedRoute>
               </ProtectedRoute>
             }
           />
@@ -308,7 +322,18 @@ function App() {
             path="/business/inventory/edit/:id"
             element={
               <ProtectedRoute allowedTypes={['business']}>
-                <EditProduct />
+                <EnterpriseProtectedRoute>
+                 <EditProduct />
+                </EnterpriseProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/business/enterprise/register"
+            element={
+              <ProtectedRoute allowedTypes={['business']}>
+                <EnterpriseRegister />
               </ProtectedRoute>
             }
           />
