@@ -83,7 +83,11 @@ const EnterpriseRegister = () => {
   const validate = () => {
     const e = {};
     if (!formData.companyName.trim())        e.companyName        = 'Company name is required';
-    if (!formData.registrationNumber.trim()) e.registrationNumber = 'Registration number is required';
+    if (!formData.registrationNumber.trim()) {
+           e.registrationNumber = 'Registration number is required';
+    } else if (formData.registrationNumber.trim().length !== 15) {
+        e.registrationNumber = 'GST number must be exactly 15 characters';
+    }
     if (!formData.industryType)              e.industryType       = 'Select an industry type';
     if (!formData.revenue)                   e.revenue            = 'Select a revenue range';
     if (!formData.contactPerson.trim())      e.contactPerson      = 'Contact person is required';
@@ -166,6 +170,7 @@ const EnterpriseRegister = () => {
                   onChange={handleChange}
                   placeholder="CIN / GSTIN / MSME No."
                   icon={FileText}
+                  maxLength={15}
                   required
                 />
                 {errors.registrationNumber && <p className="mt-1 text-sm text-red-600">{errors.registrationNumber}</p>}

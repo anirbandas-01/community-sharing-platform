@@ -3,23 +3,25 @@ import { Navigate } from 'react-router-dom';
 import api from '../services/api';
 
 export default function EnterpriseProtectedRoute({ children }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
   const [approved, setApproved] = useState(false);
+  const [status, setStatus]     = useState(null);
 
   useEffect(() => {
-    const checkEnterprise = async () => {
+    const check = async () => {
       try {
         const res = await api.get('/business/profile');
-        const enterprise = res.data.enterprise;
-        setApproved(enterprise?.status === 'approved');
+        const s = res.data.enterprise?.status ?? 'none';
+        setStatus(s);
+        setApproved(s === 'approved');
       } catch {
+        setStatus('none');
         setApproved(false);
       } finally {
         setLoading(false);
       }
     };
-
-    checkEnterprise();
+    check();
   }, []);
 
   if (loading) {
@@ -31,7 +33,7 @@ export default function EnterpriseProtectedRoute({ children }) {
   }
 
   if (!approved) {
-    return <Navigate to="/business/dashboard" replace />;
+    return <Navigate to={`/business/dashboard?blocked=true&status=${status}`} replace />;
   }
 
   return children;
