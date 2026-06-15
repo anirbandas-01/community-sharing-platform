@@ -44,6 +44,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import EditProduct from './pages/business/EditProduct';
 import EnterpriseRegister from './pages/business/EnterpriseRegister';
 import EnterpriseProtectedRoute from './components/EnterpriseProtectedRoute';
+import FindResidents from './pages/resident/Findresidents';
 
 function App() {
   return (
@@ -98,6 +99,15 @@ function App() {
             element={
               <ProtectedRoute allowedTypes={['resident']}>
                 <ProfessionalDetail />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/resident/find-residents"
+            element={
+              <ProtectedRoute allowedTypes={['resident']}>
+                <FindResidents />
               </ProtectedRoute>
             }
           />

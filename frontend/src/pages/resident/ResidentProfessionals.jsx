@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Star, MapPin, Clock, Filter, Calendar, MessageCircle } from 'lucide-react';
+import { Search, Star, MapPin, Clock, Filter, Calendar, MessageCircle, Briefcase } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
-import { Home, Users, Briefcase, Settings, User as UserIcon } from 'lucide-react';
+import { Home, Users, Settings, User as UserIcon } from 'lucide-react';
 
 // FIX: reusable rating display — shows stars + count when rating exists, "New" badge when null
 const RatingDisplay = ({ rating, reviewsCount, size = 'sm' }) => {
@@ -32,6 +32,7 @@ const RatingDisplay = ({ rating, reviewsCount, size = 'sm' }) => {
 const ResidentProfessionals = () => {
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -41,7 +42,9 @@ const ResidentProfessionals = () => {
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
     { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
+    { icon: Users, label: 'Find Residents', path: '/resident/find-residents' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
+    { icon: Star, label: 'My Reviews', path: '/resident/reviews' },
     { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
@@ -65,21 +68,23 @@ const ResidentProfessionals = () => {
   const fetchProfessionals = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = selectedCategory !== 'all' ? { profession: selectedCategory } : {};
       const response = await api.get('/professionals', { params });
       setProfessionals(response.data.professionals || []);
-    } catch (error) {
-      console.error('Error fetching professionals:', error);
+    } catch (err) {
+      console.error('Error fetching professionals:', err);
+      setError('Failed to load professionals. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const filteredProfessionals = professionals.filter(pro =>
-    (selectedCategory === 'all' || pro.profession.toLowerCase() === selectedCategory.toLowerCase()) &&
+    (selectedCategory === 'all' || pro.profession?.toLowerCase() === selectedCategory.toLowerCase()) &&
     (searchTerm === '' ||
-      pro.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pro.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pro.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pro.profession?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pro.services?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
     )
   );
@@ -88,8 +93,14 @@ const ResidentProfessionals = () => {
     navigate(`/resident/professionals/${professional.id}`);
   };
 
-  const handleMessage = (professional) => {
-    alert(`Opening chat with ${professional.name}`);
+  // FIX: wire Chat button — start a DM then navigate to messages
+  const handleMessage = async (professional) => {
+    try {
+      await api.post('/messages/start', { recipient_id: professional.id });
+      navigate('/resident/messages');
+    } catch {
+      navigate('/resident/messages');
+    }
   };
 
   return (
@@ -98,6 +109,13 @@ const ResidentProfessionals = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Professionals</h1>
         <p className="text-gray-600">Book trusted professionals in your area</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-red-700">{error}</span>
+          <Button variant="ghost" size="sm" onClick={fetchProfessionals}>Retry</Button>
+        </div>
+      )}
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col lg:flex-row gap-4">
@@ -116,7 +134,7 @@ const ResidentProfessionals = () => {
         </div>
 
         <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-          <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          <div className="flex gap-2 overflow-x-auto pb-2">
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -152,6 +170,7 @@ const ResidentProfessionals = () => {
         </div>
       ) : filteredProfessionals.length === 0 ? (
         <Card className="text-center py-12">
+          {/* FIX: Briefcase now imported */}
           <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No Professionals Found</h3>
           <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
@@ -177,7 +196,6 @@ const ResidentProfessionals = () => {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 text-lg">{pro.name}</h3>
                   <p className="text-sm text-gray-600">{pro.profession}</p>
-                  {/* FIX: use RatingDisplay — shows "New" when rating is null */}
                   <div className="mt-1">
                     <RatingDisplay rating={pro.rating} reviewsCount={pro.reviews_count} />
                   </div>
@@ -216,6 +234,7 @@ const ResidentProfessionals = () => {
               </div>
 
               <div className="mt-auto flex gap-2">
+                {/* FIX: Chat button now navigates to messages after starting DM */}
                 <Button variant="outline" size="sm" className="flex-1" onClick={() => handleMessage(pro)}>
                   <MessageCircle className="w-4 h-4 mr-1" />
                   Chat

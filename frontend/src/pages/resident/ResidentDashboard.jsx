@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Users, Briefcase, MessageCircle, Calendar, Settings, User as UserIcon } from 'lucide-react';
+import { Home, Users, Briefcase, MessageCircle, Calendar, Settings, User as UserIcon, Star } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -17,18 +17,20 @@ const ResidentDashboard = () => {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [loadingProfessionals, setLoadingProfessionals] = useState(true);
   const [loadingCommunities, setLoadingCommunities] = useState(true);
+  const [error, setError] = useState(null);
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
     { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
+    { icon: Users, label: 'Find Residents', path: '/resident/find-residents' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
+    { icon: Star, label: 'My Reviews', path: '/resident/reviews' },
     { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
   ];
 
-  // Fetch bookings — used for both upcoming list and stats
   useEffect(() => {
     const fetchBookings = async () => {
       try {
@@ -43,6 +45,7 @@ const ResidentDashboard = () => {
         );
       } catch (error) {
         console.error('Error fetching bookings:', error);
+        setError('Failed to load some data. Please refresh.');
       } finally {
         setLoadingBookings(false);
       }
@@ -50,7 +53,6 @@ const ResidentDashboard = () => {
     fetchBookings();
   }, []);
 
-  // Fetch professionals
   useEffect(() => {
     const fetchProfessionals = async () => {
       try {
@@ -66,7 +68,6 @@ const ResidentDashboard = () => {
     fetchProfessionals();
   }, []);
 
-  // Fetch joined communities
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
@@ -82,7 +83,6 @@ const ResidentDashboard = () => {
     fetchCommunities();
   }, []);
 
-  // FIX: derive stats from real data instead of hardcoded values
   const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
   const stats = [
     {
@@ -113,7 +113,6 @@ const ResidentDashboard = () => {
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
-      {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Welcome back, {user?.name?.split(' ')[0] || 'Resident'}! 👋
@@ -121,7 +120,20 @@ const ResidentDashboard = () => {
         <p className="text-gray-600">Here's what's happening in your community today</p>
       </div>
 
-      {/* Stats Grid — real data */}
+      {/* Error banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-red-700">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-600 text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, idx) => (
           <Card key={idx} hover className="relative overflow-hidden">
@@ -202,6 +214,7 @@ const ResidentDashboard = () => {
               </div>
             ) : featuredProfessionals.length === 0 ? (
               <div className="text-center py-8">
+                {/* FIX: Briefcase now properly imported */}
                 <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-600">No professionals available</p>
               </div>
@@ -228,10 +241,12 @@ const ResidentDashboard = () => {
                         <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
                           <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                         </svg>
-                        <span className="text-sm font-medium text-gray-900">{pro.rating}</span>
-                        <span className="text-xs text-gray-500">
-                          ({pro.total_reviews || pro.reviews_count || 0})
-                        </span>
+                        <span className="text-sm font-medium text-gray-900">{pro.rating ?? 'New'}</span>
+                        {pro.rating && (
+                          <span className="text-xs text-gray-500">
+                            ({pro.total_reviews || pro.reviews_count || 0})
+                          </span>
+                        )}
                       </div>
                       <span className="text-sm font-semibold text-primary-600">{pro.price}</span>
                     </div>
@@ -260,6 +275,10 @@ const ResidentDashboard = () => {
                 <Briefcase className="w-5 h-5 mr-2" />
                 Find Professional
               </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/find-residents'}>
+                <Users className="w-5 h-5 mr-2" />
+                Find Residents
+              </Button>
               <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/communities'}>
                 <Users className="w-5 h-5 mr-2" />
                 Join Community
@@ -270,7 +289,7 @@ const ResidentDashboard = () => {
               </Button>
               <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/bookings'}>
                 <Calendar className="w-5 h-5 mr-2" />
-                View Calendar
+                View Bookings
               </Button>
             </div>
           </Card>

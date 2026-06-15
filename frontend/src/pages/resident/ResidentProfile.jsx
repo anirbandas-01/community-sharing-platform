@@ -1,367 +1,287 @@
-import { useState, useEffect } from 'react';
-import { Camera, Edit2, Save, X, MapPin, Mail, Phone, Calendar, CreditCard } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  User as UserIcon, Mail, Phone, MapPin, Camera,
+  Edit2, Save, X, Home, Users, Briefcase, Calendar,
+  MessageCircle, Settings, Star, Lock
+} from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
-import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { Home, Users, Briefcase, MessageCircle, Settings, User as UserIcon } from 'lucide-react';
+import api from '../../services/api';
 
 const ResidentProfile = () => {
-  const { user, checkAuth } = useAuth();
-  const [editing, setEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    city: '',
-    address: '',
-    aadhaar: '',
-    bio: '',
-    profile_image: null,
-  });
+  const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
-  // FIX: real stats state instead of hardcoded values
-  const [statsData, setStatsData] = useState({
-    communities: 0,
-    totalBookings: 0,
-    completedBookings: 0,
-    totalSpent: 0,
-    memberSince: '',
+  const [isEditing, setIsEditing]       = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [saving, setSaving]             = useState(false);
+  const [error, setError]               = useState(null);
+  const [successMsg, setSuccessMsg]     = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name:    '',
+    email:   '',
+    phone:   '',
+    city:    '',
+    bio:     '',
+    address: '',
   });
-  const [loadingStats, setLoadingStats] = useState(true);
 
   const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
-    { icon: Users, label: 'My Communities', path: '/resident/communities' },
-    { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
-    { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
-    { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
-    { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
-    { icon: Settings, label: 'Settings', path: '/resident/settings' },
+    { icon: Home,          label: 'Dashboard',          path: '/resident/dashboard' },
+    { icon: Users,         label: 'My Communities',     path: '/resident/communities' },
+    { icon: Briefcase,     label: 'Find Professionals', path: '/resident/professionals' },
+    { icon: Users,         label: 'Find Residents',     path: '/resident/find-residents' },
+    { icon: Calendar,      label: 'My Bookings',        path: '/resident/bookings' },
+    { icon: Star,          label: 'My Reviews',         path: '/resident/reviews' },
+    { icon: MessageCircle, label: 'Messages',           path: '/resident/messages' },
+    { icon: UserIcon,      label: 'Profile',            path: '/resident/profile' },
+    { icon: Settings,      label: 'Settings',           path: '/resident/settings' },
   ];
 
   useEffect(() => {
-    fetchProfile();
-    fetchStats();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const response = await api.get('/user/profile');
-      const profileData = response.data.user || response.data;
+    if (user) {
       setFormData({
-        name: profileData.name || '',
-        email: profileData.email || '',
-        phone: profileData.phone || '',
-        city: profileData.city || '',
-        address: profileData.address || '',
-        aadhaar: profileData.aadhaar || '',
-        bio: profileData.bio || '',
-        profile_image: null,
+        name:    user.name    || '',
+        email:   user.email   || '',
+        phone:   user.phone   || '',
+        city:    user.city    || '',
+        bio:     user.bio     || '',
+        address: user.address || '',
       });
-      if (profileData.profile_image) {
-        setImagePreview(profileData.profile_image);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
     }
+  }, [user]);
+
+  const handleChange = (field) => (e) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
   };
 
-  // FIX: fetch real stats from existing endpoints
-  const fetchStats = async () => {
+  const handleSave = async () => {
     try {
-      setLoadingStats(true);
-
-      const [bookingsRes, communitiesRes, profileRes] = await Promise.allSettled([
-        api.get('/user/bookings'),
-        api.get('/user/communities'),
-        api.get('/user/profile'),
-      ]);
-
-      const bookings = bookingsRes.status === 'fulfilled'
-        ? (bookingsRes.value.data.bookings || [])
-        : [];
-
-      const communities = communitiesRes.status === 'fulfilled'
-        ? (communitiesRes.value.data.communities || [])
-        : [];
-
-      const profileData = profileRes.status === 'fulfilled'
-        ? (profileRes.value.data.user || profileRes.value.data)
-        : {};
-
-      // Calculate total spent from completed bookings
-      const completedBookings = bookings.filter(b => b.status === 'completed');
-      const totalSpent = completedBookings.reduce((sum, b) => {
-        // amount comes as "₹500" string, strip the symbol and parse
-        const raw = String(b.amount || '0').replace(/[^0-9.]/g, '');
-        return sum + (parseFloat(raw) || 0);
-      }, 0);
-
-      // Member since from created_at
-      const memberSince = profileData.created_at
-        ? new Date(profileData.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })
-        : '';
-
-      setStatsData({
-        communities: communities.length,
-        totalBookings: bookings.length,
-        completedBookings: completedBookings.length,
-        totalSpent,
-        memberSince,
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
+      setSaving(true);
+      setError(null);
+      const response = await api.put('/user/profile', formData);
+      if (updateUser) updateUser(response.data.user);
+      setSuccessMsg('Profile updated successfully!');
+      setIsEditing(false);
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
     } finally {
-      setLoadingStats(false);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      const file = files[0];
-      if (file) {
-        setFormData({ ...formData, profile_image: file });
-        const reader = new FileReader();
-        reader.onloadend = () => setImagePreview(reader.result);
-        reader.readAsDataURL(file);
-      }
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const fd = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (formData[key] !== null && key !== 'profile_image') {
-          fd.append(key, formData[key]);
-        }
-      });
-      if (formData.profile_image) {
-        fd.append('profile_image', formData.profile_image);
-      }
-      await api.post('/user/profile/update', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      await checkAuth();
-      setEditing(false);
-      alert('Profile updated successfully!');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert(error.response?.data?.message || 'Failed to update profile');
-    } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    setEditing(false);
-    fetchProfile();
+    if (user) {
+      setFormData({
+        name:    user.name    || '',
+        email:   user.email   || '',
+        phone:   user.phone   || '',
+        city:    user.city    || '',
+        bio:     user.bio     || '',
+        address: user.address || '',
+      });
+    }
+    setIsEditing(false);
+    setError(null);
   };
 
-  // FIX: stats now use real data from statsData
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingPhoto(true);
+      const data = new FormData();
+      data.append('photo', file);
+      const response = await api.post('/user/photo', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (updateUser) updateUser({ ...user, image: response.data.image_url });
+      setSuccessMsg('Photo updated!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch {
+      setError('Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const stats = [
-    {
-      label: 'Communities Joined',
-      value: loadingStats ? '—' : statsData.communities,
-      icon: Users,
-      color: 'blue',
-    },
-    {
-      label: 'Total Bookings',
-      value: loadingStats ? '—' : statsData.totalBookings,
-      icon: Calendar,
-      color: 'green',
-    },
-    {
-      label: 'Completed',
-      value: loadingStats ? '—' : statsData.completedBookings,
-      icon: MessageCircle,
-      color: 'purple',
-    },
-    {
-      label: 'Total Spent',
-      value: loadingStats ? '—' : `₹${statsData.totalSpent.toLocaleString()}`,
-      icon: CreditCard,
-      color: 'orange',
-    },
+    { label: 'Communities',   value: user?.communities_count  ?? 0, color: 'blue' },
+    { label: 'Bookings',      value: user?.bookings_count     ?? 0, color: 'purple' },
+    { label: 'Reviews',       value: user?.reviews_count      ?? 0, color: 'yellow' },
   ];
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
-        <p className="text-gray-600">Manage your account information</p>
+        <p className="text-gray-600">Manage your personal information</p>
       </div>
 
+      {/* Success banner */}
+      {successMsg && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-green-700 font-medium">{successMsg}</span>
+          <button onClick={() => setSuccessMsg('')} className="text-green-400 hover:text-green-600 text-lg">×</button>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-red-700">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 text-lg">×</button>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column */}
-        <div className="lg:col-span-1">
-          <Card>
-            <div className="text-center mb-6">
-              <div className="relative inline-block">
-                <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 mx-auto mb-4">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-500 to-secondary-500 text-white text-4xl font-bold">
-                      {user?.name?.charAt(0) || 'U'}
-                    </div>
-                  )}
-                </div>
-                {editing && (
-                  <label className="absolute bottom-4 right-0 bg-primary-600 text-white p-2 rounded-full cursor-pointer hover:bg-primary-700 transition-colors">
-                    <Camera className="w-5 h-5" />
-                    <input type="file" accept="image/*" onChange={handleChange} className="sr-only" />
-                  </label>
-                )}
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">{formData.name || 'User'}</h2>
-              <Badge variant="primary">Resident</Badge>
+        {/* Left: avatar + stats */}
+        <div className="space-y-6">
+          <Card className="text-center">
+            <div className="relative inline-block mb-4">
+              <img
+                src={user?.image || '/default-avatar.png'}
+                alt={user?.name}
+                className="w-28 h-28 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
+              />
+              <button
+                className="absolute bottom-1 right-1 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white hover:bg-primary-700 transition-colors shadow"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                title="Change photo"
+              >
+                {uploadingPhoto
+                  ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <Camera className="w-4 h-4" />
+                }
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
             </div>
 
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-3 text-gray-600">
-                <Mail className="w-5 h-5" />
-                <span className="text-sm">{formData.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Phone className="w-5 h-5" />
-                <span className="text-sm">{formData.phone || 'Not set'}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <MapPin className="w-5 h-5" />
-                <span className="text-sm">{formData.city || 'Not specified'}</span>
-              </div>
-              {/* FIX: real member since date */}
-              <div className="flex items-center gap-3 text-gray-600">
-                <Calendar className="w-5 h-5" />
-                <span className="text-sm">
-                  {loadingStats
-                    ? 'Loading...'
-                    : statsData.memberSince
-                      ? `Member since ${statsData.memberSince}`
-                      : 'Member'}
-                </span>
-              </div>
-            </div>
-
-            {!editing && (
-              <Button variant="primary" className="w-full" onClick={() => setEditing(true)}>
-                <Edit2 className="w-5 h-5 mr-2" />
-                Edit Profile
-              </Button>
+            <h2 className="text-xl font-bold text-gray-900">{user?.name}</h2>
+            <p className="text-gray-500 text-sm mt-1">{user?.email}</p>
+            {user?.city && (
+              <p className="text-gray-500 text-sm flex items-center justify-center gap-1 mt-1">
+                <MapPin className="w-3 h-3" />{user.city}
+              </p>
             )}
           </Card>
 
-          <Card className="mt-6">
-            <h3 className="font-semibold text-gray-900 mb-3">Bio</h3>
-            {editing ? (
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                rows="4"
-                placeholder="Tell us about yourself..."
-              />
-            ) : (
-              <p className="text-gray-600 text-sm">{formData.bio || 'No bio added yet.'}</p>
-            )}
+          {/* Stats */}
+          <Card>
+            <h3 className="font-semibold text-gray-900 mb-4">Activity</h3>
+            <div className="space-y-3">
+              {stats.map((s) => (
+                <div key={s.label} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{s.label}</span>
+                  <span className={`text-lg font-bold text-${s.color}-600`}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Security card */}
+          <Card>
+            <h3 className="font-semibold text-gray-900 mb-4">Security</h3>
+            {/* FIX: Change Password now navigates to settings#security instead of doing nothing */}
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => navigate('/resident/settings?tab=security')}
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Change Password
+            </Button>
           </Card>
         </div>
 
-        {/* Right Column */}
-        <div className="lg:col-span-2 space-y-8">
+        {/* Right: editable form */}
+        <div className="lg:col-span-2">
           <Card>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Personal Information</h3>
-              {editing && (
+              <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
+              {!isEditing ? (
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                  <Edit2 className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              ) : (
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleCancel}>
-                    <X className="w-5 h-5 mr-2" />
+                  <Button variant="ghost" size="sm" onClick={handleCancel} disabled={saving}>
+                    <X className="w-4 h-4 mr-1" />
                     Cancel
                   </Button>
-                  <Button variant="primary" onClick={handleSubmit} loading={loading}>
-                    <Save className="w-5 h-5 mr-2" />
-                    Save Changes
+                  <Button variant="primary" size="sm" onClick={handleSave} disabled={saving}>
+                    <Save className="w-4 h-4 mr-1" />
+                    {saving ? 'Saving…' : 'Save'}
                   </Button>
                 </div>
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} disabled={!editing} required />
-                <Input label="Email" type="email" name="email" value={formData.email} onChange={handleChange} disabled={!editing} required />
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Input label="Phone" name="phone" value={formData.phone} onChange={handleChange} disabled={!editing} required />
-                <Input label="City" name="city" value={formData.city} onChange={handleChange} disabled={!editing} />
-              </div>
-              <Input label="Address" name="address" value={formData.address} onChange={handleChange} disabled={!editing} />
-              <Input label="Aadhaar Number" name="aadhaar" value={formData.aadhaar} onChange={handleChange} disabled={!editing} maxLength="12" />
-            </form>
-          </Card>
-
-          {/* FIX: Activity stats use real data */}
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Activity Overview</h3>
             <div className="grid md:grid-cols-2 gap-6">
-              {stats.map((stat, idx) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={idx} className="flex items-center gap-4">
-                    <div className={`w-14 h-14 bg-${stat.color}-100 rounded-xl flex items-center justify-center`}>
-                      <Icon className={`w-7 h-7 text-${stat.color}-600`} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                {isEditing
+                  ? <Input icon={UserIcon} value={formData.name} onChange={handleChange('name')} placeholder="Your name" />
+                  : <p className="text-gray-900 py-2">{formData.name || '—'}</p>}
+              </div>
 
-          <Card>
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Account Settings</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <h4 className="font-semibold text-gray-900">Email Notifications</h4>
-                  <p className="text-sm text-gray-600">Receive updates about bookings and messages</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" defaultChecked className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                {isEditing
+                  ? <Input icon={Mail} value={formData.email} onChange={handleChange('email')} type="email" placeholder="Your email" disabled />
+                  : <p className="text-gray-900 py-2">{formData.email || '—'}</p>}
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <h4 className="font-semibold text-gray-900">SMS Notifications</h4>
-                  <p className="text-sm text-gray-600">Get SMS alerts for important updates</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                </label>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                {isEditing
+                  ? <Input icon={Phone} value={formData.phone} onChange={handleChange('phone')} placeholder="+91 XXXXX XXXXX" />
+                  : <p className="text-gray-900 py-2">{formData.phone || '—'}</p>}
               </div>
-              <div className="pt-4 border-t border-gray-200">
-                <Button variant="outline" className="text-red-600 hover:bg-red-50 border-red-300">
-                  Change Password
-                </Button>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                {isEditing
+                  ? <Input icon={MapPin} value={formData.city} onChange={handleChange('city')} placeholder="Your city" />
+                  : <p className="text-gray-900 py-2">{formData.city || '—'}</p>}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                {isEditing
+                  ? <Input icon={MapPin} value={formData.address} onChange={handleChange('address')} placeholder="Your full address" />
+                  : <p className="text-gray-900 py-2">{formData.address || '—'}</p>}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                {isEditing ? (
+                  <textarea
+                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    rows={4}
+                    value={formData.bio}
+                    onChange={handleChange('bio')}
+                    placeholder="Tell others a bit about yourself…"
+                  />
+                ) : (
+                  <p className="text-gray-900 py-2">{formData.bio || '—'}</p>
+                )}
               </div>
             </div>
           </Card>
