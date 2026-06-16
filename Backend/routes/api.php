@@ -14,7 +14,9 @@ use App\Http\Controllers\Api\MessagesController;
 use App\Http\Controllers\Api\ReviewsController;
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\CommunityPostsController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Http;
 
 /*
@@ -72,6 +74,7 @@ Route::prefix('admin')->group(function () {
     });
 });
 Route::middleware('auth:sanctum')->group(function () {
+
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::prefix('user')->group(function () {
@@ -81,8 +84,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/profile/photo', [UserController::class, 'uploadPhoto']);
     });
 
-    Route::get('/search/professionals', [ResidentController::class, 'searchProfessionals']);
+    Route::get('/residents/search', [SearchController::class, 'searchResidents']);
+    Route::get('/search/users', [SearchController::class, 'searchUsers']);
+    Route::get('/search/professionals', [SearchController::class, 'searchProfessionals']);
 
+     // ── Community invite (used by FindResidents invite modal) ─────────
+    Route::post('/communities/{id}/invite', [SearchController::class, 'inviteToCommunity']);
+    
+
+    // Product Store — accessible by resident AND professional (no role restriction)
+    Route::get('/store/products', [OrderController::class, 'browseProducts']);
+    Route::get('/store/products/{id}', [OrderController::class, 'showProduct']);
+ 
+    // Orders — place & manage (buyer side, resident or professional)
+    Route::post('/store/orders', [OrderController::class, 'placeOrder']);
+    Route::get('/store/my-orders', [OrderController::class, 'myOrders']);
+    Route::post('/store/orders/{id}/cancel', [OrderController::class, 'cancelOrder']);
     
     Route::middleware(['role:professional'])->group(function () {
 
@@ -159,11 +176,15 @@ Route::middleware('auth:sanctum')->group(function () {
         }); */
 
         // Orders
-        Route::get('/orders', [App\Http\Controllers\Api\BusinessController::class, 'getOrders']);
+/*         Route::get('/orders', [App\Http\Controllers\Api\BusinessController::class, 'getOrders']);
         Route::put('/orders/{id}', [App\Http\Controllers\Api\BusinessController::class, 'updateOrder']);
 
         // Sales
-        Route::get('/sales', [App\Http\Controllers\Api\BusinessController::class, 'getSales']);
+        Route::get('/sales', [App\Http\Controllers\Api\BusinessController::class, 'getSales']); */
+
+         Route::get('/orders', [OrderController::class, 'businessOrders']);
+         Route::put('/orders/{id}', [OrderController::class, 'updateOrderStatus']);
+         Route::get('/sales', [OrderController::class, 'businessSales']); 
     });
    
     // User Communities (PROTECTED - requires auth)
