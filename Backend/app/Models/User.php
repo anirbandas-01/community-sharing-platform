@@ -160,4 +160,39 @@ public function getTotalReviewsAttribute()
     }
     return $this->reviewsReceived()->count();
 }
+
+public function isProfessionalProfileComplete()
+{
+    if ($this->user_type !== 'professional') {
+        return false;
+    }
+
+    if (empty($this->name) || empty($this->phone) || empty($this->city)) {
+        return false;
+    }
+
+    $profile = $this->professionalProfile;
+
+    if (!$profile) {
+        return false;
+    }
+
+    return !empty($profile->specialization)
+        && !empty($profile->experience_years)
+        && !empty($profile->hourly_rate)
+        && !empty($profile->bio);
+}
+
+public function getProfileImageUrlAttribute()
+{
+    if (!$this->profile_image) {
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&size=150&background=6366f1&color=fff';
+    }
+
+    if (str_starts_with($this->profile_image, 'http://') || str_starts_with($this->profile_image, 'https://')) {
+        return $this->profile_image;
+    }
+
+    return asset('storage/' . $this->profile_image);
+}
 }

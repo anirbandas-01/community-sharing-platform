@@ -60,7 +60,7 @@ class ResidentController extends Controller
                             'id' => $appointment->professional->id,
                             'name' => $appointment->professional->name,
                             'profession' => $appointment->professional->professionalProfile->specialization ?? 'Professional',
-                            'image' => $appointment->professional->profile_image_url ?? 'https://i.pravatar.cc/150?img=12',
+                            'image' => $appointment->professional->profile_image_url,
                             'phone' => $appointment->professional->phone ?? 'N/A',
                         ],
                         'date' => $appointment->appointment_time->format('M d, Y'),
@@ -217,7 +217,7 @@ class ResidentController extends Controller
                     'location' => $pro->city ?? 'Location',
                     'verified' => true,
                     'available' => true,
-                    'image' => $pro->profile_image_url ?? 'https://i.pravatar.cc/150?img=1',
+                    'image' => $pro->profile_image_url,
                     'services' => $pro->services->pluck('name')->toArray(),
                 ];
             });

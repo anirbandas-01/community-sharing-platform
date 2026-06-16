@@ -34,17 +34,19 @@ export default function ProfessionalReviews() {
   }, [user]);
 
   const fetchReviews = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get(`/professionals/${user.id}/reviews`);
-      setReviews(response.data.reviews || []);
-      setStats(response.data.stats || null);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const response = await api.get(`/professionals/${user.id}/reviews`);
+    setReviews(response.data.reviews || []);
+    setStats(response.data.stats || null);
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    setReviews([]);
+    setStats(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleRespond = async (reviewId) => {
     if (!response.trim() || response.trim().length < 10) {

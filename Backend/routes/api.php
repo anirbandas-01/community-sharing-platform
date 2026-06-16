@@ -122,7 +122,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/professional/services/{id}', [ProfessionalsController::class, 'updateService']);
 
         Route::delete('/professional/services/{id}', [ProfessionalsController::class, 'deleteService']);
-
+        
+        Route::patch('/professional/services/{id}/toggle-status', [ProfessionalsController::class, 'toggleServiceStatus']);
 
         //Appointments
         Route::get('/professional/appointments', [ProfessionalsController::class, 'getAppointment']);
@@ -135,8 +136,6 @@ Route::middleware('auth:sanctum')->group(function () {
         //Reviews
         Route::get('/professional/reviews', [ProfessionalsController::class, 'getReviews']);
 
-        Route::get('/professional/notifications', [ProfessionalsController::class, 'getNotifications']);
-        Route::get('/professional/messages', [ProfessionalsController::class, 'getMessages']);
     });
 
 
@@ -231,7 +230,7 @@ Route::get('/communities/{id}/members', [CommunitiesController::class, 'members'
 // Public Professionals
 Route::get('/professionals', [ProfessionalsController::class, 'publicList']);
 Route::get('/professionals/{id}', [ProfessionalsController::class, 'publicShow']);
-Route::get('/professionals/{id}/reviews', [ProfessionalsController::class, 'reviews']);
+
 
 // Public review endpoint
 Route::get('/professionals/{id}/reviews', [ReviewsController::class, 'getProfessionalReviews']);

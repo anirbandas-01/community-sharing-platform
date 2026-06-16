@@ -61,12 +61,11 @@ class ProfessionalsController extends Controller
                     'name' => $pro->name,
                     'profession' => $pro->professionalProfile->specialization ?? 'Professional',
                     'rating' => $avgRating ? round($avgRating, 1) : null,
-                    'reviews_count' => $totalReviews,
-                    'total_reviews' => $totalReviews, // Alternative field name
+                    'total_reviews' => $totalReviews,
                     'experience' => ($pro->professionalProfile->experience_years ?? 0) . ' years',
                     'location' => $pro->city ?? 'Location',
                     'verified' => $pro->professionalProfile->is_verified ?? false,
-                    'available' => true, // ← FIX: Always true so buttons work
+                    'available' => $pro->services->where('is_active', true)->isNotEmpty(),
                     'price' => $price,
                     'image' => $pro->profile_image ?? 'https://ui-avatars.com/api/?name=' . urlencode($pro->name) . '&size=150&background=6366f1&color=fff',
                     'services' => $pro->services->pluck('name')->toArray(),
@@ -123,8 +122,8 @@ class ProfessionalsController extends Controller
                     'phone' => $professional->phone ?? 'N/A',
                     'email' => $professional->email,
                     'verified' => $professional->professionalProfile->is_verified ?? false,
-                    'available' => true, // ← FIX: Always true
-                    'response_time' => '1-2 hours',
+                    'available' => $professional->services->where('is_active', true)->isNotEmpty(), 
+                    'response_time' => $this->calculateResponseTime($professional->id),
                     'price' => $price,
                     'image' => $professional->profile_image ?? 'https://ui-avatars.com/api/?name=' . urlencode($professional->name) . '&size=150&background=6366f1&color=fff',
                     'services' => $professional->services->map(function ($service) {
@@ -136,11 +135,9 @@ class ProfessionalsController extends Controller
                             'duration' => $service->duration . ' mins',
                         ];
                     }),
-                    'certifications' => [
-                        'Certified Professional',
-                        'Background Verified',
-                        'ID Verified'
-                    ],
+                    'certifications' => $professional->professionalProfile->is_verified ?? false
+    ? ['Verified Professional']
+    : [],
                     'portfolio' => [],
                 ]
             ]);
@@ -155,8 +152,29 @@ class ProfessionalsController extends Controller
             ], 404);
         }
     }
+   
+private function calculateResponseTime($professionalId)
+{
+    $confirmedAppointments = Appointment::where('professional_id', $professionalId)
+        ->where('status', '!=', 'pending')
+        ->get();
 
-    // ... (rest of the methods remain the same as before)
+    if ($confirmedAppointments->isEmpty()) {
+        return 'No response history yet';
+    }
+
+    $avgMinutes = $confirmedAppointments->avg(function ($apt) {
+        return $apt->created_at->diffInMinutes($apt->updated_at);
+    });
+
+    if ($avgMinutes < 60) {
+        return 'Usually within ' . max(round($avgMinutes), 1) . ' min';
+    }
+
+    $hours = round($avgMinutes / 60);
+    return 'Usually within ' . $hours . ' hr' . ($hours > 1 ? 's' : '');
+}
+    
     
     /**
      * Get professional profile with REAL stats - NO DUMMY DATA
@@ -169,30 +187,26 @@ class ProfessionalsController extends Controller
             // Load professional profile
             $user->load('professionalProfile', 'services');
             
-            // Calculate REAL stats
-            $totalBookings = Appointment::where('professional_id', $user->id)->count();
-            $completedBookings = Appointment::where('professional_id', $user->id)
-                ->where('status', 'completed')
-                ->count();
+           $appointmentStats = Appointment::where('professional_id', $user->id)
+    ->selectRaw('
+        COUNT(*) as total_bookings,
+        COUNT(CASE WHEN status = \'completed\' THEN 1 END) as completed_bookings,
+        SUM(CASE WHEN status = \'completed\' THEN total_price ELSE 0 END) as total_earnings
+    ')
+    ->first();
+
+    $totalBookings = $appointmentStats->total_bookings;
+    $completedBookings = $appointmentStats->completed_bookings;
+    $totalEarnings = $appointmentStats->total_earnings ?? 0;
+
+    $reviewStats = Review::where('professional_id', $user->id)
+        ->selectRaw('AVG(rating) as average_rating, COUNT(*) as total_reviews')
+        ->first();
+
+    $averageRating = $reviewStats->average_rating;
+    $totalReviews = $reviewStats->total_reviews;
             
-            // Get average rating from reviews
-            $averageRating = Review::where('professional_id', $user->id)->avg('rating');
-            $totalReviews = Review::where('professional_id', $user->id)->count();
-            
-            // Calculate total earnings from completed appointments
-            $totalEarnings = Appointment::where('professional_id', $user->id)
-                ->where('status', 'completed')
-                ->sum('total_price');
-            
-            // Check if profile is complete
-            $profileComplete = !empty($user->name) 
-                && !empty($user->phone) 
-                && !empty($user->city)
-                && $user->professionalProfile
-                && !empty($user->professionalProfile->specialization)
-                && !empty($user->professionalProfile->experience_years)
-                && !empty($user->professionalProfile->hourly_rate)
-                && !empty($user->professionalProfile->bio);
+            $profileComplete = $user->isProfessionalProfileComplete();
             
             return response()->json([
                 'id' => $user->id,
@@ -353,17 +367,8 @@ class ProfessionalsController extends Controller
             $user = $request->user();
             $user->load('professionalProfile');
             
-            // CHECK IF PROFILE IS COMPLETE BEFORE ALLOWING SERVICE CREATION
-            $profileComplete = !empty($user->name) 
-                && !empty($user->phone) 
-                && !empty($user->city)
-                && $user->professionalProfile
-                && !empty($user->professionalProfile->specialization)
-                && !empty($user->professionalProfile->experience_years)
-                && !empty($user->professionalProfile->hourly_rate)
-                && !empty($user->professionalProfile->bio);
+            if (!$user->isProfessionalProfileComplete()) {
             
-            if (!$profileComplete) {
                 return response()->json([
                     'message' => 'Please complete your profile before adding services. Fill in all required fields: name, phone, city, specialization, experience, hourly rate, and bio.',
                     'profile_incomplete' => true
@@ -582,25 +587,30 @@ class ProfessionalsController extends Controller
         try {
             $user = $request->user();
             
-            // Get real statistics
-            $totalAppointments = Appointment::where('professional_id', $user->id)->count();
-            $pendingAppointments = Appointment::where('professional_id', $user->id)
-                ->where('status', 'pending')->count();
-            $activeServices = Service::where('professional_id', $user->id)
-                ->where('is_active', true)->count();
-            
-            // Earnings
-            $totalEarnings = Appointment::where('professional_id', $user->id)
-                ->where('status', 'completed')
-                ->sum('total_price');
-            $availableEarnings = $totalEarnings;
-            $pendingEarnings = Appointment::where('professional_id', $user->id)
-                ->where('status', 'confirmed')
-                ->sum('total_price');
-            
-            // Rating
-            $averageRating = Review::where('professional_id', $user->id)->avg('rating');
-            $totalReviews = Review::where('professional_id', $user->id)->count();
+            $appointmentStats = Appointment::where('professional_id', $user->id)
+        ->selectRaw('
+            COUNT(*) as total_appointments,
+            COUNT(CASE WHEN status = \'pending\' THEN 1 END) as pending_appointments,
+            SUM(CASE WHEN status = \'completed\' THEN total_price ELSE 0 END) as total_earnings,
+            SUM(CASE WHEN status = \'confirmed\' THEN total_price ELSE 0 END) as pending_earnings
+        ')
+        ->first();
+
+        $totalAppointments = $appointmentStats->total_appointments;
+        $pendingAppointments = $appointmentStats->pending_appointments;
+        $totalEarnings = $appointmentStats->total_earnings ?? 0;
+        $availableEarnings = $totalEarnings;
+        $pendingEarnings = $appointmentStats->pending_earnings ?? 0;
+
+        $activeServices = Service::where('professional_id', $user->id)
+            ->where('is_active', true)->count();
+
+        $reviewStats = Review::where('professional_id', $user->id)
+            ->selectRaw('AVG(rating) as average_rating, COUNT(*) as total_reviews')
+            ->first();
+
+        $averageRating = $reviewStats->average_rating;
+        $totalReviews = $reviewStats->total_reviews;
             
             // Upcoming appointments
             $upcomingAppointments = Appointment::where('professional_id', $user->id)
@@ -738,15 +748,19 @@ class ProfessionalsController extends Controller
                     ];
                 });
             
-            // Calculate stats
-            $averageRating = Review::where('professional_id', $user->id)->avg('rating');
-            $totalReviews = Review::where('professional_id', $user->id)->count();
-            
+            $breakdown = Review::where('professional_id', $user->id)
+                ->selectRaw('rating, COUNT(*) as count')
+                ->groupBy('rating')
+                ->pluck('count', 'rating');
+
+            $totalReviews = $breakdown->sum();
+            $averageRating = $totalReviews > 0
+                ? $breakdown->reduce(fn($carry, $count, $rating) => $carry + ($rating * $count), 0) / $totalReviews
+                : null;
+
             $ratingBreakdown = [];
             for ($i = 1; $i <= 5; $i++) {
-                $ratingBreakdown[$i] = Review::where('professional_id', $user->id)
-                    ->where('rating', $i)
-                    ->count();
+                $ratingBreakdown[$i] = $breakdown->get($i, 0);
             }
 
             return response()->json([
@@ -772,50 +786,32 @@ class ProfessionalsController extends Controller
     }
 
     /**
-     * Get reviews for a professional (public)
-     */
-    public function reviews($id)
-    {
-        try {
-            $reviews = Review::where('professional_id', $id)
-                ->with('user')
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($review) {
-                    return [
-                        'id' => $review->id,
-                        'user' => [
-                            'name' => $review->user->name ?? 'Anonymous',
-                            'avatar' => $review->user->profile_image ?? null,
-                        ],
-                        'rating' => $review->rating,
-                        'comment' => $review->comment,
-                        'professional_response' => $review->professional_response,
-                        'created_at' => $review->created_at->format('M d, Y'),
-                    ];
-                });
+ * Toggle service active/inactive status
+ */
+public function toggleServiceStatus(Request $request, $id)
+{
+    try {
+        $service = Service::where('id', $id)
+            ->where('professional_id', $request->user()->id)
+            ->firstOrFail();
 
-            return response()->json([
-                'reviews' => $reviews
-            ]);
+        $service->is_active = !$service->is_active;
+        $service->save();
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'reviews' => []
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Service status updated successfully',
+            'service' => $service
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Toggle service status error', [
+            'error' => $e->getMessage()
+        ]);
+
+        return response()->json([
+            'message' => 'Failed to update service status'
+        ], 500);
     }
+}
 
-    /**
-     * Placeholder methods
-     */
-    public function getNotifications(Request $request)
-    {
-        return response()->json(['notifications' => []]);
-    }
-
-    public function getMessages(Request $request)
-    {
-        return response()->json(['messages' => []]);
-    }
 }
