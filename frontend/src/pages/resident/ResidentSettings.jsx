@@ -11,6 +11,10 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
 
+import { useLocation, useNavigate } from 'react-router-dom'; 
+import { useAuth } from '../../context/AuthContext';         
+
+
 const ResidentSettings = () => {
   const location = useLocation();
 
@@ -27,6 +31,8 @@ const ResidentSettings = () => {
   const [showCurrentPw, setShowCurrentPw]       = useState(false);
   const [showNewPw, setShowNewPw]               = useState(false);
   const [showConfirmPw, setShowConfirmPw]       = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const [notifications, setNotifications] = useState({
     email_bookings:    true,
@@ -86,45 +92,57 @@ const ResidentSettings = () => {
     }
   };
 
-  /* -------- Password change -------- */
-  const handleChangePassword = async () => {
-    if (passwordData.new_password !== passwordData.confirm_password) {
-      setError('New passwords do not match.');
-      return;
-    }
-    if (passwordData.new_password.length < 8) {
-      setError('New password must be at least 8 characters.');
-      return;
-    }
-    try {
-      setSaving(true);
-      setError(null);
-      await api.put('/user/password', {
-        current_password: passwordData.current_password,
-        new_password:     passwordData.new_password,
-      });
-      setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
-      showSuccess('Password changed successfully!');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to change password. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
+const handleChangePassword = async () => {
+  if (passwordData.new_password !== passwordData.confirm_password) {
+    setError('New passwords do not match.');
+    return;
+  }
+  if (passwordData.new_password.length < 8) {
+    setError('New password must be at least 8 characters.');
+    return;
+  }
+  try {
+    setSaving(true);
+    setError(null);
+    // FIX: was PUT /user/password (doesn't exist) — real route is
+    // POST /user/change-password. Laravel's `confirmed` rule also needs a
+    // `new_password_confirmation` field, not `confirm_password`.
+    await api.post('/user/change-password', {
+      current_password: passwordData.current_password,
+      new_password: passwordData.new_password,
+      new_password_confirmation: passwordData.confirm_password,
+    });
+    setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
+    showSuccess('Password changed successfully! Logging you out for security…');
 
-  /* -------- Delete account -------- */
-  const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      'Are you absolutely sure? This will permanently delete your account and all data. This cannot be undone.'
-    );
-    if (!confirmed) return;
-    try {
-      await api.delete('/user/account');
-      window.location.href = '/';
-    } catch {
-      setError('Failed to delete account. Please contact support.');
-    }
-  };
+    // The backend revokes every token (including this session's) on password
+    // change, so the current login is already dead — log out locally and
+    // send the resident back to the login screen.
+    setTimeout(async () => {
+      try { await logout(); } catch {}
+      navigate('/login');
+    }, 1800);
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to change password. Please try again.');
+  } finally {
+    setSaving(false);
+  }
+};
+
+const handleDeleteAccount = async () => {
+  const confirmed = window.confirm(
+    'Are you absolutely sure? This will permanently delete your account and all data. This cannot be undone.'
+  );
+  if (!confirmed) return;
+  try {
+    // FIX: backend route didn't exist before — now implemented as DELETE /user/account
+    await api.delete('/user/account');
+    try { await logout(); } catch {}
+    window.location.href = '/';
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to delete account. Please contact support.');
+  }
+};
 
   const Toggle = ({ checked, onChange }) => (
     <button

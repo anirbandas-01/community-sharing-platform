@@ -12,6 +12,16 @@ import Input from '../../components/ui/Input';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
+
+const getAvatarSrc = (u) => {
+  if (!u?.profile_image || u.profile_image === 'null' || u.profile_image === '') {
+    return '/default-avatar.png';
+  }
+  return u.profile_image.startsWith('http')
+    ? u.profile_image
+    : `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://127.0.0.1:8000'}${u.profile_image}`;
+};
+
 const ResidentProfile = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -24,14 +34,9 @@ const ResidentProfile = () => {
   const [successMsg, setSuccessMsg]     = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name:    '',
-    email:   '',
-    phone:   '',
-    city:    '',
-    bio:     '',
-    address: '',
-  });
+  const emptyForm = { name: '', email: '', phone: '', city: '', bio: '', address: '' };
+  const [formData, setFormData]         = useState(emptyForm);
+  const [originalData, setOriginalData] = useState(emptyForm);
 
   const menuItems = [
     { icon: Home,          label: 'Dashboard',          path: '/resident/dashboard' },
@@ -46,17 +51,29 @@ const ResidentProfile = () => {
   ];
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name:    user.name    || '',
-        email:   user.email   || '',
-        phone:   user.phone   || '',
-        city:    user.city    || '',
-        bio:     user.bio     || '',
-        address: user.address || '',
-      });
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/resident/profile');
+      const u = res.data.user || {};
+      const data = {
+        name:    u.name    || '',
+        email:   u.email   || '',
+        phone:   u.phone   || '',
+        city:    u.city    || '',
+        address: u.address || '',
+        bio:     res.data.bio || '',
+      };
+      setFormData(data);
+      setOriginalData(data);
+    } catch (err) {
+      setError('Failed to load profile.');
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
+  loadProfile();
+}, []);
 
   const handleChange = (field) => (e) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -66,8 +83,9 @@ const ResidentProfile = () => {
     try {
       setSaving(true);
       setError(null);
-      const response = await api.put('/user/profile', formData);
+      const response = await api.put('/resident/profile', formData);
       if (updateUser) updateUser(response.data.user);
+      setOriginalData({ ...formData, bio: response.data.bio ?? formData.bio });
       setSuccessMsg('Profile updated successfully!');
       setIsEditing(false);
       setTimeout(() => setSuccessMsg(''), 3000);
@@ -79,18 +97,9 @@ const ResidentProfile = () => {
   };
 
   const handleCancel = () => {
-    if (user) {
-      setFormData({
-        name:    user.name    || '',
-        email:   user.email   || '',
-        phone:   user.phone   || '',
-        city:    user.city    || '',
-        bio:     user.bio     || '',
-        address: user.address || '',
-      });
-    }
-    setIsEditing(false);
-    setError(null);
+     setFormData(originalData);
+     setIsEditing(false);
+     setError(null);
   };
 
   const handlePhotoUpload = async (e) => {
@@ -98,12 +107,13 @@ const ResidentProfile = () => {
     if (!file) return;
     try {
       setUploadingPhoto(true);
+      setError(null);
       const data = new FormData();
       data.append('photo', file);
-      const response = await api.post('/user/photo', data, {
+      const response = await api.post('/user/profile/photo', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      if (updateUser) updateUser({ ...user, image: response.data.image_url });
+      if (updateUser) updateUser({ ...user, profile_image: response.data.profile_image });
       setSuccessMsg('Photo updated!');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch {
@@ -148,10 +158,10 @@ const ResidentProfile = () => {
           <Card className="text-center">
             <div className="relative inline-block mb-4">
               <img
-                src={user?.image || '/default-avatar.png'}
-                alt={user?.name}
-                className="w-28 h-28 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
-              />
+                  src={getAvatarSrc(user)}
+                  alt={user?.name}
+                  className="w-28 h-28 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
+                />
               <button
                 className="absolute bottom-1 right-1 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white hover:bg-primary-700 transition-colors shadow"
                 onClick={() => fileInputRef.current?.click()}

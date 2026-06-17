@@ -14,8 +14,12 @@ class ResidentController extends Controller
 {
     public function profile(Request $request)
     {
+        $user = $request->user();
+        $user->load('residentProfile');
+
         return response()->json([
-            'user' => $request->user()
+            'user' => $user,
+            'bio'  => $user->residentProfile->bio ?? null,
         ]);
     }
 
@@ -26,14 +30,17 @@ class ResidentController extends Controller
             'phone' => 'nullable|string|max:20',
             'city' => 'nullable|string|max:100',
             'address' => 'nullable|string|max:500',
+            'bio'     => 'nullable|string|max:1000',
         ]);
 
         $user = $request->user();
         $user->update($request->only(['name', 'phone', 'city', 'address']));
-
+        $user->residentProfile()->updateOrCreate([], ['bio' => $request->bio]);
+        $user->load('residentProfile');
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user
+            'user' => $user,
+            'bio'     => $user->residentProfile->bio ?? null,
         ]);
     }
 

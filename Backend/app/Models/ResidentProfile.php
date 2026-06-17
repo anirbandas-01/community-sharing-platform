@@ -11,6 +11,7 @@ class ResidentProfile extends Model
 
     protected $fillable = [
         'user_id',
+        'bio',
         'preferences',
         'saved_professionals',
         'saved_businesses',

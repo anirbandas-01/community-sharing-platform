@@ -160,6 +160,32 @@ class UserController extends Controller
         ]);
     }
 
+    public function deleteAccount(Request $request)
+{
+    $user = $request->user();
+
+    try {
+        // Revoke every API token, then remove the account itself.
+        // resident_profiles, appointments, reviews, messages, community_members,
+        // etc. all cascade-delete via their FK constraints in the migrations.
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account deleted successfully.'
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Account deletion failed', [
+            'user_id' => $user->id,
+            'error'   => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'message' => 'Failed to delete account. Please try again or contact support.'
+        ], 500);
+    }
+}
+
     /* public function uploadPhoto (Request $request)
     {
         $request->validate([
