@@ -20,7 +20,7 @@ const ProfessionalBookings = () => {
     { icon: Briefcase, label: 'My Services', path: '/professional/services' },
     { icon: Users, label: 'My Groups', path: '/professional/groups' },
     { icon: MessageCircle, label: 'Messages', path: '/professional/messages', },
-    { icon: TrendingUp, label: 'Analytics', path: '/professional/analytics' },
+    /* { icon: TrendingUp, label: 'Analytics', path: '/professional/analytics' }, */
     { icon: UserIcon, label: 'Profile', path: '/professional/profile' },
     { icon: Settings, label: 'Settings', path: '/professional/settings' },
   ];
