@@ -45,6 +45,9 @@ import EditProduct from './pages/business/EditProduct';
 import EnterpriseRegister from './pages/business/EnterpriseRegister';
 import EnterpriseProtectedRoute from './components/EnterpriseProtectedRoute';
 import FindResidents from './pages/resident/Findresidents';
+import ResidentStore from './pages/resident/ResidentStore';
+import ResidentMyOrders from './pages/resident/ResidentMyOrders';
+import ProfessionalMyOrders from './pages/professional/ProfessionalMyOrders';
 
 function App() {
   return (
@@ -157,6 +160,23 @@ function App() {
             }
           />
 
+         <Route
+            path="/resident/shop"
+            element={
+              <ProtectedRoute allowedTypes={['resident']}>
+                <ResidentStore />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resident/my-orders"
+            element={
+              <ProtectedRoute allowedTypes={['resident']}>
+                <ResidentMyOrders />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Professional Routes */}
           <Route
@@ -233,6 +253,26 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+
+          <Route
+            path="/professional/shop"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalMyOrders />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/professional/my-orders"
+            element={
+              <ProtectedRoute allowedTypes={['professional']}>
+                <ProfessionalMyOrders />
+              </ProtectedRoute>
+            }
+          />
+
 
           {/* Business Routes */}
           <Route

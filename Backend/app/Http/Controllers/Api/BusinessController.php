@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Product;
 use App\Models\Enterprise;
 use App\Models\User;
+use App\Models\Order;
 
 class BusinessController extends Controller
 {
@@ -104,19 +105,28 @@ class BusinessController extends Controller
 
             $totalProducts  = $products->count();
             $lowStockCount  = $products->where('stock', '<=', 10)->where('stock', '>', 0)->count();
-            $outOfStockCount = $products->where('stock', 0)->count();
+           /*  $outOfStockCount = $products->where('stock', 0)->count();
 
-            $totalValue = $products->sum(fn($p) => $p->stock * $p->price);
+            $totalValue = $products->sum(fn($p) => $p->stock * $p->price); */
+
+            $orders = Order::where('business_user_id', $userId)->get();
+            $totalRevenue = $orders->whereIn('status', ['delivered','shipped','processing'])->sum('total_price');
+            $pendingOrders = $orders->where('status', 'pending')->count();
 
             $dashboard = [
                 'revenue' => [
-                    'total'  => 0,
+                    'total'  => $totalRevenue,
                     'change' => '+0%',
                 ],
                 'orders' => [
-                    'pending'   => 0,
-                    'new_today' => 0,
-                    'recent'    => [],
+                    'pending'   => $pendingOrders,
+                    'new_today' => Order::where('business_user_id', $userId)->whereDate('created_at', today())->count(),
+                    'recent'    =>  Order::where('business_user_id', $userId)->with(['product','user'])->latest()->take(5)->get()->map(fn($o) => [
+                            'id'       => $o->id,
+                            'customer' => $o->user->name ?? 'Customer',
+                            'total'    => $o->total_price,
+                            'status'   => $o->status,
+                        ])->toArray(),
                 ],
                 'products' => [
                     'total'     => $totalProducts,
@@ -362,37 +372,82 @@ class BusinessController extends Controller
      * Get orders — placeholder until orders table is built
      */
     public function getOrders(Request $request)
-    {
-        try {
-            return response()->json(['orders' => []]);
-        } catch (\Exception $e) {
-            Log::error('Get orders error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error loading orders',
-                'error'   => $e->getMessage(),
-            ], 500);
-        }
+{
+    try {
+        $orders = Order::where('business_user_id', $request->user()->id)
+            ->with(['product', 'user'])
+            ->latest()
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'customer' => $order->user->name ?? 'Customer',
+                    'customer_phone' => $order->user->phone ?? null,
+
+                    'product_name' => $order->product->name ?? 'Product',
+                    'product_photo' => $order->product && $order->product->photo
+                        ? asset('storage/' . $order->product->photo)
+                        : null,
+
+                    'quantity' => $order->quantity,
+                    'unit_price' => $order->unit_price,
+                    'total' => $order->total_price,
+
+                    'status' => $order->status,
+                    'date' => $order->created_at->format('Y-m-d'),
+
+                    'delivery_address' => $order->delivery_address,
+                    'notes' => $order->notes,
+                ];
+            });
+
+        return response()->json([
+            'orders' => $orders
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Get orders error: ' . $e->getMessage());
+
+        return response()->json([
+            'message' => 'Error loading orders',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     /**
      * FIX #2: updateOrder was declared as a route but had no method — now it exists
      * Placeholder until orders table is built
      */
     public function updateOrder(Request $request, $id)
-    {
-        try {
-            // TODO: implement when orders table exists
-            // $order = Order::where('user_id', $request->user()->id)->findOrFail($id);
-            // $order->update(['status' => $request->status]);
-            return response()->json(['message' => 'Order updated successfully']);
-        } catch (\Exception $e) {
-            Log::error('Update order error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error updating order',
-                'error'   => $e->getMessage(),
-            ], 500);
-        }
+{
+    try {
+        $request->validate([
+            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+        ]);
+
+        $order = Order::where('business_user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        $order->update([
+            'status' => $request->status,
+        ]);
+
+        return response()->json([
+            'message' => 'Order updated successfully',
+            'order' => [
+                'id' => $order->id,
+                'status' => $order->status,
+            ]
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Update order error: ' . $e->getMessage());
+
+        return response()->json([
+            'message' => 'Error updating order',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     /**
      * Get sales data — placeholder until orders table is built

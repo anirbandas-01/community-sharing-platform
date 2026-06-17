@@ -264,7 +264,7 @@ const Register = () => {
                   label="Full Name"
                   name="name"
                   icon={User}
-                  placeholder="John Doe"
+                  placeholder="Rup Das"
                   value={formData.name}
                   onChange={handleChange}
                   required
@@ -298,7 +298,7 @@ const Register = () => {
                   label="City"
                   name="city"
                   icon={MapPin}
-                  placeholder="Mumbai"
+                  placeholder="Santipur"
                   value={formData.city}
                   onChange={handleChange}
                   required
@@ -308,7 +308,7 @@ const Register = () => {
                   label="State"
                   name="state"
                   icon={MapPin}
-                  placeholder="Maharashtra"
+                  placeholder="WestBengal"
                   value={formData.state}
                   onChange={handleChange}
                   required

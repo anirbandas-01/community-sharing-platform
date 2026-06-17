@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Star, Edit2, Trash2, MessageSquare } from 'lucide-react';
-import { Home, Users, Settings, User as UserIcon, Briefcase, Calendar, MessageCircle } from 'lucide-react';
+import { Home, Users, Settings, User as UserIcon, Briefcase, Calendar, MessageCircle, Store,ShoppingCart } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -14,6 +14,9 @@ export default function ResidentReviews() {
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
     { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
+    { icon: Users, label: 'Find Residents', path: '/resident/find-residents' },
+    { icon: Store, label: 'Shop', path: '/resident/shop' },
+    { icon: ShoppingCart, label: 'My Orders', path: '/resident/my-orders' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
     { icon: Star, label: 'My Reviews', path: '/resident/reviews' },
     { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },

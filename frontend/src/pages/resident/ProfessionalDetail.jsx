@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, MapPin, Phone, Mail, Clock, DollarSign, Calendar, MessageCircle, ArrowLeft, CheckCircle, Award, Briefcase } from 'lucide-react';
+import { Star, MapPin, Phone, Mail, Clock, DollarSign, Calendar, MessageCircle, ArrowLeft, CheckCircle, Award, Briefcase, Store,ShoppingCart } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -31,6 +31,8 @@ const ProfessionalDetail = () => {
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
     { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
+    { icon: Store, label: 'Shop', path: '/resident/shop' },
+    { icon: ShoppingCart, label: 'My Orders', path: '/resident/my-orders' },
     { icon: Calendar, label: 'My Bookings', path: '/resident/bookings' },
     { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Calendar, Clock, MapPin, Star, Filter, Search,
   MessageCircle, RefreshCw, CheckCircle, XCircle,
-  AlertCircle, Home, Users, Briefcase, Settings, User as UserIcon
+  AlertCircle, Home, Users, Briefcase, Settings, User as UserIcon, Store,ShoppingCart
 } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
@@ -36,6 +36,8 @@ const ResidentBookings = () => {
     { icon: Users,       label: 'My Communities',    path: '/resident/communities' },
     { icon: Briefcase,   label: 'Find Professionals',path: '/resident/professionals' },
     { icon: Users,       label: 'Find Residents',    path: '/resident/find-residents' },
+    { icon: Store, label: 'Shop', path: '/resident/shop' },
+    { icon: ShoppingCart, label: 'My Orders', path: '/resident/my-orders' },
     { icon: Calendar,    label: 'My Bookings',       path: '/resident/bookings' },
     { icon: Star,        label: 'My Reviews',        path: '/resident/reviews' },
     { icon: MessageCircle, label: 'Messages',        path: '/resident/messages' },

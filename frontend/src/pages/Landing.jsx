@@ -206,8 +206,12 @@ const Landing = () => {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg"></div>
-                <span className="text-white font-bold">LocalHub</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg">
+                    <div className="w-9 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                </div>
+                <span className="text-white font-bold">CommunitySharing</span>
               </div>
               <p className="text-sm">Connecting communities, one neighborhood at a time.</p>
             </div>
@@ -242,7 +246,7 @@ const Landing = () => {
               </Link>
           </div>
           <div className="pt-8 border-t border-gray-800 text-center text-sm">
-            <p>&copy; 2026 LocalHub. All rights reserved.</p>
+            <p>&copy; 2026 CommunitySharing. All rights reserved.</p>
           </div>
         </div>
       </footer>
