@@ -64,14 +64,17 @@ const ResidentProfessionals = () => {
   ];
 
   useEffect(() => {
-    fetchProfessionals();
-  }, [selectedCategory]);
+     const t = setTimeout(() => { fetchProfessionals(); }, 400);
+     return () => clearTimeout(t);
+  }, [selectedCategory, searchTerm]);
 
   const fetchProfessionals = async () => {
     try {
       setLoading(true);
       setError(null);
-      const params = selectedCategory !== 'all' ? { profession: selectedCategory } : {};
+      const params = {};
+      if (selectedCategory !== 'all') params.profession = selectedCategory;
+      if (searchTerm.trim()) params.search = searchTerm.trim();
       const response = await api.get('/professionals', { params });
       setProfessionals(response.data.professionals || []);
     } catch (err) {
@@ -83,12 +86,11 @@ const ResidentProfessionals = () => {
   };
 
   const filteredProfessionals = professionals.filter(pro =>
-    (selectedCategory === 'all' || pro.profession?.toLowerCase() === selectedCategory.toLowerCase()) &&
-    (searchTerm === '' ||
+    searchTerm === '' ||
       pro.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pro.profession?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pro.services?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
+    
   );
 
   const handleBookNow = (professional) => {

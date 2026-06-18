@@ -275,7 +275,7 @@ const CommunityDetail = () => {
                       />
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{post.author.name}</h3>
-                        <p className="text-sm text-gray-500">{post.timestamp}</p>
+                        <p className="text-sm text-gray-500">{post.time}</p>
                       </div>
                     </div>
                     <p className="text-gray-700 mb-4">{post.content}</p>

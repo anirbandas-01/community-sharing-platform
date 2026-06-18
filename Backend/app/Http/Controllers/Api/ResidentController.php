@@ -108,7 +108,7 @@ class ResidentController extends Controller
             $validated = $request->validate([
                 'professional_id' => 'required|exists:users,id',
                 'service_id' => 'required|exists:services,id',
-                'date' => 'required|date|after:today',
+                'date' => 'required|date|after_or_equal:today',
                 'time' => 'required',
                 'notes' => 'nullable|string|max:500',
             ]);
