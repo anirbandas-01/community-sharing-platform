@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, ShoppingCart, Package, Filter, X, Plus, Minus,
-  CheckCircle, AlertCircle, Store, ArrowLeft,
+  Search, ShoppingCart, Package, X, Plus, Minus,
+  CheckCircle, Store, MapPin,
 } from 'lucide-react';
-import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -12,7 +11,7 @@ import Input from '../../components/ui/Input';
 import api from '../../services/api';
 
 // ─── Cart Drawer ─────────────────────────────────────────────────────────────
-function CartDrawer({ cart, onClose, onUpdateQty, onRemove, onCheckout, placing }) {
+function CartDrawer({ cart, onClose, onUpdateQty, onRemove, onCheckout, placing, deliveryAddress, onAddressChange }) {
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   return (
@@ -42,48 +41,67 @@ function CartDrawer({ cart, onClose, onUpdateQty, onRemove, onCheckout, placing 
               <p className="text-gray-500">Your cart is empty</p>
             </div>
           ) : (
-            cart.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
-                {item.photo ? (
-                  <img src={item.photo} alt={item.name}
-                    className="w-16 h-16 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                    <Package className="w-7 h-7 text-gray-400" />
+            <>
+              {cart.map((item) => (
+                <div key={item.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+                  {item.photo ? (
+                    <img src={item.photo} alt={item.name}
+                      className="w-16 h-16 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                      <Package className="w-7 h-7 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{item.name}</p>
+                    <p className="text-xs text-gray-500 mb-2">{item.business_name}</p>
+                    <p className="text-primary-600 font-bold">₹{Number(item.price).toLocaleString()}</p>
                   </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onUpdateQty(item.id, item.qty - 1)}
+                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="w-6 text-center text-sm font-semibold">{item.qty}</span>
+                      <button
+                        onClick={() => onUpdateQty(item.id, item.qty + 1)}
+                        disabled={item.qty >= item.stock}
+                        className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => onRemove(item.id)}
+                      className="text-xs text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Delivery Address */}
+              <div className="pt-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                  <MapPin className="w-4 h-4 text-primary-600" />
+                  Delivery Address <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={deliveryAddress}
+                  onChange={(e) => onAddressChange(e.target.value)}
+                  rows={3}
+                  placeholder="Enter your full delivery address: flat/house no, street, area, city, pincode..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none text-sm"
+                />
+                {!deliveryAddress.trim() && (
+                  <p className="text-xs text-red-500 mt-1">Delivery address is required to place an order.</p>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{item.name}</p>
-                  <p className="text-xs text-gray-500 mb-2">{item.business_name}</p>
-                  <p className="text-primary-600 font-bold">₹{Number(item.price).toLocaleString()}</p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  {/* Qty controls */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onUpdateQty(item.id, item.qty - 1)}
-                      className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="w-6 text-center text-sm font-semibold">{item.qty}</span>
-                    <button
-                      onClick={() => onUpdateQty(item.id, item.qty + 1)}
-                      disabled={item.qty >= item.stock}
-                      className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => onRemove(item.id)}
-                    className="text-xs text-red-500 hover:text-red-700"
-                  >
-                    Remove
-                  </button>
-                </div>
               </div>
-            ))
+            </>
           )}
         </div>
 
@@ -95,14 +113,14 @@ function CartDrawer({ cart, onClose, onUpdateQty, onRemove, onCheckout, placing 
               <span className="text-2xl font-bold text-gray-900">₹{total.toLocaleString()}</span>
             </div>
             <p className="text-xs text-gray-400">
-              Note: Each item from the same business will be placed as a separate order.
+              Each item from the same business will be placed as a separate order.
             </p>
             <Button
               variant="primary"
               className="w-full"
               onClick={onCheckout}
               loading={placing}
-              disabled={placing}
+              disabled={placing || !deliveryAddress.trim()}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
               {placing ? 'Placing Orders...' : 'Place Order'}
@@ -148,11 +166,9 @@ function ProductCard({ product, onAddToCart, inCart }) {
 
   return (
     <Card hover className="flex flex-col">
-      {/* Image */}
       <div className="relative -mt-6 -mx-6 mb-4 h-48 bg-gray-100 rounded-t-xl overflow-hidden">
         {product.photo ? (
-          <img src={product.photo} alt={product.name}
-            className="w-full h-full object-cover" />
+          <img src={product.photo} alt={product.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Package className="w-12 h-12 text-gray-300" />
@@ -173,10 +189,8 @@ function ProductCard({ product, onAddToCart, inCart }) {
         )}
       </div>
 
-      {/* Info */}
       <div className="flex-1 flex flex-col">
         <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-2">{product.name}</h3>
-
         <div className="flex items-center gap-1 mb-3">
           <Store className="w-3 h-3 text-gray-400" />
           <span className="text-xs text-gray-500 truncate">{product.business?.name}</span>
@@ -184,7 +198,6 @@ function ProductCard({ product, onAddToCart, inCart }) {
             <span className="text-xs text-gray-400">· {product.business.city}</span>
           )}
         </div>
-
         <div className="flex items-center justify-between mt-auto">
           <div>
             <p className="text-2xl font-bold text-primary-600">
@@ -200,7 +213,6 @@ function ProductCard({ product, onAddToCart, inCart }) {
               )}
             </p>
           </div>
-
           <Button
             variant={inCart ? 'outline' : 'primary'}
             size="sm"
@@ -208,15 +220,9 @@ function ProductCard({ product, onAddToCart, inCart }) {
             onClick={() => onAddToCart(product)}
           >
             {inCart ? (
-              <>
-                <CheckCircle className="w-4 h-4 mr-1" />
-                In Cart
-              </>
+              <><CheckCircle className="w-4 h-4 mr-1" />In Cart</>
             ) : (
-              <>
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                Add
-              </>
+              <><ShoppingCart className="w-4 h-4 mr-1" />Add</>
             )}
           </Button>
         </div>
@@ -226,27 +232,24 @@ function ProductCard({ product, onAddToCart, inCart }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Main ProductStore component — used by BOTH resident and professional
+// Main ProductStore — shared for resident & professional
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function ProductStore({ menuItems, userType, DashboardLayout: Layout }) {
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [products, setProducts]           = useState([]);
+  const [categories, setCategories]       = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [searchTerm, setSearchTerm]       = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Cart: [{ id, name, photo, price, stock, qty, business_name, business_id }]
-  const [cart, setCart] = useState([]);
-  const [showCart, setShowCart] = useState(false);
-  const [placing, setPlacing] = useState(false);
+  const [cart, setCart]                   = useState([]);
+  const [showCart, setShowCart]           = useState(false);
+  const [placing, setPlacing]             = useState(false);
   const [successOrders, setSuccessOrders] = useState(null);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
 
-  // ── Fetch products ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory]);
+  useEffect(() => { fetchProducts(); }, [selectedCategory]);
 
   const fetchProducts = async () => {
     try {
@@ -263,7 +266,6 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
     }
   };
 
-  // ── Filter ──────────────────────────────────────────────────────────────────
   const filteredProducts = products.filter((p) => {
     if (!searchTerm) return true;
     const q = searchTerm.toLowerCase();
@@ -274,11 +276,9 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
     );
   });
 
-  // ── Cart helpers ────────────────────────────────────────────────────────────
   const addToCart = (product) => {
     setCart((prev) => {
-      const exists = prev.find((i) => i.id === product.id);
-      if (exists) return prev; // already in cart, don't duplicate
+      if (prev.find((i) => i.id === product.id)) return prev;
       return [
         ...prev,
         {
@@ -296,34 +296,29 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
   };
 
   const updateQty = (id, newQty) => {
-    if (newQty < 1) {
-      removeFromCart(id);
-      return;
-    }
+    if (newQty < 1) { removeFromCart(id); return; }
     setCart((prev) =>
       prev.map((i) => (i.id === id ? { ...i, qty: Math.min(newQty, i.stock) } : i))
     );
   };
 
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((i) => i.id !== id));
-  };
+  const removeFromCart = (id) => setCart((prev) => prev.filter((i) => i.id !== id));
 
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
 
-  // ── Checkout ────────────────────────────────────────────────────────────────
   const handleCheckout = async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0 || !deliveryAddress.trim()) return;
     setPlacing(true);
 
     const results = [];
-    const failed = [];
+    const failed  = [];
 
     for (const item of cart) {
       try {
         const res = await api.post('/store/orders', {
-          product_id: item.id,
-          quantity:   item.qty,
+          product_id:       item.id,
+          quantity:         item.qty,
+          delivery_address: deliveryAddress.trim(),
         });
         results.push(res.data.order);
       } catch (err) {
@@ -335,9 +330,9 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
 
     if (results.length > 0) {
       setCart([]);
+      setDeliveryAddress('');
       setShowCart(false);
       setSuccessOrders(results);
-      // Refresh products to show updated stock
       fetchProducts();
     }
 
@@ -346,17 +341,14 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
     }
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <Layout menuItems={menuItems} userType={userType}>
-      {/* Page Header */}
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-1">Shop</h1>
           <p className="text-gray-600">Browse products from local verified businesses</p>
         </div>
-
-        {/* Cart button */}
         <button
           onClick={() => setShowCart(true)}
           className="relative flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-medium"
@@ -386,9 +378,7 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
         <button
           onClick={() => setSelectedCategory('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0
-            ${selectedCategory === 'all'
-              ? 'bg-primary-600 text-white'
-              : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'}`}
+            ${selectedCategory === 'all' ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'}`}
         >
           All Products
         </button>
@@ -397,16 +387,13 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
             key={cat}
             onClick={() => setSelectedCategory(cat)}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0
-              ${selectedCategory === cat
-                ? 'bg-primary-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'}`}
+              ${selectedCategory === cat ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:border-primary-300'}`}
           >
             {cat}
           </button>
         ))}
       </div>
 
-      {/* Results count */}
       <p className="text-sm text-gray-500 mb-4">
         {loading ? 'Loading...' : `${filteredProducts.length} product${filteredProducts.length !== 1 ? 's' : ''} found`}
       </p>
@@ -456,6 +443,8 @@ export default function ProductStore({ menuItems, userType, DashboardLayout: Lay
           onRemove={removeFromCart}
           onCheckout={handleCheckout}
           placing={placing}
+          deliveryAddress={deliveryAddress}
+          onAddressChange={setDeliveryAddress}
         />
       )}
 

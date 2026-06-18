@@ -64,7 +64,7 @@ const ResidentMessages = () => {
   const fetchMessages = async (conversationId) => {
     try {
       setLoadingMessages(true);
-      const res = await api.get(`/messages/conversation/${conversationId}`);
+      const res = await api.get(`/messages/conversations/${conversationId}`);
       setMessages(res.data.messages || []);
     } catch {
       setError('Failed to load messages.');
@@ -77,7 +77,7 @@ const ResidentMessages = () => {
     setSelectedConversation(conv);
     fetchMessages(conv.id);
     // Mark as read
-    api.put(`/messages/conversation/${conv.id}/read`).catch(() => {});
+    /* api.put(`/messages/conversation/${conv.id}/read`).catch(() => {}); */
     setConversations(prev =>
       prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
     );

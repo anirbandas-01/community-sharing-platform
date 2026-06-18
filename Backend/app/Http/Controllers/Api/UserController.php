@@ -211,32 +211,33 @@ class UserController extends Controller
 
 
 
-    // GET /user/settings
-public function getSettings(Request $request)
-{
-    // Return default settings
-    return response()->json([
-        'email_notifications' => true,
-        'sms_notifications' => false,
-        'push_notifications' => true,
-        'booking_updates' => true,
-        'community_updates' => true,
-        'message_notifications' => true,
-        'promotional_emails' => false,
-        'profile_visibility' => 'public',
-        'show_phone' => true,
-        'show_email' => false,
-        'show_address' => false,
-        'language' => 'en',
-        'timezone' => 'Asia/Kolkata',
-        'theme' => 'light',
-    ]);
-}
-
-// POST /user/settings
-public function saveSettings(Request $request)
-{
-    // For now, just return success
-    return response()->json(['message' => 'Settings saved successfully']);
-}
+ // GET /user/settings
+    public function getSettings(Request $request)
+    {
+        $record   = \App\Models\UserSetting::where('user_id', $request->user()->id)->first();
+        $defaults = \App\Models\UserSetting::defaults();
+ 
+        // Merge saved settings over defaults so new keys always appear
+        $settings = $record
+            ? array_merge($defaults, $record->settings ?? [])
+            : $defaults;
+ 
+        return response()->json($settings);
+    }
+ 
+    // POST /user/settings
+    public function saveSettings(Request $request)
+    {
+        $allowed = array_keys(\App\Models\UserSetting::defaults());
+ 
+        // Only persist known keys
+        $incoming = array_intersect_key($request->all(), array_flip($allowed));
+ 
+        \App\Models\UserSetting::updateOrCreate(
+            ['user_id' => $request->user()->id],
+            ['settings' => $incoming]
+        );
+ 
+        return response()->json(['message' => 'Settings saved successfully']);
+    }
 }

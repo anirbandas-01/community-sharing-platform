@@ -312,20 +312,49 @@ class OrderController extends Controller
     {
         try {
             $businessUserId = $request->user()->id;
-
+ 
+            $period    = $request->query('period', 'month');
+            $startDate = match ($period) {
+                'week'  => now()->subWeek(),
+                'year'  => now()->subYear(),
+                default => now()->subMonth(),
+            };
+ 
+            // Previous period (same length) for growth comparison
+            $prevStart = match ($period) {
+                'week'  => now()->subWeeks(2),
+                'year'  => now()->subYears(2),
+                default => now()->subMonths(2),
+            };
+ 
+            // ── Revenue & orders for selected period ──
             $totalRevenue = Order::where('business_user_id', $businessUserId)
                 ->whereIn('status', ['delivered', 'shipped', 'processing'])
+                ->where('created_at', '>=', $startDate)
                 ->sum('total_price');
-
-            $totalOrders = Order::where('business_user_id', $businessUserId)->count();
-
+ 
+            $totalOrders = Order::where('business_user_id', $businessUserId)
+                ->where('created_at', '>=', $startDate)
+                ->count();
+ 
             $avgOrderValue = $totalOrders > 0
                 ? round($totalRevenue / $totalOrders, 2)
                 : 0;
-
-            // Top products
+ 
+            // ── Growth vs previous period ──
+            $prevRevenue = Order::where('business_user_id', $businessUserId)
+                ->whereIn('status', ['delivered', 'shipped', 'processing'])
+                ->whereBetween('created_at', [$prevStart, $startDate])
+                ->sum('total_price');
+ 
+            $growth = $prevRevenue > 0
+                ? round((($totalRevenue - $prevRevenue) / $prevRevenue) * 100, 1)
+                : 0;
+ 
+            // ── Top products for the period ──
             $topProducts = Order::where('business_user_id', $businessUserId)
                 ->whereIn('status', ['delivered', 'shipped', 'processing'])
+                ->where('created_at', '>=', $startDate)
                 ->select('product_id', DB::raw('SUM(quantity) as units'), DB::raw('SUM(total_price) as revenue'))
                 ->groupBy('product_id')
                 ->with('product')
@@ -337,11 +366,11 @@ class OrderController extends Controller
                     'units'   => $o->units,
                     'revenue' => number_format($o->revenue, 0),
                 ]);
-
-            // Daily sales (last 7 days)
+ 
+            // ── Daily sales chart data for the period ──
             $dailySales = Order::where('business_user_id', $businessUserId)
                 ->whereIn('status', ['delivered', 'shipped', 'processing'])
-                ->where('created_at', '>=', now()->subDays(7))
+                ->where('created_at', '>=', $startDate)
                 ->select(
                     DB::raw('DATE(created_at) as date'),
                     DB::raw('COUNT(*) as orders'),
@@ -355,12 +384,12 @@ class OrderController extends Controller
                     'orders'  => $d->orders,
                     'revenue' => number_format($d->revenue, 0),
                 ]);
-
+ 
             return response()->json([
                 'revenue'         => ['total' => $totalRevenue],
                 'orders'          => ['total' => $totalOrders],
                 'avg_order_value' => $avgOrderValue,
-                'growth'          => 0,
+                'growth'          => $growth,
                 'daily_sales'     => $dailySales,
                 'top_products'    => $topProducts,
             ]);
