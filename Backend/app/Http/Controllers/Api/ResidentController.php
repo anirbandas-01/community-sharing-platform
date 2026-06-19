@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\User;
 use App\Models\Service;
 use App\Models\Review;  // ← ADD THIS
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;  // ← ADD THIS
 
 class ResidentController extends Controller
@@ -128,6 +129,8 @@ class ResidentController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'total_price' => $service->price ?? 500,
             ]);
+            
+            NotificationService::bookingReceived($appointment);
 
             return response()->json([
                 'message' => 'Appointment booked successfully',
@@ -164,6 +167,7 @@ class ResidentController extends Controller
 
             $appointment->status = 'cancelled';
             $appointment->save();
+            NotificationService::bookingReceived($appointment);
 
             return response()->json([
                 'message' => 'Appointment cancelled successfully'

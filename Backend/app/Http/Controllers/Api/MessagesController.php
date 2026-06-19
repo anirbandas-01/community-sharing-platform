@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 
 class MessagesController extends Controller
@@ -143,6 +144,7 @@ class MessagesController extends Controller
 
             // Update last_message_at on conversation
             $conversation->update(['last_message_at' => now()]);
+            NotificationService::newMessage($message, $conversation);
 
             return response()->json([
                 'message'         => 'Message sent successfully',

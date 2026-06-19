@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Community;
 use App\Models\CommunityPost;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 
 class CommunityPostsController extends Controller
@@ -99,6 +100,7 @@ class CommunityPostsController extends Controller
             ]);
 
             $post->load('user');
+            NotificationService::communityPost($post);
 
             return response()->json([
                 'message' => 'Post created',

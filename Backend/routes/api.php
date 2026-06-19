@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\MessagesController;
 use App\Http\Controllers\Api\ReviewsController;
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\CommunityPostsController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\SearchController;
@@ -76,6 +77,15 @@ Route::prefix('admin')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::prefix('notifications')->group(function () {
+    Route::get('/',          [NotificationController::class, 'index']);
+    Route::get('/count',     [NotificationController::class, 'count']);
+    Route::put('/read-all',  [NotificationController::class, 'markAllRead']);
+    Route::delete('/',       [NotificationController::class, 'clearAll']);
+    Route::put('/{id}/read', [NotificationController::class, 'markRead']);
+    Route::delete('/{id}',   [NotificationController::class, 'destroy']);
+   });
 
     Route::prefix('user')->group(function () {
         Route::get('/profile', [UserController::class, 'profile']);

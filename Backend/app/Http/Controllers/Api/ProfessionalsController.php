@@ -9,6 +9,7 @@ use App\Models\Service;
 use App\Models\Appointment;
 use App\Models\Review;
 use App\Models\ProfessionalProfile;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -562,6 +563,12 @@ private function calculateResponseTime($professionalId)
 
             $appointment->status = $validated['status'];
             $appointment->save();
+            match ($validated['status']) {
+            'confirmed'  => NotificationService::bookingConfirmed($appointment),
+            'cancelled'  => NotificationService::bookingCancelled($appointment, 'professional'),
+            'completed'  => NotificationService::bookingCompleted($appointment),
+            default      => null,
+        };
 
             return response()->json([
                 'message' => 'Appointment updated successfully',

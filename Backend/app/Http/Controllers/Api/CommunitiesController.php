@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Community;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class CommunitiesController extends Controller
@@ -216,6 +217,7 @@ class CommunitiesController extends Controller
 
             // Update member count
             $community->increment('member_count');
+            NotificationService::communityJoined($request->user()->id, $community);
 
             return response()->json([
                 'message' => 'Joined community successfully'

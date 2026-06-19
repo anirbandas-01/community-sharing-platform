@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\NotificationService;
 
 class OrderController extends Controller
 {
@@ -158,6 +159,7 @@ class OrderController extends Controller
             });
 
             $order->load('product', 'business');
+            NotificationService::orderPlaced($order);
 
             return response()->json([
                 'message' => 'Order placed successfully',
@@ -222,6 +224,7 @@ class OrderController extends Controller
 
                 $order->status = 'cancelled';
                 $order->save();
+                NotificationService::orderCancelled($order, 'buyer');
             });
 
             return response()->json(['message' => 'Order cancelled successfully']);
@@ -292,10 +295,20 @@ class OrderController extends Controller
                     }
                     $order->status = $validated['status'];
                     $order->save();
+                    if ($order->status === 'cancelled') {
+                        NotificationService::orderCancelled($order, 'business');
+                    } else {
+                        NotificationService::orderStatusChanged($order);
+                    }
                 });
             } else {
                 $order->status = $validated['status'];
                 $order->save();
+                 if ($order->status === 'cancelled') {
+                    NotificationService::orderCancelled($order, 'business');
+                } else {
+                    NotificationService::orderStatusChanged($order);
+                }
             }
 
             return response()->json(['message' => 'Order updated successfully']);

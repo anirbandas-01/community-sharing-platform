@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Bell, Search, LogOut, User, Settings } from 'lucide-react';
+import { Menu, X, Search, LogOut, User, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
+import NotificationBell from '../NotificationBell';
 
 const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -140,10 +141,7 @@ const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) =>
               {/* Right Side */}
               <div className="flex items-center gap-4">
                 {/* Notifications */}
-                <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                  <Bell className="w-6 h-6" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <NotificationBell userType={userType} />
 
                 {/* User Menu */}
                 <div className="relative">

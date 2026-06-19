@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Review;
 use App\Models\Appointment;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 
 class ReviewsController extends Controller
@@ -69,6 +70,8 @@ class ReviewsController extends Controller
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
             ]);
+
+            NotificationService::reviewReceived($review);
 
             $review->load('user');
 
@@ -219,6 +222,8 @@ class ReviewsController extends Controller
             $review->professional_response = $validated['response'];
             $review->responded_at = now();
             $review->save();
+
+            NotificationService::reviewResponded($review);
 
             return response()->json([
                 'message' => 'Response added successfully',

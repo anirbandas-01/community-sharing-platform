@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 
 class SearchController extends Controller
@@ -238,7 +239,20 @@ class SearchController extends Controller
                 'role'   => 'member',
                 'status' => 'active',
             ]);
+
+            NotificationService::communityInvite(
+                $validated['user_id'],
+                $community,
+                $request->user()
+            );
+
             $community->increment('member_count');
+            
+            NotificationService::communityInvite(
+                $validated['user_id'],
+                $community,
+                $request->user()
+            );
 
             return response()->json([
                 'message' => 'Invitation sent and user added to community successfully',
