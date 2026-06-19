@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Store, Edit2, Save, X, Building2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Mail, Phone, MapPin, Store, Edit2, Save, X, Building2, Camera } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -22,7 +22,7 @@ const menuItems = [
   { icon: Settings,     label: 'Settings',   path: '/business/settings' },
 ];
 
-// FIX #6: helper that maps enterprise status to the right badge
+// Dynamic badge based on enterprise status
 const EnterpriseBadge = ({ enterprise }) => {
   if (!enterprise) {
     return <Badge variant="warning">No Enterprise Registered</Badge>;
@@ -37,11 +37,16 @@ const EnterpriseBadge = ({ enterprise }) => {
 };
 
 const BusinessProfile = () => {
-  const { user } = useAuth();
-  const [profile, setProfile]   = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
+  const { user, checkAuth } = useAuth();
+  const fileInputRef = useRef(null);
+
+  const [profile, setProfile]         = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [isEditing, setIsEditing]     = useState(false);
+  const [formData, setFormData]       = useState({});
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [successMsg, setSuccessMsg]   = useState('');
+  const [error, setError]             = useState(null);
 
   useEffect(() => { fetchProfile(); }, []);
 
@@ -53,11 +58,54 @@ const BusinessProfile = () => {
       setFormData(response.data);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      setError('Failed to load profile.');
     } finally {
       setLoading(false);
     }
   };
 
+  const showSuccess = (msg) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 3500);
+  };
+
+  // ── Profile photo upload ──────────────────────────────────────────────────
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Image must be under 2MB.');
+      return;
+    }
+
+    try {
+      setUploadingPhoto(true);
+      setError(null);
+      const data = new FormData();
+      data.append('photo', file);
+
+      const response = await api.post('/user/profile/photo', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      // Update local profile state with new image URL
+      setProfile(prev => ({ ...prev, profile_image: response.data.profile_image }));
+
+      // Refresh auth context so header avatar updates too
+      if (checkAuth) checkAuth();
+
+      showSuccess('Profile photo updated successfully!');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input so same file can be re-selected if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  // ── Profile text fields save ──────────────────────────────────────────────
   const handleSave = async () => {
     try {
       const updateData = {
@@ -68,18 +116,37 @@ const BusinessProfile = () => {
         address: formData.address,
       };
       await api.put('/business/profile', updateData);
-      setProfile({ ...profile, ...updateData });
+      setProfile(prev => ({ ...prev, ...updateData }));
       setIsEditing(false);
-      alert('Profile updated successfully!');
+      showSuccess('Profile updated successfully!');
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert(error.response?.data?.message || 'Failed to update profile');
+      setError(error.response?.data?.message || 'Failed to update profile.');
     }
   };
 
-  const handleCancel = () => { setFormData(profile); setIsEditing(false); };
+  const handleCancel = () => { setFormData(profile); setIsEditing(false); setError(null); };
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // ── Avatar helper — handles Supabase URLs and local storage paths ─────────
+  const getAvatarSrc = () => {
+    const img = profile?.profile_image;
+    if (!img || img === 'null' || img === '') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://127.0.0.1:8000'}${img}`;
+  };
+
+  const getEnterprisePh = () => {
+    const img = profile?.enterprise?.enterprise_photo;
+    if (!img || img === 'null' || img === '') return null;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return `${import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://127.0.0.1:8000'}/storage/${img}`;
+  };
+
+  const initials = profile?.name?.charAt(0)?.toUpperCase() || 'B';
+  const avatarSrc = getAvatarSrc();
+  const enterprisePhoto = getEnterprisePh();
+
+  // ── Loading / error states ────────────────────────────────────────────────
   if (loading) {
     return (
       <DashboardLayout menuItems={menuItems} userType="business">
@@ -131,29 +198,78 @@ const BusinessProfile = () => {
         )}
       </div>
 
+      {/* Success banner */}
+      {successMsg && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-green-700 font-medium">{successMsg}</span>
+          <button onClick={() => setSuccessMsg('')} className="text-green-400 text-lg">×</button>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-red-700">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400 text-lg">×</button>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-8">
 
-        {/* ── Left: avatar + contact ── */}
-        <div className="lg:col-span-1">
+        {/* ── Left column ── */}
+        <div className="lg:col-span-1 space-y-6">
+
+          {/* Avatar card with upload */}
           <Card>
             <div className="text-center mb-6">
-              {profile.profile_image ? (
-                <img
-                  src={profile.profile_image}
-                  alt={profile.name}
-                  className="w-32 h-32 rounded-full object-cover mx-auto mb-4"
+
+              {/* Avatar + camera button */}
+              <div className="relative inline-block mb-4">
+                {avatarSrc ? (
+                  <img
+                    src={avatarSrc}
+                    alt={profile.name}
+                    className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-lg"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-4xl font-bold mx-auto">
+                    {initials}
+                  </div>
+                )}
+
+                {/* Camera button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  title="Change profile photo"
+                  className="absolute bottom-1 right-1 w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center text-white hover:bg-primary-700 transition-colors shadow-md border-2 border-white disabled:opacity-60"
+                >
+                  {uploadingPhoto ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                </button>
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
                 />
-              ) : (
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4">
-                  {profile.name?.charAt(0) || 'B'}
-                </div>
-              )}
+              </div>
+
+              <p className="text-xs text-gray-400 mb-4">JPG or PNG · max 2MB</p>
+
               <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
               <p className="text-gray-600 mb-3 capitalize">{profile.user_type}</p>
-              {/* FIX #6: dynamic badge based on enterprise.status */}
               <EnterpriseBadge enterprise={profile.enterprise} />
             </div>
 
+            {/* Contact info */}
             <div className="space-y-3 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Phone className="w-5 h-5 flex-shrink-0" />
@@ -169,6 +285,7 @@ const BusinessProfile = () => {
               </div>
             </div>
 
+            {/* Enterprise summary */}
             {profile.enterprise && (
               <div className="pt-6 mt-6 border-t border-gray-200">
                 <div className="flex items-center gap-2 mb-4">
@@ -186,10 +303,32 @@ const BusinessProfile = () => {
               </div>
             )}
           </Card>
+
+          {/* ── Enterprise photo card (NEW) ── */}
+          {enterprisePhoto && (
+            <Card>
+              <div className="flex items-center gap-2 mb-4">
+                <Building2 className="w-5 h-5 text-primary-600" />
+                <h3 className="font-semibold text-gray-900">Business Photo</h3>
+              </div>
+              <img
+                src={enterprisePhoto}
+                alt={profile.enterprise?.company_name || 'Business'}
+                className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+              />
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                To update this photo, re-apply via enterprise registration.
+              </p>
+            </Card>
+          )}
+
         </div>
 
-        {/* ── Right: editable fields ── */}
+        {/* ── Right column ── */}
         <div className="lg:col-span-2 space-y-6">
+
+          {/* Basic editable info */}
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-6">Basic Information</h2>
             <div className="grid md:grid-cols-2 gap-6">
@@ -248,7 +387,7 @@ const BusinessProfile = () => {
             </div>
           </Card>
 
-          {/* Enterprise details (read-only — edited via the enterprise registration page) */}
+          {/* Enterprise details (read-only) */}
           {profile.enterprise && (
             <Card>
               <h2 className="text-xl font-bold text-gray-900 mb-6">Enterprise Details</h2>
@@ -273,8 +412,8 @@ const BusinessProfile = () => {
               </div>
             </Card>
           )}
-        </div>
 
+        </div>
       </div>
     </DashboardLayout>
   );
