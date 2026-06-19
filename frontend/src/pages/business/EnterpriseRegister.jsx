@@ -80,6 +80,14 @@ const EnterpriseRegister = () => {
     reader.readAsDataURL(file);
   };
 
+  const [isReApply, setIsReApply] = useState(false);
+  useEffect(() => {
+  api.get('/business/profile').then(res => {
+    if (res.data.enterprise?.status === 'rejected') setIsReApply(true);
+    }).catch(() => {});
+  }, []);
+
+
   const validate = () => {
     const e = {};
     if (!formData.companyName.trim())        e.companyName        = 'Company name is required';
@@ -97,7 +105,7 @@ const EnterpriseRegister = () => {
     if (!formData.address.trim())            e.address            = 'Address is required';
     if (!formData.city.trim())               e.city               = 'City is required';
     if (formData.description.trim().length < 20) e.description   = 'Description must be at least 20 characters';
-    if (!formData.photo)                     e.photo              = 'Upload a business photo';
+    if (!formData.photo && !isReApply)                     e.photo              = 'Upload a business photo';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -340,7 +348,7 @@ const EnterpriseRegister = () => {
                 <div>
                   <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-sm text-gray-600 mb-1">Upload your business / office photo</p>
-                  <p className="text-xs text-gray-400">JPG, PNG up to 5MB</p>
+                  <p className="text-xs text-gray-400">JPG, PNG up to 5MB {isReApply ? ' · Leave blank to keep existing photo' : ''}</p>
                 </div>
               )}
             </div>

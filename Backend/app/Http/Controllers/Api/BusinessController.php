@@ -31,9 +31,7 @@ class BusinessController extends Controller
                 'state'         => $user->state,
                 'address'       => $user->address,
                 // FIX #4: always return a full URL so the frontend doesn't need to guess
-                'profile_image' => $user->profile_image
-                    ? asset('storage/' . $user->profile_image)
-                    : null,
+                'profile_image' => $user->profile_image ??  null ,
                 'user_type'     => $user->user_type,
             ];
 
