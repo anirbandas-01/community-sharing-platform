@@ -5,32 +5,27 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
+use App\Services\NotificationService;
 
 class SearchController extends Controller
 {
     /**
      * GET /residents/search?name=John&city=Kolkata
-     * Search residents by name and/or city
-     * Used by FindResidents.jsx
      */
     public function searchResidents(Request $request)
     {
         try {
             $query = User::where('user_type', 'resident');
 
-            // Filter out the currently logged-in user
             if ($request->user()) {
                 $query->where('id', '!=', $request->user()->id);
             }
 
-            // Search by name
             if ($request->filled('name')) {
                 $query->where('name', 'LIKE', '%' . $request->name . '%');
             }
 
-            // Filter by city
             if ($request->filled('city')) {
                 $query->where('city', 'LIKE', '%' . $request->city . '%');
             }
@@ -41,15 +36,13 @@ class SearchController extends Controller
                 ->limit(30)
                 ->get()
                 ->map(function ($resident) use ($request) {
-                    // Count communities this resident is in
-                    $communitiesCount = $resident->communities()->count();
-
-                    // Count mutual communities (communities both share)
+                    $communitiesCount  = $resident->communities()->count();
                     $mutualCommunities = 0;
+
                     if ($request->user()) {
-                        $myCommIds      = $request->user()->communities()->pluck('communities.id')->toArray();
-                        $theirCommIds   = $resident->communities()->pluck('communities.id')->toArray();
-                        $mutualCommunities = count(array_intersect($myCommIds, $theirCommIds));
+                        $myIds    = $request->user()->communities()->pluck('communities.id')->toArray();
+                        $theirIds = $resident->communities()->pluck('communities.id')->toArray();
+                        $mutualCommunities = count(array_intersect($myIds, $theirIds));
                     }
 
                     return [
@@ -61,7 +54,7 @@ class SearchController extends Controller
                             ?? 'https://ui-avatars.com/api/?name=' . urlencode($resident->name) . '&size=56&background=6366f1&color=fff',
                         'communities_count'  => $communitiesCount,
                         'mutual_communities' => $mutualCommunities,
-                        'is_online'          => false, // extend later with presence system
+                        'is_online'          => false,
                         'member_since'       => $resident->created_at->format('M Y'),
                     ];
                 });
@@ -72,28 +65,25 @@ class SearchController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Search residents error: ' . $e->getMessage());
-            return response()->json([
-                'message'   => 'Failed to search residents',
-                'residents' => [],
-            ], 500);
+            return response()->json(['message' => 'Failed to search residents', 'residents' => []], 500);
         }
     }
 
     /**
      * GET /search/users?q=John
-     * Search ALL users (residents + professionals) by name
-     * Used by MessagingCenter "New Message" modal — falls back from /search/professionals
+     * FIX: now searches ALL user types (resident, professional, business)
+     * Used by MessagingCenter "New Message" modal
      */
     public function searchUsers(Request $request)
     {
         try {
-            $q = $request->input('q', $request->input('search', ''));
+            $q = trim($request->input('q', $request->input('search', '')));
 
-            if (empty(trim($q))) {
+            if (empty($q)) {
                 return response()->json(['users' => []]);
             }
 
-            $query = User::whereIn('user_type', ['resident', 'professional'])
+            $query = User::whereIn('user_type', ['resident', 'professional', 'business'])
                 ->where('name', 'LIKE', '%' . $q . '%');
 
             // Exclude self
@@ -102,17 +92,22 @@ class SearchController extends Controller
             }
 
             $users = $query
+                ->with('professionalProfile', 'enterprise')
                 ->select('id', 'name', 'user_type', 'city', 'profile_image')
-                ->limit(20)
+                ->limit(25)
                 ->get()
                 ->map(function ($user) {
+                    $subtitle = match ($user->user_type) {
+                        'professional' => $user->professionalProfile->specialization ?? 'Professional',
+                        'business'     => $user->enterprise->company_name ?? 'Business',
+                        default        => 'Resident',
+                    };
+
                     return [
                         'id'         => $user->id,
                         'name'       => $user->name,
                         'role'       => ucfirst($user->user_type),
-                        'profession' => $user->user_type === 'professional'
-                            ? ($user->professionalProfile->specialization ?? 'Professional')
-                            : 'Resident',
+                        'profession' => $subtitle,
                         'city'       => $user->city,
                         'image'      => $user->profile_image
                             ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&size=40&background=6366f1&color=fff',
@@ -122,17 +117,12 @@ class SearchController extends Controller
             return response()->json(['users' => $users]);
         } catch (\Exception $e) {
             Log::error('Search users error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to search users',
-                'users'   => [],
-            ], 500);
+            return response()->json(['message' => 'Failed to search users', 'users' => []], 500);
         }
     }
 
     /**
      * GET /search/professionals?search=John&profession=plumber&city=Mumbai
-     * Search professionals only (already used by frontend fallback + ResidentController)
-     * Kept here so all search logic lives in one place
      */
     public function searchProfessionals(Request $request)
     {
@@ -160,45 +150,44 @@ class SearchController extends Controller
                 $query->where('city', $request->city);
             }
 
+            // Exclude self if logged-in user is also a professional
+            if ($request->user()) {
+                $query->where('id', '!=', $request->user()->id);
+            }
+
             $professionals = $query->limit(20)->get()->map(function ($pro) {
                 $avgRating    = \App\Models\Review::where('professional_id', $pro->id)->avg('rating');
                 $reviewsCount = \App\Models\Review::where('professional_id', $pro->id)->count();
 
                 return [
-                    'id'           => $pro->id,
-                    'name'         => $pro->name,
-                    'profession'   => $pro->professionalProfile->specialization ?? 'Professional',
-                    'rating'       => $avgRating ? round($avgRating, 1) : null,
-                    'reviews_count'=> $reviewsCount,
-                    'price'        => $pro->professionalProfile
+                    'id'            => $pro->id,
+                    'name'          => $pro->name,
+                    'profession'    => $pro->professionalProfile->specialization ?? 'Professional',
+                    'rating'        => $avgRating ? round($avgRating, 1) : null,
+                    'reviews_count' => $reviewsCount,
+                    'price'         => $pro->professionalProfile
                         ? '₹' . number_format($pro->professionalProfile->hourly_rate ?? 500, 0)
                         : '₹500',
-                    'experience'   => ($pro->professionalProfile->experience_years ?? 0) . ' years',
-                    'location'     => $pro->city ?? 'Location',
-                    'verified'     => $pro->professionalProfile->is_verified ?? false,
-                    'available'    => true,
-                    'image'        => $pro->profile_image
+                    'experience'    => ($pro->professionalProfile->experience_years ?? 0) . ' years',
+                    'location'      => $pro->city ?? 'Location',
+                    'verified'      => $pro->professionalProfile->is_verified ?? false,
+                    'available'     => true,
+                    'image'         => $pro->profile_image
                         ?? 'https://ui-avatars.com/api/?name=' . urlencode($pro->name) . '&size=56&background=6366f1&color=fff',
-                    'services'     => $pro->services->pluck('name')->toArray(),
-                    // also expose as 'role' so the messaging modal can display it
-                    'role'         => $pro->professionalProfile->specialization ?? 'Professional',
+                    'services'      => $pro->services->pluck('name')->toArray(),
+                    'role'          => $pro->professionalProfile->specialization ?? 'Professional',
                 ];
             });
 
             return response()->json(['professionals' => $professionals]);
         } catch (\Exception $e) {
             Log::error('Search professionals error: ' . $e->getMessage());
-            return response()->json([
-                'message'       => 'Failed to search professionals',
-                'professionals' => [],
-            ], 500);
+            return response()->json(['message' => 'Failed to search professionals', 'professionals' => []], 500);
         }
     }
 
     /**
      * POST /communities/{id}/invite
-     * Invite a user to a community
-     * Used by FindResidents invite modal
      */
     public function inviteToCommunity(Request $request, $communityId)
     {
@@ -209,13 +198,6 @@ class SearchController extends Controller
 
             $community = \App\Models\Community::findOrFail($communityId);
 
-            // Only community admins/moderators can invite
-            $isMod = $community->members()
-                ->where('user_id', $request->user()->id)
-                ->whereIn('community_members.role', ['admin', 'moderator'])
-                ->exists();
-
-            // Allow any member to invite for now (change to $isMod check if you want strict access)
             $isMember = $community->members()
                 ->where('user_id', $request->user()->id)
                 ->exists();
@@ -224,7 +206,6 @@ class SearchController extends Controller
                 return response()->json(['message' => 'You must be a member to invite others'], 403);
             }
 
-            // Check if already a member
             $alreadyMember = $community->members()
                 ->where('user_id', $validated['user_id'])
                 ->exists();
@@ -233,35 +214,24 @@ class SearchController extends Controller
                 return response()->json(['message' => 'User is already a member of this community'], 400);
             }
 
-            // For now: directly add them as member (no separate invite table needed)
-            // If you want a proper invitation flow with accept/reject, add an invitations table later
             $community->members()->attach($validated['user_id'], [
                 'role'   => 'member',
                 'status' => 'active',
             ]);
 
+                        // Send notification to invited user
             NotificationService::communityInvite(
                 $validated['user_id'],
                 $community,
                 $request->user()
             );
-
-            $community->increment('member_count');
             
-            NotificationService::communityInvite(
-                $validated['user_id'],
-                $community,
-                $request->user()
-            );
+            $community->increment('member_count');
 
-            return response()->json([
-                'message' => 'Invitation sent and user added to community successfully',
-            ]);
+            return response()->json(['message' => 'Invitation sent successfully']);
         } catch (\Exception $e) {
             Log::error('Invite to community error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to send invitation',
-            ], 500);
+            return response()->json(['message' => 'Failed to send invitation'], 500);
         }
     }
 }

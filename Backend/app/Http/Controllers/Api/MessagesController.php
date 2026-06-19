@@ -7,14 +7,15 @@ use Illuminate\Http\Request;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
-use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
+use App\Services\NotificationService;
 
 class MessagesController extends Controller
 {
     /**
      * GET /messages/conversations
-     * Returns all conversations for the authenticated user
+     * Returns all conversations for the authenticated user,
+     * ordered by most-recent message (WhatsApp style).
      */
     public function conversations(Request $request)
     {
@@ -23,34 +24,49 @@ class MessagesController extends Controller
 
             $conversations = Conversation::where('user_one_id', $userId)
                 ->orWhere('user_two_id', $userId)
-                ->with(['userOne', 'userTwo', 'latestMessage.sender'])
+                ->with([
+                    'userOne.professionalProfile',
+                    'userOne.enterprise',
+                    'userTwo.professionalProfile',
+                    'userTwo.enterprise',
+                    'latestMessage.sender'
+                ])
                 ->orderBy('last_message_at', 'desc')
                 ->get()
                 ->map(function ($conversation) use ($userId) {
                     $otherUser   = $conversation->otherUser($userId);
                     $lastMessage = $conversation->latestMessage;
 
-                    // Count unread messages sent by the other user
                     $unreadCount = Message::where('conversation_id', $conversation->id)
                         ->where('sender_id', '!=', $userId)
                         ->where('is_read', false)
                         ->count();
 
+                    // Build role label (Resident / Professional / Business name)
+                    $role = match ($otherUser->user_type) {
+                        'professional' => optional($otherUser->professionalProfile)->specialization ?? 'Professional',
+                        'business'     => optional($otherUser->enterprise)->company_name ?? 'Business',
+                        'resident'     => 'Resident',
+                        default        => ucfirst($otherUser->user_type),
+                    };
+
                     return [
-                        'id'                => $conversation->id,
-                        'user'              => [
+                        'id'              => $conversation->id,
+                        'user'            => [
                             'id'     => $otherUser->id,
                             'name'   => $otherUser->name,
                             'avatar' => $otherUser->profile_image
                                 ?? 'https://ui-avatars.com/api/?name=' . urlencode($otherUser->name) . '&size=48&background=6366f1&color=fff',
-                            'role'   => ucfirst($otherUser->user_type),
+                            'role'   => $role,
                             'online' => false,
                         ],
-                        'last_message'      => $lastMessage ? $lastMessage->message : 'No messages yet',
+                        'last_message'    => $lastMessage ? $lastMessage->message : null,
+                        // FIX: expose as both field names so UI can use either
+                        'last_message_at' => $conversation->last_message_at?->toIso8601String(),
                         'last_message_time' => $lastMessage
                             ? $lastMessage->created_at->diffForHumans()
                             : '',
-                        'unread_count'      => $unreadCount,
+                        'unread_count'    => $unreadCount,
                     ];
                 });
 
@@ -64,20 +80,19 @@ class MessagesController extends Controller
 
     /**
      * GET /messages/conversations/{id}
-     * Returns messages for a specific conversation
      */
     public function messages(Request $request, $id)
     {
         try {
-            $userId       = $request->user()->id;
+            $userId = $request->user()->id;
+
             $conversation = Conversation::where('id', $id)
                 ->where(function ($q) use ($userId) {
-                    $q->where('user_one_id', $userId)
-                      ->orWhere('user_two_id', $userId);
+                    $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
                 })
                 ->firstOrFail();
 
-            // Mark messages from the other user as read
+            // Mark incoming messages as read
             Message::where('conversation_id', $id)
                 ->where('sender_id', '!=', $userId)
                 ->where('is_read', false)
@@ -107,7 +122,7 @@ class MessagesController extends Controller
 
     /**
      * POST /messages
-     * Send a message — creates conversation if it doesn't exist
+     * Send a message in an existing conversation.
      */
     public function send(Request $request)
     {
@@ -120,12 +135,10 @@ class MessagesController extends Controller
 
             $userId = $request->user()->id;
 
-            // Get or create conversation
             if (!empty($validated['conversation_id'])) {
                 $conversation = Conversation::where('id', $validated['conversation_id'])
                     ->where(function ($q) use ($userId) {
-                        $q->where('user_one_id', $userId)
-                          ->orWhere('user_two_id', $userId);
+                        $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
                     })
                     ->firstOrFail();
             } elseif (!empty($validated['recipient_id'])) {
@@ -134,7 +147,6 @@ class MessagesController extends Controller
                 return response()->json(['message' => 'Either conversation_id or recipient_id is required'], 422);
             }
 
-            // Create the message
             $message = Message::create([
                 'conversation_id' => $conversation->id,
                 'sender_id'       => $userId,
@@ -142,13 +154,17 @@ class MessagesController extends Controller
                 'is_read'         => false,
             ]);
 
-            // Update last_message_at on conversation
             $conversation->update(['last_message_at' => now()]);
-            NotificationService::newMessage($message, $conversation);
+
+            // Send notification to recipient
+                NotificationService::newMessage(
+                    $message,
+                    $conversation
+                );
 
             return response()->json([
-                'message'         => 'Message sent successfully',
-                'data'            => [
+                'message' => 'Message sent successfully',
+                'data'    => [
                     'id'              => $message->id,
                     'conversation_id' => $conversation->id,
                     'message'         => $message->message,
@@ -165,7 +181,8 @@ class MessagesController extends Controller
 
     /**
      * POST /messages/start
-     * Start a new conversation with a user (e.g. from professional profile page)
+     * Start (or find) a conversation with any user.
+     * FIX: single handler — removed the conflicting CommunityPostsController binding.
      */
     public function start(Request $request)
     {
@@ -174,7 +191,12 @@ class MessagesController extends Controller
                 'recipient_id' => 'required|integer|exists:users,id',
             ]);
 
-            $userId       = $request->user()->id;
+            $userId = $request->user()->id;
+
+            if ($userId === $validated['recipient_id']) {
+                return response()->json(['message' => 'Cannot message yourself'], 400);
+            }
+
             $conversation = Conversation::findOrCreateBetween($userId, $validated['recipient_id']);
 
             return response()->json([

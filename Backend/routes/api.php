@@ -85,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/',       [NotificationController::class, 'clearAll']);
     Route::put('/{id}/read', [NotificationController::class, 'markRead']);
     Route::delete('/{id}',   [NotificationController::class, 'destroy']);
+    Route::put('/user/notifications', [UserController::class, 'saveSettings']);
    });
 
     Route::prefix('user')->group(function () {
@@ -218,7 +219,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/communities/{id}/posts/{postId}/like', [CommunityPostsController::class, 'like']);
 
     // Start DM Conversation
-    Route::post('/messages/start', [CommunityPostsController::class, 'startConversation']);
+    Route::post('/messages/start', [MessagesController::class, 'start']);
     
     // Settings (PROTECTED)
     Route::get('/user/settings', [UserController::class, 'getSettings']);
