@@ -272,10 +272,6 @@ const BusinessProfile = () => {
               </div>
 
               <p className="text-xs text-gray-400 mb-4">JPG or PNG · max 2MB</p>
-
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
-              <p className="text-gray-600 mb-3 capitalize">{profile.user_type}</p>
-              
               <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
               <p className="text-gray-600 mb-3 capitalize">{profile.user_type}</p>
               <EnterpriseBadge enterprise={profile.enterprise} />
