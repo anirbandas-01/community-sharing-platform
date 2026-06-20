@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\CommunityPostsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Http;
@@ -36,9 +37,24 @@ use Illuminate\Support\Facades\Http;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+//otp routes
+Route::prefix('otp')->group(function () {
+    // Registration flow
+    Route::post('/send-registration',   [OtpController::class, 'sendRegistrationOtp']);
+    Route::post('/verify-registration', [OtpController::class, 'verifyRegistrationOtp']);
+
+    // Password reset flow
+    Route::post('/send-password-reset',   [OtpController::class, 'sendPasswordResetOtp']);
+    Route::post('/verify-password-reset', [OtpController::class, 'verifyPasswordResetOtp']);
+
+    // Resend (for both purposes)
+    Route::post('/resend', [OtpController::class, 'resend']);
+});
+
 // Password reset — public routes (no auth required)
 Route::post('/forgot-password', [PasswordResetController::class, 'validateEmail']);
 Route::post('/reset-password',  [PasswordResetController::class, 'resetPassword']);
+
 
 // Admin Routes (add after other routes)
 Route::prefix('admin')->group(function () {
