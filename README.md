@@ -1,4 +1,4 @@
-# LocalHub - Community Sharing Platform
+# CommunitySharing - Community Sharing Platform
 
 <div align="center">
   <h3>🌍 Connect. Share. Collaborate.</h3>
@@ -12,9 +12,9 @@
 
 ---
 
-## 📖 About LocalHub
+## 📖 About CommunitySharing
 
-LocalHub is a community-driven platform designed to facilitate resource sharing, collaboration, and connection among community members. Whether you're looking to share tools, collaborate on projects, or connect with like-minded individuals in your area, LocalHub provides the digital infrastructure to make it happen.
+CommunitySharing is a community-driven platform designed to facilitate resource sharing, collaboration, and connection among community members. Whether you're looking to share tools, collaborate on projects, or connect with like-minded individuals in your area, CommunitySharing provides the digital infrastructure to make it happen.
 
 ## ✨ Features
 
@@ -76,10 +76,10 @@ Before you begin, ensure you have the following installed:
 4. **Database Setup**
    ```sql
    -- Create a new database
-   CREATE DATABASE localhub;
+   CREATE DATABASE CommunitySharing;
    
    -- Import the database schema
-   -- mysql -u your_username -p localhub < database/schema.sql
+   -- mysql -u your_username -p CommunitySharing < database/schema.sql
    ```
 
 5. **Start the Backend Server**
@@ -124,14 +124,14 @@ Create a `.env` file in both `frontend` and `Backend` directories:
 **Frontend (.env)**
 ```env
 REACT_APP_API_URL=http://localhost:8000/api
-REACT_APP_NAME=LocalHub
+REACT_APP_NAME=CommunitySharing
 ```
 
 **Backend (.env or config.php)**
 ```php
 <?php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'localhub');
+define('DB_NAME', 'CommunitySharing');
 define('DB_USER', 'your_username');
 define('DB_PASS', 'your_password');
 define('API_SECRET_KEY', 'your_secret_key_here');
@@ -248,5 +248,5 @@ For support, email anirban14093@gmail.com or join our community discussions.
 <div align="center">
   Made with ❤️ for building stronger communities
   <br>
-  <sub>LocalHub - Where neighbors become friends</sub>
+  <sub>CommunitySharing - Where neighbors become friends</sub>
 </div>

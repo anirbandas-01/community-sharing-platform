@@ -48,14 +48,14 @@ class TestDataSeeder extends Seeder
 
         $admin = User::create([
             'name'              => 'Admin User',
-            'email'             => 'admin@localhub.com',
+            'email'             => 'admin@CommunitySharing.com',
             'password'          => bcrypt('admin123'),
             'user_type'         => 'admin',
             'phone'             => '9000000001',
             'aadhaar'           => '111111111111',
             'city'              => 'Mumbai',
             'state'             => 'Maharashtra',        // FIX: state is required
-            'address'           => 'LocalHub HQ, Bandra West, Mumbai - 400050',
+            'address'           => 'CommunitySharing HQ, Bandra West, Mumbai - 400050',
             'profile_image'     => $adminAvatar,
             'email_verified_at' => now(),
         ]);
@@ -335,7 +335,7 @@ class TestDataSeeder extends Seeder
                 'member_count' => 143,
             ],
             [
-                'name'         => 'LocalHub Testing Community',
+                'name'         => 'CommunitySharing Testing Community',
                 'description'  => 'Private community used for QA and feature testing only.',
                 'category'     => 'general',
                 'member_count' => 5,
@@ -363,7 +363,7 @@ class TestDataSeeder extends Seeder
         $this->command->table(
             ['Role', 'Email', 'Password'],
             [
-                ['Admin',        'admin@localhub.com',          'admin123'],
+                ['Admin',        'admin@CommunitySharing.com',          'admin123'],
                 ['Resident',     'resident@test.com',           'password'],
                 ['Resident',     'priya@test.com',              'password'],
                 ['Professional', 'rajesh@test.com',             'password'],

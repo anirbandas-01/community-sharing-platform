@@ -255,7 +255,7 @@ const Register = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10 border border-gray-100">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-            <p className="text-gray-600 mt-2">Join LocalHub community in easy steps</p>
+            <p className="text-gray-600 mt-2">Join CommunitySharing community in easy steps</p>
           </div>
 
           {/* Progress Steps */}

@@ -12,6 +12,9 @@ use App\Models\Appointment;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\EnterpriseApproved;
+use App\Mail\EnterpriseRejected;
+use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
@@ -75,55 +78,6 @@ class AdminController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Get all users with filters
-     */
-    /* public function getUsers(Request $request)
-    {
-        try {
-            $query = User::query();
-
-            // Filter by user type
-            if ($request->has('type') && $request->type !== 'all') {
-                $query->where('user_type', $request->type);
-            }
-
-            // Search
-            if ($request->has('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhere('email', 'LIKE', "%{$search}%")
-                      ->orWhere('phone', 'LIKE', "%{$search}%");
-                });
-            }
-
-            $users = $query->latest()
-                ->paginate(20)
-                ->through(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $user->phone,
-                        'user_type' => $user->user_type,
-                        'city' => $user->city,
-                        'created_at' => $user->created_at->format('M d, Y'),
-                        'profile_image' => $user->profile_image 
-                            ? asset('uploads/profiles/' . $user->profile_image) 
-                            : null,
-                    ];
-                });
-
-            return response()->json($users);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error loading users',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    } */
 
    /**
  * Get all users with filters
@@ -417,29 +371,54 @@ public function getUsers(Request $request)
      * Approve/Reject enterprise verification
      */
     public function updateVerificationStatus(Request $request, $id)
-    {
+{
+    try {
+        $validated = $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'notes'  => 'nullable|string|max:1000',
+        ]);
+
+        $enterprise         = Enterprise::with('user')->findOrFail($id);
+        $enterprise->status = $validated['status'];
+        $enterprise->save();
+
+        $notes = $validated['notes'] ?? '';
+
+        // ── Send email to the business owner ──────────────────────────
         try {
-            $validated = $request->validate([
-                'status' => 'required|in:approved,rejected',
-                'notes'  => 'nullable|string',
+            $mailable = $validated['status'] === 'approved'
+                ? new EnterpriseApproved($enterprise, $notes)
+                : new EnterpriseRejected($enterprise, $notes);
+
+            $recipientEmail = $enterprise->email ?: $enterprise->user->email;
+            $recipientName  = $enterprise->contact_person ?: $enterprise->user->name;
+
+            Mail::to($recipientEmail, $recipientName)->send($mailable);
+
+            \Illuminate\Support\Facades\Log::info('Enterprise verification email sent', [
+                'enterprise_id' => $enterprise->id,
+                'status'        => $validated['status'],
+                'recipient'     => $recipientEmail,
             ]);
- 
-            $enterprise         = Enterprise::findOrFail($id);
-            $enterprise->status = $validated['status'];
-            $enterprise->save();
- 
-            // TODO: Send notification email to user with $validated['notes']
- 
-            return response()->json([
-                'message' => "Enterprise {$validated['status']} successfully"
+        } catch (\Exception $mailException) {
+            \Illuminate\Support\Facades\Log::error('Failed to send enterprise verification email', [
+                'enterprise_id' => $enterprise->id,
+                'error'         => $mailException->getMessage(),
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error updating verification status',
-                'error'   => $e->getMessage()
-            ], 500);
+            // Mail failure does NOT roll back the status change
         }
+
+        return response()->json([
+            'message' => "Enterprise {$validated['status']} successfully"
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Error updating verification status',
+            'error'   => $e->getMessage()
+        ], 500);
     }
+}
 
 
    

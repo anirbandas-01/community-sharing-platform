@@ -12,10 +12,10 @@ class AdminSeeder extends Seeder
     {
         // Create admin user
         User::updateOrCreate(
-            ['email' => 'admin@localhub.com'],
+            ['email' => 'admin@CommunitySharing.com'],
             [
                 'name' => 'Admin',
-                'email' => 'admin@localhub.com',
+                'email' => 'admin@CommunitySharing.com',
                 'password' => Hash::make('admin123'), // Change this password!
                 'user_type' => 'admin',
                 'phone' => '0000000000',
@@ -24,6 +24,6 @@ class AdminSeeder extends Seeder
             ]
         );
 
-        echo "✅ Admin created: admin@localhub.com / admin123\n";
+        echo "✅ Admin created: admin@CommunitySharing.com / admin123\n";
     }
 }

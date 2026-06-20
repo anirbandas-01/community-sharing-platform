@@ -75,7 +75,7 @@ const Login = () => {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">{isAdminLogin ? 'Admin Login' : 'Welcome Back'}</h1>
-            <p className="text-gray-600 mt-2">{isAdminLogin ? 'Sign in to admin dashboard' : 'Sign in to continue to LocalHub'}</p>
+            <p className="text-gray-600 mt-2">{isAdminLogin ? 'Sign in to admin dashboard' : 'Sign in to continue to CommunitySharing'}</p>
           </div>
 
           {/* Error Alert */}
@@ -153,7 +153,7 @@ const Login = () => {
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">New to LocalHub?</span>
+              <span className="px-4 bg-white text-gray-500">New to CommunitySharing?</span>
             </div>
           </div>
 

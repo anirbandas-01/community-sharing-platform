@@ -55,7 +55,7 @@ const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) =>
                 <User className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-gray-900">LocalHub</h2>
+                <h2 className="font-bold text-gray-900">CommunitySharing</h2>
                 <span className="text-xs text-gray-500 uppercase tracking-wide">{userType}</span>
               </div>
             </Link>

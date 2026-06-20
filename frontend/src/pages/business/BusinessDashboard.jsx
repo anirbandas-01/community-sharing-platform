@@ -135,7 +135,7 @@ function RejectedScreen({ navigate }) {
       </div>
 
       <div className="flex gap-4">
-        <Button variant="outline" onClick={() => window.location.href = 'mailto:support@localhub.com'}>
+        <Button variant="outline" onClick={() => window.location.href = 'mailto:support@CommunitySharing.com'}>
           Contact Support
         </Button>
         <Button variant="primary" onClick={() => navigate('/business/enterprise/register')}>

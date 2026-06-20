@@ -7,7 +7,7 @@ export default function ChatBot() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: '👋 Hi! I\'m your LocalHub AI Assistant. How can I help you today?',
+      content: '👋 Hi! I\'m your CommunitySharing AI Assistant. How can I help you today?',
       timestamp: new Date().toISOString(),
     }
   ]);
@@ -121,7 +121,7 @@ export default function ChatBot() {
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold">LocalHub AI</h3>
+                <h3 className="font-bold">CommunitySharing AI</h3>
                 <p className="text-xs opacity-90">Always here to help</p>
               </div>
             </div>

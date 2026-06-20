@@ -20,8 +20,8 @@ class OtpMail extends Mailable
     public function envelope(): Envelope
     {
         $subject = $this->purpose === 'registration'
-            ? 'Your LocalHub Registration OTP'
-            : 'Your LocalHub Password Reset OTP';
+            ? 'Your CommunitySharing Registration OTP'
+            : 'Your CommunitySharing Password Reset OTP';
 
         return new Envelope(subject: $subject);
     }
