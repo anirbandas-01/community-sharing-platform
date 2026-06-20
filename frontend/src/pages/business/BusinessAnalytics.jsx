@@ -2,7 +2,7 @@ import { BarChart3 } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
-import { Home, Package, ShoppingCart, TrendingUp, MessageCircle, Settings, User as UserIcon } from 'lucide-react';
+import { Home, Package, ShoppingCart, TrendingUp, MessageCircle, Settings, User as UserIcon , Star} from 'lucide-react';
 
 const BusinessAnalytics = () => {
   const menuItems = [
@@ -14,6 +14,7 @@ const BusinessAnalytics = () => {
     { icon: BarChart3, label: 'Analytics', path: '/business/analytics' },
     { icon: UserIcon, label: 'Profile', path: '/business/profile' },
     { icon: Settings, label: 'Settings', path: '/business/settings' },
+    { icon: Star, label: 'Reviews', path: '/business/reviews' },
   ];
 
   return (

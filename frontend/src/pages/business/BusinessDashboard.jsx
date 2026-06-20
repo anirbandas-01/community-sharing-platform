@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Home, Package, ShoppingCart, TrendingUp, MessageCircle,
   Settings, User as UserIcon, BarChart3,
-  Clock, XCircle, Building2, ArrowRight, CheckCircle2,
+  Clock, XCircle, Building2, ArrowRight, CheckCircle2, Star
 } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
@@ -21,6 +21,7 @@ const menuItems = [
   { icon: BarChart3,     label: 'Analytics',  path: '/business/analytics' },
   { icon: UserIcon,      label: 'Profile',    path: '/business/profile' },
   { icon: Settings,      label: 'Settings',   path: '/business/settings' },
+  { icon: Star, label: 'Reviews', path: '/business/reviews' },
 ];
 
 // ─── Enterprise gate screens (shown instead of dashboard) ──────────────────

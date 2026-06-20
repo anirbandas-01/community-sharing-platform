@@ -738,6 +738,7 @@ private function calculateResponseTime($professionalId)
             $user = $request->user();
             
             $reviews = Review::where('professional_id', $user->id)
+                ->where('review_type', 'professional')
                 ->with('user')
                 ->orderBy('created_at', 'desc')
                 ->get()

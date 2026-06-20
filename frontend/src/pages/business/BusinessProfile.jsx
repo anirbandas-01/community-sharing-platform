@@ -8,7 +8,7 @@ import Input from '../../components/ui/Input';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import {
-  Home, Package, ShoppingCart, TrendingUp, MessageCircle, BarChart3, Settings,
+  Home, Package, ShoppingCart, TrendingUp, MessageCircle, BarChart3, Settings, Star
 } from 'lucide-react';
 
 const menuItems = [
@@ -20,6 +20,7 @@ const menuItems = [
   { icon: BarChart3,    label: 'Analytics',  path: '/business/analytics' },
   { icon: User,         label: 'Profile',    path: '/business/profile' },
   { icon: Settings,     label: 'Settings',   path: '/business/settings' },
+  { icon: Star, label: 'Reviews', path: '/business/reviews' },
 ];
 
 // Dynamic badge based on enterprise status
@@ -47,8 +48,16 @@ const BusinessProfile = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [successMsg, setSuccessMsg]   = useState('');
   const [error, setError]             = useState(null);
+  const [storeRating, setStoreRating] = useState(null);
 
   useEffect(() => { fetchProfile(); }, []);
+
+  useEffect(() => {
+  if (!profile?.id) return;
+  api.get(`/businesses/${profile.id}/reviews`)
+    .then(res => setStoreRating(res.data.stats))
+    .catch(() => setStoreRating(null));
+}, [profile?.id]);
 
   const fetchProfile = async () => {
     try {
@@ -266,7 +275,25 @@ const BusinessProfile = () => {
 
               <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
               <p className="text-gray-600 mb-3 capitalize">{profile.user_type}</p>
+              
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">{profile.name}</h2>
+              <p className="text-gray-600 mb-3 capitalize">{profile.user_type}</p>
               <EnterpriseBadge enterprise={profile.enterprise} />
+
+              {/* Store rating badge */}
+              {storeRating && storeRating.total_reviews > 0 ? (
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+                    <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                    <span className="text-sm font-bold text-amber-700">{storeRating.average_rating}</span>
+                    <span className="text-xs text-amber-600">
+                      ({storeRating.total_reviews} store review{storeRating.total_reviews !== 1 ? 's' : ''})
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 mt-3">No store reviews yet</p>
+              )}
             </div>
 
             {/* Contact info */}

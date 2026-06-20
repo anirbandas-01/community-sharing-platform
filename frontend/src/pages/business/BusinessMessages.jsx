@@ -1,5 +1,5 @@
 import {
-  Home, Package, ShoppingCart, TrendingUp, MessageCircle, BarChart3, Settings, User as UserIcon,
+  Home, Package, ShoppingCart, TrendingUp, MessageCircle, BarChart3, Settings, User as UserIcon, Star
 } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import MessagingCenter from '../../components/messages/MessagingCenter.jsx';
@@ -14,6 +14,7 @@ const menuItems = [
   { icon: BarChart3, label: 'Analytics', path: '/business/analytics' },
   { icon: UserIcon, label: 'Profile', path: '/business/profile' },
   { icon: Settings, label: 'Settings', path: '/business/settings' },
+  { icon: Star, label: 'Reviews', path: '/business/reviews' },
 ];
 
 export default function BusinessMessages() {

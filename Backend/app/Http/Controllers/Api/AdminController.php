@@ -371,44 +371,44 @@ public function getUsers(Request $request)
     /**
      * Get pending verifications (enterprises)
      */
-    public function getPendingVerifications()
+     public function getPendingVerifications()
     {
         try {
-            $enterprises = Enterprise::where('status', 'pending')
-                ->with('user')
+            $enterprises = Enterprise::with('user')
                 ->latest()
                 ->get()
                 ->map(function ($enterprise) {
                     return [
-                        'id' => $enterprise->id,
-                        'company_name' => $enterprise->company_name,
+                        'id'                  => $enterprise->id,
+                        'company_name'        => $enterprise->company_name,
                         'registration_number' => $enterprise->registration_number,
-                        'industry_type' => $enterprise->industry_type,
-                        'annual_revenue' => $enterprise->annual_revenue,
-                        'contact_person' => $enterprise->contact_person,
-                        'phone' => $enterprise->phone,
-                        'email' => $enterprise->email,
-                        'city' => $enterprise->city,
-                        'description' => $enterprise->description,
-                        'photo_url' => $enterprise->enterprise_photo 
-                            ? asset('storage/' . $enterprise->enterprise_photo) 
+                        'industry_type'       => $enterprise->industry_type,
+                        'annual_revenue'      => $enterprise->annual_revenue,
+                        'contact_person'      => $enterprise->contact_person,
+                        'phone'               => $enterprise->phone,
+                        'email'               => $enterprise->email,
+                        'city'                => $enterprise->city,
+                        'description'         => $enterprise->description,
+                        'status'              => $enterprise->status,   // ← now included for all statuses
+                        'photo_url'           => $enterprise->enterprise_photo
+                            ? asset('storage/' . $enterprise->enterprise_photo)
                             : null,
                         'user' => [
-                            'id' => $enterprise->user->id,
-                            'name' => $enterprise->user->name,
+                            'id'    => $enterprise->user->id,
+                            'name'  => $enterprise->user->name,
                             'email' => $enterprise->user->email,
                         ],
                         'created_at' => $enterprise->created_at->format('M d, Y'),
                     ];
                 });
-
+ 
             return response()->json([
                 'verifications' => $enterprises
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error loading verifications',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
@@ -421,22 +421,22 @@ public function getUsers(Request $request)
         try {
             $validated = $request->validate([
                 'status' => 'required|in:approved,rejected',
-                'notes' => 'nullable|string',
+                'notes'  => 'nullable|string',
             ]);
-
-            $enterprise = Enterprise::findOrFail($id);
+ 
+            $enterprise         = Enterprise::findOrFail($id);
             $enterprise->status = $validated['status'];
             $enterprise->save();
-
-            // tod: Send notification email to user
-
+ 
+            // TODO: Send notification email to user with $validated['notes']
+ 
             return response()->json([
                 'message' => "Enterprise {$validated['status']} successfully"
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error updating verification status',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }

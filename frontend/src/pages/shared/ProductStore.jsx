@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, ShoppingCart, Package, X, Plus, Minus,
-  CheckCircle, Store, MapPin,
+  CheckCircle, Store, MapPin,Star
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -191,13 +191,35 @@ function ProductCard({ product, onAddToCart, inCart }) {
 
       <div className="flex-1 flex flex-col">
         <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-2">{product.name}</h3>
+
+        {/* Product rating */}
+        <div className="flex items-center gap-1 mb-1">
+          {product.rating ? (
+            <>
+              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm font-medium text-gray-900">{product.rating}</span>
+              <span className="text-xs text-gray-500">({product.reviews_count})</span>
+            </>
+          ) : (
+            <span className="text-xs text-gray-400">No reviews yet</span>
+          )}
+        </div>
+
+        {/* Business + store rating */}
         <div className="flex items-center gap-1 mb-3">
           <Store className="w-3 h-3 text-gray-400" />
           <span className="text-xs text-gray-500 truncate">{product.business?.name}</span>
           {product.business?.city && (
             <span className="text-xs text-gray-400">· {product.business.city}</span>
           )}
+          {product.business?.rating && (
+            <span className="flex items-center gap-0.5 ml-1 text-xs text-amber-600 font-medium">
+              <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+              {product.business.rating}
+            </span>
+          )}
         </div>
+
         <div className="flex items-center justify-between mt-auto">
           <div>
             <p className="text-2xl font-bold text-primary-600">

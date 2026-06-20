@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Search, Edit2, Trash2, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Building2, Search, Edit2, Trash2, CheckCircle, XCircle, Clock , ShieldCheck} from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -20,6 +20,7 @@ const AdminCommunities = () => {
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Building2, label: 'Communities', path: '/admin/communities' },
+    { icon: ShieldCheck, label: 'Verifications', path: '/admin/verifications' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];

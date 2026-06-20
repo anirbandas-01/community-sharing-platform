@@ -2,7 +2,28 @@ import { useState } from 'react';
 import { Star, X } from 'lucide-react';
 import api from '../../services/api';
 
-export default function ReviewForm({ professionalId, appointmentId, onSuccess, onClose }) {
+/**
+ * Generic review form.
+ *
+ * Props:
+ * - reviewType: 'professional' | 'product' | 'store'
+ * - professionalId, appointmentId   (when reviewType === 'professional')
+ * - productId                       (when reviewType === 'product')
+ * - businessUserId                  (when reviewType === 'product' or 'store')
+ * - orderId                         (optional, any type — links review to a specific order)
+ * - targetName                      (display name shown in the heading, e.g. product/business/professional name)
+ */
+export default function ReviewForm({
+  reviewType = 'professional',
+  professionalId,
+  appointmentId,
+  productId,
+  businessUserId,
+  orderId,
+  targetName,
+  onSuccess,
+  onClose,
+}) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -11,12 +32,11 @@ export default function ReviewForm({ professionalId, appointmentId, onSuccess, o
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (rating === 0) {
       setError('Please select a rating');
       return;
     }
-    
     if (comment.trim().length < 10) {
       setError('Review must be at least 10 characters long');
       return;
@@ -26,12 +46,24 @@ export default function ReviewForm({ professionalId, appointmentId, onSuccess, o
     setError('');
 
     try {
-      await api.post('/reviews', {
-        professional_id: professionalId,
-        appointment_id: appointmentId,
+      const payload = {
+        review_type: reviewType,
         rating,
         comment: comment.trim(),
-      });
+      };
+
+      if (reviewType === 'professional') {
+        payload.professional_id = professionalId;
+        if (appointmentId) payload.appointment_id = appointmentId;
+      } else if (reviewType === 'product') {
+        payload.product_id = productId;
+        if (orderId) payload.order_id = orderId;
+      } else if (reviewType === 'store') {
+        payload.business_user_id = businessUserId;
+        if (orderId) payload.order_id = orderId;
+      }
+
+      await api.post('/reviews', payload);
 
       if (onSuccess) onSuccess();
       if (onClose) onClose();
@@ -42,10 +74,15 @@ export default function ReviewForm({ professionalId, appointmentId, onSuccess, o
     }
   };
 
+  const titleByType = {
+    professional: 'Write a Review',
+    product: 'Review this Product',
+    store: 'Review this Store',
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -53,10 +90,13 @@ export default function ReviewForm({ professionalId, appointmentId, onSuccess, o
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-2xl font-bold mb-6">Write a Review</h2>
+        <h2 className="text-2xl font-bold mb-1">{titleByType[reviewType]}</h2>
+        {targetName && (
+          <p className="text-sm text-gray-500 mb-6">for <span className="font-medium">{targetName}</span></p>
+        )}
+        {!targetName && <div className="mb-6" />}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Rating Stars */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Your Rating
@@ -92,7 +132,6 @@ export default function ReviewForm({ professionalId, appointmentId, onSuccess, o
             )}
           </div>
 
-          {/* Comment */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Your Review
@@ -102,7 +141,13 @@ export default function ReviewForm({ professionalId, appointmentId, onSuccess, o
               onChange={(e) => setComment(e.target.value)}
               rows={5}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Share your experience with this professional..."
+              placeholder={
+                reviewType === 'product'
+                  ? 'Share your experience with this product...'
+                  : reviewType === 'store'
+                  ? 'Share your experience shopping with this store...'
+                  : 'Share your experience with this professional...'
+              }
               maxLength={1000}
             />
             <p className="text-sm text-gray-500 mt-1">
@@ -110,14 +155,12 @@ export default function ReviewForm({ professionalId, appointmentId, onSuccess, o
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* Submit Button */}
           <div className="flex gap-3">
             <button
               type="button"

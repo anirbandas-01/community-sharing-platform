@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\NotificationService;
+use App\Models\Review;
 
 class OrderController extends Controller
 {
@@ -17,105 +18,143 @@ class OrderController extends Controller
      * PUBLIC within auth — accessible by resident & professional.
      */
     public function browseProducts(Request $request)
-    {
-        try {
-            $query = Product::with(['user.enterprise'])
-                ->whereHas('user.enterprise', function ($q) {
-                    $q->where('status', 'approved');
-                })
-                ->where('stock', '>', 0); // only in-stock products
+{
+    try {
+        $query = Product::with(['user.enterprise'])
+            ->whereHas('user.enterprise', function ($q) {
+                $q->where('status', 'approved');
+            })
+            ->where('stock', '>', 0);
 
-            // Search by name or category
-            if ($request->search) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhere('category', 'LIKE', "%{$search}%");
-                });
-            }
-
-            // Filter by category
-            if ($request->category && $request->category !== 'all') {
-                $query->where('category', $request->category);
-            }
-
-            $products = $query->latest()->get()->map(function ($product) {
-                return [
-                    'id'           => $product->id,
-                    'name'         => $product->name,
-                    'category'     => $product->category,
-                    'price'        => $product->price,
-                    'stock'        => $product->stock,
-                    'sku'          => $product->sku,
-                    'photo'        => $product->photo
-                        ? asset('storage/' . $product->photo)
-                        : null,
-                    'business' => [
-                        'id'           => $product->user->id,
-                        'name'         => $product->user->enterprise->company_name ?? $product->user->name,
-                        'city'         => $product->user->city,
-                        'photo'        => $product->user->enterprise->enterprise_photo
-                            ? asset('storage/' . $product->user->enterprise->enterprise_photo)
-                            : null,
-                    ],
-                ];
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('category', 'LIKE', "%{$search}%");
             });
-
-            // Distinct categories for filter dropdown
-            $categories = Product::whereHas('user.enterprise', function ($q) {
-                    $q->where('status', 'approved');
-                })
-                ->where('stock', '>', 0)
-                ->distinct()
-                ->pluck('category')
-                ->sort()
-                ->values();
-
-            return response()->json([
-                'products'   => $products,
-                'categories' => $categories,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Browse products error: ' . $e->getMessage());
-            return response()->json([
-                'message'  => 'Error loading products',
-                'products' => [],
-            ], 500);
         }
+
+        if ($request->category && $request->category !== 'all') {
+            $query->where('category', $request->category);
+        }
+
+        $allProducts = $query->latest()->get();
+
+        // Bulk-fetch product rating averages in one query
+        $productIds = $allProducts->pluck('id');
+        $productRatings = Review::where('review_type', 'product')
+            ->whereIn('product_id', $productIds)
+            ->selectRaw('product_id, AVG(rating) as avg_rating, COUNT(*) as total')
+            ->groupBy('product_id')
+            ->get()
+            ->keyBy('product_id');
+
+        // Bulk-fetch store (business) rating averages too
+        $businessIds = $allProducts->pluck('user_id')->unique();
+        $storeRatings = Review::where('review_type', 'store')
+            ->whereIn('business_user_id', $businessIds)
+            ->selectRaw('business_user_id, AVG(rating) as avg_rating, COUNT(*) as total')
+            ->groupBy('business_user_id')
+            ->get()
+            ->keyBy('business_user_id');
+
+        $products = $allProducts->map(function ($product) use ($productRatings, $storeRatings) {
+            $pRating = $productRatings->get($product->id);
+            $sRating = $storeRatings->get($product->user_id);
+
+            return [
+                'id'           => $product->id,
+                'name'         => $product->name,
+                'category'     => $product->category,
+                'price'        => $product->price,
+                'stock'        => $product->stock,
+                'sku'          => $product->sku,
+                'photo'        => $product->photo
+                    ? asset('storage/' . $product->photo)
+                    : null,
+                'rating'       => $pRating ? round($pRating->avg_rating, 1) : null,
+                'reviews_count' => $pRating ? (int) $pRating->total : 0,
+                'business' => [
+                    'id'            => $product->user->id,
+                    'name'          => $product->user->enterprise->company_name ?? $product->user->name,
+                    'city'          => $product->user->city,
+                    'photo'         => $product->user->enterprise->enterprise_photo
+                        ? asset('storage/' . $product->user->enterprise->enterprise_photo)
+                        : null,
+                    'rating'        => $sRating ? round($sRating->avg_rating, 1) : null,
+                    'reviews_count' => $sRating ? (int) $sRating->total : 0,
+                ],
+            ];
+        });
+
+        $categories = Product::whereHas('user.enterprise', function ($q) {
+                $q->where('status', 'approved');
+            })
+            ->where('stock', '>', 0)
+            ->distinct()
+            ->pluck('category')
+            ->sort()
+            ->values();
+
+        return response()->json([
+            'products'   => $products,
+            'categories' => $categories,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Browse products error: ' . $e->getMessage());
+        return response()->json([
+            'message'  => 'Error loading products',
+            'products' => [],
+        ], 500);
     }
+}
 
     /**
      * Get a single product detail (public within auth).
      */
     public function showProduct($id)
-    {
-        try {
-            $product = Product::with('user.enterprise')
-                ->whereHas('user.enterprise', function ($q) {
-                    $q->where('status', 'approved');
-                })
-                ->findOrFail($id);
+{
+    try {
+        $product = Product::with('user.enterprise')
+            ->whereHas('user.enterprise', function ($q) {
+                $q->where('status', 'approved');
+            })
+            ->findOrFail($id);
 
-            return response()->json([
-                'id'       => $product->id,
-                'name'     => $product->name,
-                'category' => $product->category,
-                'price'    => $product->price,
-                'stock'    => $product->stock,
-                'sku'      => $product->sku,
-                'photo'    => $product->photo
-                    ? asset('storage/' . $product->photo)
-                    : null,
-                'business' => [
-                    'id'   => $product->user->id,
-                    'name' => $product->user->enterprise->company_name ?? $product->user->name,
-                    'city' => $product->user->city,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
+        $pRating = Review::where('review_type', 'product')
+            ->where('product_id', $product->id)
+            ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as total')
+            ->first();
+
+        $sRating = Review::where('review_type', 'store')
+            ->where('business_user_id', $product->user_id)
+            ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as total')
+            ->first();
+
+        return response()->json([
+            'id'       => $product->id,
+            'name'     => $product->name,
+            'category' => $product->category,
+            'price'    => $product->price,
+            'stock'    => $product->stock,
+            'sku'      => $product->sku,
+            'photo'    => $product->photo
+                ? asset('storage/' . $product->photo)
+                : null,
+            'rating'        => $pRating && $pRating->total > 0 ? round($pRating->avg_rating, 1) : null,
+            'reviews_count' => $pRating ? (int) $pRating->total : 0,
+            'business' => [
+                'id'            => $product->user->id,
+                'name'          => $product->user->enterprise->company_name ?? $product->user->name,
+                'city'          => $product->user->city,
+                'rating'        => $sRating && $sRating->total > 0 ? round($sRating->avg_rating, 1) : null,
+                'reviews_count' => $sRating ? (int) $sRating->total : 0,
+            ],
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Product not found'], 404);
     }
+}
 
     /**
      * Place an order.
@@ -425,6 +464,8 @@ class OrderController extends Controller
     {
         return [
             'id'               => $order->id,
+            'product_id'       => $order->product_id,        
+            'business_user_id' => $order->business_user_id,
             'product_name'     => $order->product->name ?? 'Product',
             'product_photo'    => $order->product->photo
                 ? asset('storage/' . $order->product->photo)

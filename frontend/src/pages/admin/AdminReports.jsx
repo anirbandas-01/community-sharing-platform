@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Calendar, TrendingUp, Users, Building2 } from 'lucide-react';
+import { FileText, Download, Calendar, TrendingUp, Users, Building2,ShieldCheck } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -15,6 +15,7 @@ const AdminReports = () => {
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Building2, label: 'Communities', path: '/admin/communities' },
+    { icon: ShieldCheck, label: 'Verifications', path: '/admin/verifications' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];

@@ -11,7 +11,7 @@ import Input from '../../components/ui/Input';
 import api from '../../services/api';
 import {
   Home, Package, ShoppingCart, TrendingUp, MessageCircle,
-  BarChart3, Settings, User as UserIcon,
+  BarChart3, Settings, User as UserIcon, Star
 } from 'lucide-react';
 
 const menuItems = [
@@ -23,6 +23,7 @@ const menuItems = [
   { icon: BarChart3,    label: 'Analytics',  path: '/business/analytics' },
   { icon: UserIcon,     label: 'Profile',    path: '/business/profile' },
   { icon: Settings,     label: 'Settings',   path: '/business/settings' },
+  { icon: Star, label: 'Reviews', path: '/business/reviews' },
 ];
 
 const industryTypes = [

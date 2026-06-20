@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
   ShoppingBag, Package, Clock, CheckCircle, XCircle,
-  Truck, AlertCircle, X,
+  Truck, AlertCircle, X, Star 
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import api from '../../services/api';
+import ReviewForm from '../../components/reviews/ReviewForm';
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -69,6 +70,7 @@ export default function MyOrders({ menuItems, userType, DashboardLayout: Layout 
   const [activeTab, setActiveTab] = useState('all');
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [reviewModal, setReviewModal] = useState(null);
 
   useEffect(() => { fetchOrders(); }, []);
 
@@ -251,24 +253,48 @@ export default function MyOrders({ menuItems, userType, DashboardLayout: Layout 
 
                   {/* Right: total + action */}
                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-between gap-3 sm:min-w-[120px]">
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">Total</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        ₹{Number(order.total_price).toLocaleString()}
-                      </p>
-                    </div>
-                    {order.status === 'pending' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:bg-red-50 border border-red-200"
-                        onClick={() => setCancelTarget(order)}
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
+  <div className="text-right">
+    <p className="text-xs text-gray-500">Total</p>
+    <p className="text-2xl font-bold text-gray-900">
+      ₹{Number(order.total_price).toLocaleString()}
+    </p>
+  </div>
+
+  {order.status === 'pending' && (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="text-red-600 hover:bg-red-50 border border-red-200"
+      onClick={() => setCancelTarget(order)}
+    >
+      <X className="w-4 h-4 mr-1" />
+      Cancel
+    </Button>
+  )}
+
+  {order.status === 'delivered' && (
+    <div className="flex flex-col gap-2 w-full sm:w-auto">
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => setReviewModal({ type: 'product', order })}
+      >
+        <Star className="w-4 h-4 mr-1" />
+        Review Product
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => setReviewModal({ type: 'store', order })}
+      >
+        <Star className="w-4 h-4 mr-1" />
+        Review Store
+      </Button>
+    </div>
+  )}
+</div>
                 </div>
               </div>
             </Card>
@@ -285,6 +311,33 @@ export default function MyOrders({ menuItems, userType, DashboardLayout: Layout 
           loading={cancelling}
         />
       )}
+      {reviewModal && reviewModal.type === 'product' && (
+  <ReviewForm
+    reviewType="product"
+    productId={reviewModal.order.product_id}
+    orderId={reviewModal.order.id}
+    targetName={reviewModal.order.product_name}
+    onSuccess={() => {
+      setReviewModal(null);
+      fetchOrders();
+    }}
+    onClose={() => setReviewModal(null)}
+  />
+)}
+
+{reviewModal && reviewModal.type === 'store' && (
+  <ReviewForm
+    reviewType="store"
+    businessUserId={reviewModal.order.business_user_id}
+    orderId={reviewModal.order.id}
+    targetName={reviewModal.order.business_name}
+    onSuccess={() => {
+      setReviewModal(null);
+      fetchOrders();
+    }}
+    onClose={() => setReviewModal(null)}
+  />
+)}
     </Layout>
   );
 }

@@ -11,8 +11,12 @@ class Review extends Model
 
     protected $fillable = [
         'user_id',
+        'review_type',        // 'professional' | 'product' | 'store'
         'professional_id',
         'appointment_id',
+        'product_id',
+        'order_id',
+        'business_user_id',
         'rating',
         'comment',
         'professional_response',
@@ -24,43 +28,64 @@ class Review extends Model
         'responded_at' => 'datetime',
     ];
 
-    /**
-     * Get the user who wrote the review
-     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Get the professional being reviewed
-     */
     public function professional()
     {
         return $this->belongsTo(User::class, 'professional_id');
     }
 
-    /**
-     * Get the related appointment
-     */
     public function appointment()
     {
         return $this->belongsTo(Appointment::class);
     }
 
-    /**
-     * Scope for recent reviews
-     */
-    public function scopeRecent($query)
+    public function product()
     {
-        return $query->orderBy('created_at', 'desc');
+        return $this->belongsTo(Product::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    // The business owner — used for both 'product' and 'store' review types
+    public function business()
+    {
+        return $this->belongsTo(User::class, 'business_user_id');
+    }
+
+    public function scopeProfessionalReviews($query)
+    {
+        return $query->where('review_type', 'professional');
+    }
+
+    public function scopeProductReviews($query)
+    {
+        return $query->where('review_type', 'product');
+    }
+
+    public function scopeStoreReviews($query)
+    {
+        return $query->where('review_type', 'store');
     }
 
     /**
-     * Scope for high-rated reviews
+     * 'product' and 'store' both fall under "business reviews" for owner dashboards.
      */
-    public function scopeHighRated($query)
+    public function scopeBusinessReviews($query)
     {
-        return $query->where('rating', '>=', 4);
+        return $query->whereIn('review_type', ['product', 'store']);
+    }
+
+    public function getResponderIdAttribute()
+    {
+        return in_array($this->review_type, ['product', 'store'])
+            ? $this->business_user_id
+            : $this->professional_id;
     }
 }

@@ -6,7 +6,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
 import {
-  Home, Package, ShoppingCart, TrendingUp, MessageCircle, BarChart3, User as UserIcon,
+  Home, Package, ShoppingCart, TrendingUp, MessageCircle, BarChart3, User as UserIcon,Star
 } from 'lucide-react';
 
 const menuItems = [
@@ -18,6 +18,7 @@ const menuItems = [
   { icon: BarChart3,    label: 'Analytics',  path: '/business/analytics' },
   { icon: UserIcon,     label: 'Profile',    path: '/business/profile' },
   { icon: Settings,     label: 'Settings',   path: '/business/settings' },
+  { icon: Star, label: 'Reviews', path: '/business/reviews' },
 ];
 
 const tabs = [

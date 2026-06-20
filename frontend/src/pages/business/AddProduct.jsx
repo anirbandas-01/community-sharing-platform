@@ -6,7 +6,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
-import { Home, ShoppingCart, TrendingUp, MessageCircle, BarChart3, Settings, User as UserIcon } from 'lucide-react';
+import { Home, ShoppingCart, TrendingUp, MessageCircle, BarChart3, Settings, User as UserIcon, Star } from 'lucide-react';
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -29,6 +29,7 @@ const AddProduct = () => {
     { icon: BarChart3, label: 'Analytics', path: '/business/analytics' },
     { icon: UserIcon, label: 'Profile', path: '/business/profile' },
     { icon: Settings, label: 'Settings', path: '/business/settings' },
+    { icon: Star, label: 'Reviews', path: '/business/reviews' },
   ];
 
   const categories = [

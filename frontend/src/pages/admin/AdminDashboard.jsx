@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Users, Building2, FileText, Settings, TrendingUp, UserCheck, AlertCircle } from 'lucide-react';
+import { Home, Users, Building2, FileText, Settings, TrendingUp, UserCheck, AlertCircle, ShieldCheck } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -16,6 +16,7 @@ const AdminDashboard = () => {
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Building2, label: 'Communities', path: '/admin/communities' },
+     { icon: ShieldCheck, label: 'Verifications', path: '/admin/verifications' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
@@ -247,7 +248,7 @@ const AdminDashboard = () => {
               <p className="text-sm text-gray-700 mb-4">
                 {pendingVerifications} {pendingVerifications === 1 ? 'community needs' : 'communities need'} review.
               </p>
-              <Button variant="warning" size="sm" className="w-full" onClick={() => window.location.href = '/admin/communities'}>
+              <Button variant="warning" size="sm" className="w-full" onClick={() => window.location.href = '/admin/verifications'}>
                 Review All
               </Button>
             </Card>

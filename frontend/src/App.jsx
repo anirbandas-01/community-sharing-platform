@@ -48,6 +48,8 @@ import FindResidents from './pages/resident/Findresidents';
 import ResidentStore from './pages/resident/ResidentStore';
 import ResidentMyOrders from './pages/resident/ResidentMyOrders';
 import ProfessionalMyOrders from './pages/professional/ProfessionalMyOrders';
+import AdminVerifications from './pages/admin/AdminVerifications';
+import BusinessReviews from './pages/business/BusinessReviews';
 
 function App() {
   return (
@@ -388,10 +390,22 @@ function App() {
             }
           />
 
+          <Route
+              path="/business/reviews"
+              element={
+                <ProtectedRoute allowedTypes={['business']}>
+                  <EnterpriseProtectedRoute>
+                    <BusinessReviews />
+                  </EnterpriseProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
+
 
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<Login />} />
+
           <Route
             path="/admin/dashboard"
             element={
@@ -418,6 +432,13 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+              path="/admin/verifications" 
+              element={
+                <ProtectedRoute allowedTypes={['admin']}>
+                      <AdminVerifications />
+                </ProtectedRoute>} />
           
           <Route
             path="/admin/reports"
@@ -427,7 +448,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-
+    
           <Route
             path="/admin/settings"
             element={

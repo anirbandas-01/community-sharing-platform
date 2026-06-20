@@ -5,7 +5,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
-import { Home, Users, Building2, FileText } from 'lucide-react';
+import { Home, Users, Building2, FileText , ShieldCheck} from 'lucide-react';
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState(null);
@@ -21,6 +21,7 @@ const AdminSettings = () => {
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Building2, label: 'Communities', path: '/admin/communities' },
+    { icon: ShieldCheck, label: 'Verifications', path: '/admin/verifications' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];

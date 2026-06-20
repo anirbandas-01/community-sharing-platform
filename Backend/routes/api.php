@@ -74,19 +74,20 @@ Route::prefix('admin')->group(function () {
 
     });
 });
+
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::prefix('notifications')->group(function () {
-    Route::get('/',          [NotificationController::class, 'index']);
-    Route::get('/count',     [NotificationController::class, 'count']);
-    Route::put('/read-all',  [NotificationController::class, 'markAllRead']);
-    Route::delete('/',       [NotificationController::class, 'clearAll']);
-    Route::put('/{id}/read', [NotificationController::class, 'markRead']);
-    Route::delete('/{id}',   [NotificationController::class, 'destroy']);
-    Route::put('/user/notifications', [UserController::class, 'saveSettings']);
-   });
+        Route::get('/',          [NotificationController::class, 'index']);
+        Route::get('/count',     [NotificationController::class, 'count']);
+        Route::put('/read-all',  [NotificationController::class, 'markAllRead']);
+        Route::delete('/',       [NotificationController::class, 'clearAll']);
+        Route::put('/{id}/read', [NotificationController::class, 'markRead']);
+        Route::delete('/{id}',   [NotificationController::class, 'destroy']);
+        Route::put('/user/notifications', [UserController::class, 'saveSettings']);
+    });
 
     Route::prefix('user')->group(function () {
         Route::get('/profile', [UserController::class, 'profile']);
@@ -100,7 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/search/users', [SearchController::class, 'searchUsers']);
     Route::get('/search/professionals', [SearchController::class, 'searchProfessionals']);
 
-     // ── Community invite (used by FindResidents invite modal) ─────────
+    // ── Community invite (used by FindResidents invite modal) ─────────
     Route::post('/communities/{id}/invite', [SearchController::class, 'inviteToCommunity']);
     
 
@@ -115,37 +116,29 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::middleware(['role:professional'])->group(function () {
 
-    //Dashboard
+        //Dashboard
         Route::get('/professional/dashboard', [ProfessionalsController::class, 'getDashboard']);
 
-    //profile
+        //profile
         Route::get('/professional/profile', [ProfessionalsController::class, 'getProfile']);
-
         Route::put('/professional/profile', [ProfessionalsController::class, 'updateProfile']);
-
 
         //SERVICES
         Route::get('/professional/services', [ProfessionalsController::class, 'listService']);
-
         Route::post('/professional/services', [ProfessionalsController::class, 'addService']);
-  
         Route::get('/professional/services/{id}', [ProfessionalsController::class, 'getService']);
-
         Route::put('/professional/services/{id}', [ProfessionalsController::class, 'updateService']);
-
         Route::delete('/professional/services/{id}', [ProfessionalsController::class, 'deleteService']);
-        
         Route::patch('/professional/services/{id}/toggle-status', [ProfessionalsController::class, 'toggleServiceStatus']);
 
         //Appointments
         Route::get('/professional/appointments', [ProfessionalsController::class, 'getAppointment']);
-
         Route::put('/professional/appointments/{id}', [ProfessionalsController::class, 'updateAppointment']);
 
         //Earnings
         Route::get('/professional/earnings', [ProfessionalsController::class, 'getEarnings']);
 
-        //Reviews
+        //Reviews (reviews received as a professional)
         Route::get('/professional/reviews', [ProfessionalsController::class, 'getReviews']);
 
     });
@@ -169,7 +162,6 @@ Route::middleware('auth:sanctum')->group(function () {
         //dashboard
         Route::get('/business/dashboard', [BusinessController::class, 'getDashboard']);
         
-        
         // Products/Inventory
         Route::get('/business/products', [BusinessController::class, 'getProducts']);
         Route::post('/business/products', [BusinessController::class, 'createProduct']);
@@ -181,21 +173,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/enterprise/register', [EnterpriseController::class, 'store']);
         Route::get('/enterprise/show', [EnterpriseController::class, 'show']);
 
-        /* // Orders (placeholder)
-        Route::get('/business/orders', function () {
-            return response()->json(['orders' => []]);
-        }); */
-
         // Orders
-/*         Route::get('/orders', [App\Http\Controllers\Api\BusinessController::class, 'getOrders']);
-        Route::put('/orders/{id}', [App\Http\Controllers\Api\BusinessController::class, 'updateOrder']);
+        Route::get('/orders', [OrderController::class, 'businessOrders']);
+        Route::put('/orders/{id}', [OrderController::class, 'updateOrderStatus']);
+        Route::get('/sales', [OrderController::class, 'businessSales']);
 
-        // Sales
-        Route::get('/sales', [App\Http\Controllers\Api\BusinessController::class, 'getSales']); */
-
-         Route::get('/orders', [OrderController::class, 'businessOrders']);
-         Route::put('/orders/{id}', [OrderController::class, 'updateOrderStatus']);
-         Route::get('/sales', [OrderController::class, 'businessSales']); 
+        // Reviews — business owner: see/reply to ALL reviews about them
+        // (both individual product reviews AND overall store reviews)
+        Route::get('/business/reviews', [ReviewsController::class, 'getBusinessReviews']);
     });
    
     // User Communities (PROTECTED - requires auth)
@@ -225,12 +210,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/settings', [UserController::class, 'getSettings']);
     Route::post('/user/settings', [UserController::class, 'saveSettings']);
 
+    // ── Reviews (PROTECTED) ─────────────────────────────────────────────
+    // Generic creation endpoint — body.review_type decides:
+    //   'professional' -> resident reviews a professional
+    //   'product'      -> resident/professional reviews a specific product
+    //   'store'        -> resident/professional reviews the business/store as a whole
+    Route::post('/reviews', [ReviewsController::class, 'store']);
 
-    Route::post('/reviews', [ReviewsController::class, 'store']); // Create review
-    Route::get('/user/reviews', [ReviewsController::class, 'getUserReviews']); // Get my reviews
-    Route::put('/reviews/{id}', [ReviewsController::class, 'update']); // Update my review
-    Route::delete('/reviews/{id}', [ReviewsController::class, 'destroy']); // Delete my review
-    Route::post('/reviews/{id}/respond', [ReviewsController::class, 'respond']); // Professional responds
+    // Reviews written by the authenticated user (any type)
+    Route::get('/user/reviews', [ReviewsController::class, 'getUserReviews']);
+
+    // Edit / delete own review
+    Route::put('/reviews/{id}', [ReviewsController::class, 'update']);
+    Route::delete('/reviews/{id}', [ReviewsController::class, 'destroy']);
+
+    // Reply to a review — works for professional (own reviews) AND
+    // business owner (product or store reviews), authorization is checked inside
+    Route::post('/reviews/{id}/respond', [ReviewsController::class, 'respond']);
 });
   
 // Public Communities
@@ -244,8 +240,10 @@ Route::get('/professionals', [ProfessionalsController::class, 'publicList']);
 Route::get('/professionals/{id}', [ProfessionalsController::class, 'publicShow']);
 
 
-// Public review endpoint
+// ── Public review listing endpoints (no auth required) ─────────────────
 Route::get('/professionals/{id}/reviews', [ReviewsController::class, 'getProfessionalReviews']);
+Route::get('/products/{id}/reviews', [ReviewsController::class, 'getProductReviews']);
+Route::get('/businesses/{id}/reviews', [ReviewsController::class, 'getStoreReviews']); // id = business owner's user id
 
 Route::prefix('chatbot')->group(function () {
     Route::post('/message', [ChatbotController::class, 'sendMessage']);
@@ -283,4 +281,3 @@ Route::get('/test-gemini', function() {
         ], 500);
     }
 });
-
