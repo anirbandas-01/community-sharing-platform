@@ -18,7 +18,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏘️ LocalHub</h1>
+            <h1>🏘️ CommunitySharing</h1>
             <p>{{ $purpose === 'registration' ? 'Account Verification' : 'Password Reset' }}</p>
         </div>
         <div class="body">
@@ -39,7 +39,7 @@
             </p>
         </div>
         <div class="footer">
-            &copy; {{ date('Y') }} LocalHub &bull; This is an automated message
+            &copy; {{ date('Y') }} Community Sharing &bull; This is an automated message
         </div>
     </div>
 </body>
