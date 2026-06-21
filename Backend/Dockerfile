@@ -30,6 +30,7 @@ RUN chown -R www-data:www-data storage bootstrap/cache || true
 
 # Copy nginx config
 COPY docker/nginx.conf /etc/nginx/sites-available/default
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 
 EXPOSE 10000
 
@@ -42,4 +43,5 @@ CMD php artisan config:clear && \
     php artisan route:cache && \
     php artisan view:cache && \
     php-fpm -D && \
+    sleep 3 && \
     nginx -g "daemon off;"
