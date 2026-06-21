@@ -44,37 +44,44 @@ class ProfessionalsController extends Controller
                 });
             }
 
-            $professionals = $query->get()->map(function ($pro) {
-                $avgRating = Review::where('professional_id', $pro->id)->avg('rating');
-                $totalReviews = Review::where('professional_id', $pro->id)->count();
+            $professionals = $query->get();
+               
+            // Bulk fetch ratings BEFORE the loop
+                $professionalIds = $professionals->pluck('id');
+
+                $ratings = Review::whereIn('professional_id', $professionalIds)
+                    ->selectRaw('professional_id, AVG(rating) as avg_rating, COUNT(*) as total')
+                    ->groupBy('professional_id')
+                    ->get()->keyBy('professional_id');
+
+                $mapped = $professionals->map(function ($pro) use ($ratings) {
+                    $r = $ratings->get($pro->id);
+
+                    $price = '₹500';
+                    if ($pro->professionalProfile && $pro->professionalProfile->hourly_rate) {
+                        $price = '₹' . number_format($pro->professionalProfile->hourly_rate, 0);
+                    } elseif ($pro->services->isNotEmpty()) {
+                        $price = '₹' . number_format($pro->services->first()->price, 0);
+                    }
                 
-                // Get the professional's hourly rate or first service price
-                $price = '₹500'; // Default
-                if ($pro->professionalProfile && $pro->professionalProfile->hourly_rate) {
-                    $price = '₹' . number_format($pro->professionalProfile->hourly_rate, 0);
-                } elseif ($pro->services->isNotEmpty()) {
-                    $firstService = $pro->services->first();
-                    $price = '₹' . number_format($firstService->price, 0);
-                }
-                
-                return [
-                    'id' => $pro->id,
-                    'name' => $pro->name,
-                    'profession' => $pro->professionalProfile->specialization ?? 'Professional',
-                    'rating' => $avgRating ? round($avgRating, 1) : null,
-                    'total_reviews' => $totalReviews,
-                    'experience' => ($pro->professionalProfile->experience_years ?? 0) . ' years',
-                    'location' => $pro->city ?? 'Location',
-                    'verified' => $pro->professionalProfile->is_verified ?? false,
-                    'available' => $pro->services->where('is_active', true)->isNotEmpty(),
-                    'price' => $price,
-                    'image' => $pro->profile_image ?? 'https://ui-avatars.com/api/?name=' . urlencode($pro->name) . '&size=150&background=6366f1&color=fff',
-                    'services' => $pro->services->pluck('name')->toArray(),
-                ];
+                    return [
+                            'id'            => $pro->id,
+                            'name'          => $pro->name,
+                            'profession'    => $pro->professionalProfile->specialization ?? 'Professional',
+                            'rating'        => $r ? round($r->avg_rating, 1) : null,
+                            'total_reviews' => $r ? (int) $r->total : 0,
+                            'experience'    => ($pro->professionalProfile->experience_years ?? 0) . ' years',
+                            'location'      => $pro->city ?? 'Location',
+                            'verified'      => $pro->professionalProfile->is_verified ?? false,
+                            'available'     => $pro->services->where('is_active', true)->isNotEmpty(),
+                            'price'         => $price,
+                            'image'         => $pro->profile_image ?? 'https://ui-avatars.com/api/?name=' . urlencode($pro->name) . '&size=150&background=6366f1&color=fff',
+                            'services'      => $pro->services->pluck('name')->toArray(),
+                        ];
             });
 
             return response()->json([
-                'professionals' => $professionals
+                'professionals' => $mapped
             ]);
 
         } catch (\Exception $e) {
@@ -98,9 +105,12 @@ class ProfessionalsController extends Controller
                 ->where('user_type', 'professional')
                 ->with(['professionalProfile', 'services'])
                 ->firstOrFail();
+            $reviewStats = Review::where('professional_id', $id)
+                    ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as total')
+                    ->first();
 
-            $avgRating = Review::where('professional_id', $id)->avg('rating');
-            $totalReviews = Review::where('professional_id', $id)->count();
+            $avgRating    = $reviewStats->avg_rating;
+            $totalReviews = (int) $reviewStats->total;
             $totalBookings = Appointment::where('professional_id', $id)->count();
 
             // Get price
@@ -156,17 +166,16 @@ class ProfessionalsController extends Controller
    
 private function calculateResponseTime($professionalId)
 {
-    $confirmedAppointments = Appointment::where('professional_id', $professionalId)
-        ->where('status', '!=', 'pending')
-        ->get();
+    $result = Appointment::where('professional_id', $professionalId)
+    ->where('status', '!=', 'pending')
+    ->selectRaw('AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 60) as avg_minutes, COUNT(*) as total')
+    ->first();
 
-    if ($confirmedAppointments->isEmpty()) {
+    if (!$result || $result->total == 0) {
         return 'No response history yet';
     }
 
-    $avgMinutes = $confirmedAppointments->avg(function ($apt) {
-        return $apt->created_at->diffInMinutes($apt->updated_at);
-    });
+    $avgMinutes = (float) $result->avg_minutes;
 
     if ($avgMinutes < 60) {
         return 'Usually within ' . max(round($avgMinutes), 1) . ' min';
@@ -317,30 +326,39 @@ private function calculateResponseTime($professionalId)
     public function listService(Request $request)
     {
         try {
-            $services = Service::where('professional_id', $request->user()->id)
-                ->with(['appointments'])
-                ->get()
-                ->map(function ($service) {
-                    // Calculate REAL rating from reviews for this service
-                    $serviceReviews = Review::whereHas('appointment', function ($q) use ($service) {
-                        $q->where('service_id', $service->id);
-                    })->get();
-                    
-                    $avgRating = $serviceReviews->avg('rating');
-                    $bookingsCount = $service->appointments()->count();
-                    
-                    return [
-                        'id' => $service->id,
-                        'name' => $service->name,
-                        'description' => $service->description,
-                        'price' => $service->price,
-                        'duration' => $service->duration . ' mins',
-                        'category' => $service->category,
-                        'is_active' => $service->is_active,
-                        'bookings_count' => $bookingsCount,
-                        'rating' => $avgRating ? round($avgRating, 1) : null,
-                    ];
-                });
+             $serviceIds = Service::where('professional_id', $request->user()->id)
+                ->pluck('id');
+
+            // One query for all ratings
+            $serviceRatings = Review::whereHas('appointment', function ($q) use ($serviceIds) {
+                    $q->whereIn('service_id', $serviceIds);
+                })
+                ->join('appointments', 'reviews.appointment_id', '=', 'appointments.id')
+                ->selectRaw('appointments.service_id, AVG(reviews.rating) as avg_rating')
+                ->groupBy('appointments.service_id')
+                ->get()->keyBy('service_id');
+
+            // One query for all booking counts
+            $bookingCounts = Appointment::whereIn('service_id', $serviceIds)
+                ->selectRaw('service_id, COUNT(*) as total')
+                ->groupBy('service_id')
+                ->get()->keyBy('service_id');
+
+            $services = Service::whereIn('id', $serviceIds)->get()->map(function ($service) use ($serviceRatings, $bookingCounts) {
+                $r = $serviceRatings->get($service->id);
+                $b = $bookingCounts->get($service->id);
+                return [
+                    'id'             => $service->id,
+                    'name'           => $service->name,
+                    'description'    => $service->description,
+                    'price'          => $service->price,
+                    'duration'       => $service->duration . ' mins',
+                    'category'       => $service->category,
+                    'is_active'      => $service->is_active,
+                    'bookings_count' => $b ? (int) $b->total : 0,
+                    'rating'         => $r ? round($r->avg_rating, 1) : null,
+                ];
+            });
 
             return response()->json([
                 'success' => true,

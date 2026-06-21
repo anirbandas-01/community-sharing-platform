@@ -1,8 +1,8 @@
-FROM php:8.2-cli
+FROM php:8.2-fpm
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies + nginx
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libzip-dev \
     postgresql-client \
+    nginx \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql zip mbstring \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -27,14 +28,18 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chmod -R 775 storage bootstrap/cache
 RUN chown -R www-data:www-data storage bootstrap/cache || true
 
-# Expose port
+# Copy nginx config
+COPY docker/nginx.conf /etc/nginx/sites-available/default
+
 EXPOSE 10000
 
-# Run all setup commands then start server
 CMD php artisan config:clear && \
     php artisan cache:clear && \
     php artisan route:clear && \
+    php artisan view:clear && \
     php artisan migrate --force && \
     php artisan config:cache && \
     php artisan route:cache && \
-    php artisan serve --host=0.0.0.0 --port=10000
+    php artisan view:cache && \
+    php-fpm -D && \
+    nginx -g "daemon off;"
