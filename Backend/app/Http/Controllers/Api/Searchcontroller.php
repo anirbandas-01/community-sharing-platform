@@ -23,11 +23,11 @@ class SearchController extends Controller
             }
 
             if ($request->filled('name')) {
-                $query->where('name', 'LIKE', '%' . $request->name . '%');
+                $query->where('name', 'ILIKE', '%' . $request->name . '%');
             }
 
             if ($request->filled('city')) {
-                $query->where('city', 'LIKE', '%' . $request->city . '%');
+                $query->where('city', 'ILIKE', '%' . $request->city . '%');
             }
 
             $residents = $query
@@ -84,7 +84,7 @@ class SearchController extends Controller
             }
 
             $query = User::whereIn('user_type', ['resident', 'professional', 'business'])
-                ->where('name', 'LIKE', '%' . $q . '%');
+                ->where('name', 'ILIKE', '%' . $q . '%');
 
             // Exclude self
             if ($request->user()) {
@@ -131,20 +131,32 @@ class SearchController extends Controller
                 ->with(['professionalProfile', 'services']);
 
             if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhereHas('professionalProfile', function ($sub) use ($search) {
-                          $sub->where('specialization', 'LIKE', "%{$search}%");
-                      });
-                });
-            }
-
-            if ($request->filled('profession')) {
-                $query->whereHas('professionalProfile', function ($q) use ($request) {
-                    $q->where('specialization', 'LIKE', "%{$request->profession}%");
-                });
-            }
+             $search = $request->search;
+             $query->where(function ($q) use ($search) {
+        $q->where('name', 'ILIKE', "%{$search}%")
+          ->orWhere('city', 'ILIKE', "%{$search}%")
+          ->orWhereHas('professionalProfile', function ($sub) use ($search) {
+              $sub->where('specialization', 'ILIKE', "%{$search}%")
+                  ->orWhere('bio', 'ILIKE', "%{$search}%")
+                  ->orWhere('qualifications', 'ILIKE', "%{$search}%");
+          })
+          ->orWhereHas('services', function ($sub) use ($search) {
+              $sub->where('name', 'ILIKE', "%{$search}%")
+                  ->orWhere('description', 'ILIKE', "%{$search}%")
+                  ->orWhere('category', 'ILIKE', "%{$search}%");
+          });
+    });
+}
+if ($request->filled('profession')) {
+    $profession = $request->profession;
+    $query->whereHas('professionalProfile', function ($q) use ($profession) {
+        $q->where('specialization', 'ILIKE', "%{$profession}%")
+          ->orWhere('bio', 'ILIKE', "%{$profession}%");
+    })->orWhereHas('services', function ($q) use ($profession) {
+        $q->where('name', 'ILIKE', "%{$profession}%")
+          ->orWhere('category', 'ILIKE', "%{$profession}%");
+    });
+}
 
             if ($request->filled('city')) {
                 $query->where('city', $request->city);

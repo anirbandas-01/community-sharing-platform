@@ -25,24 +25,39 @@ class ProfessionalsController extends Controller
                 ->with(['professionalProfile', 'services']);
 
             if ($request->search) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhereHas('professionalProfile', function ($subQ) use ($search) {
-                          $subQ->where('specialization', 'LIKE', "%{$search}%");
-                      });
-                });
-            }
+    $search = $request->search;
+    $query->where(function ($q) use ($search) {
+        $q->where('name', 'LIKE', "%{$search}%")
+          ->orWhere('city', 'LIKE', "%{$search}%")
+          ->orWhereHas('professionalProfile', function ($subQ) use ($search) {
+              $subQ->where('specialization', 'LIKE', "%{$search}%")
+                   ->orWhere('bio', 'LIKE', "%{$search}%")
+                   ->orWhere('qualifications', 'LIKE', "%{$search}%");
+          })
+          ->orWhereHas('services', function ($subQ) use ($search) {
+              $subQ->where('name', 'LIKE', "%{$search}%")
+                   ->orWhere('category', 'LIKE', "%{$search}%")
+                   ->orWhere('description', 'LIKE', "%{$search}%");
+          });
+    });
+}
 
             if ($request->city) {
                 $query->where('city', $request->city);
             }
 
             if ($request->profession) {
-                $query->whereHas('professionalProfile', function ($q) use ($request) {
-                    $q->where('specialization', 'LIKE', "%{$request->profession}%");
-                });
-            }
+    $profession = $request->profession;
+    $query->where(function ($q) use ($profession) {
+        $q->whereHas('professionalProfile', function ($subQ) use ($profession) {
+            $subQ->where('specialization', 'LIKE', "%{$profession}%")
+                 ->orWhere('bio', 'LIKE', "%{$profession}%");
+        })->orWhereHas('services', function ($subQ) use ($profession) {
+            $subQ->where('name', 'LIKE', "%{$profession}%")
+                 ->orWhere('category', 'LIKE', "%{$profession}%");
+        });
+    });
+}
 
             $professionals = $query->get();
                

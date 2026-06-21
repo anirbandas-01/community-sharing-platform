@@ -85,13 +85,16 @@ const ResidentProfessionals = () => {
     }
   };
 
-  const filteredProfessionals = professionals.filter(pro =>
-    searchTerm === '' ||
-      pro.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pro.profession?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pro.services?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
-    
-  );
+const filteredProfessionals = professionals.filter(pro => {
+    if (searchTerm === '') return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      pro.name?.toLowerCase().includes(term) ||
+      pro.profession?.toLowerCase().includes(term) ||
+      pro.location?.toLowerCase().includes(term) ||
+      pro.services?.some(s => s.toLowerCase().includes(term))
+    );
+});
 
   const handleBookNow = (professional) => {
     navigate(`/resident/professionals/${professional.id}`);

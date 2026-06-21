@@ -18,9 +18,16 @@ class ResidentController extends Controller
         $user = $request->user();
         $user->load('residentProfile');
 
+        $communitiesCount = $user->communities()->count();
+        $bookingsCount    = \App\Models\Appointment::where('user_id', $user->id)->count();
+        $reviewsCount     = \App\Models\Review::where('user_id', $user->id)->count();
+
         return response()->json([
-            'user' => $user,
-            'bio'  => $user->residentProfile->bio ?? null,
+            'user'              => $user,
+           'bio'               => $user->residentProfile->bio ?? null,
+           'communities_count' => $communitiesCount,
+           'bookings_count'    => $bookingsCount,
+           'reviews_count'     => $reviewsCount,
         ]);
     }
 
@@ -180,71 +187,6 @@ class ResidentController extends Controller
 
             return response()->json([
                 'message' => 'Failed to cancel appointment'
-            ], 500);
-        }
-    }
-
-    /**
-     * Search professionals
-     */
-    public function searchProfessionals(Request $request)
-    {
-        try {
-            $query = User::where('user_type', 'professional')
-                ->with(['professionalProfile', 'services']);
-
-            // Search by name or specialization
-            if ($request->search) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhereHas('professionalProfile', function ($subQ) use ($search) {
-                          $subQ->where('specialization', 'LIKE', "%{$search}%");
-                      });
-                });
-            }
-
-            // Filter by profession
-            if ($request->profession) {
-                $query->whereHas('professionalProfile', function ($q) use ($request) {
-                    $q->where('specialization', 'LIKE', "%{$request->profession}%");
-                });
-            }
-
-            // Filter by city
-            if ($request->city) {
-                $query->where('city', $request->city);
-            }
-
-            $professionals = $query->get()->map(function ($pro) {
-                return [
-                    'id' => $pro->id,
-                    'name' => $pro->name,
-                    'profession' => $pro->professionalProfile->specialization ?? 'Professional',
-                    'rating' => $pro->average_rating ?? 4.5,
-                    'reviews_count' => $pro->total_reviews ?? 0,
-                    'price' => '₹500',
-                    'experience' => ($pro->professionalProfile->experience_years ?? 0) . ' years',
-                    'location' => $pro->city ?? 'Location',
-                    'verified' => true,
-                    'available' => true,
-                    'image' => $pro->profile_image_url,
-                    'services' => $pro->services->pluck('name')->toArray(),
-                ];
-            });
-
-            return response()->json([
-                'professionals' => $professionals
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Search professionals error', [
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to search professionals',
-                'professionals' => []
             ], 500);
         }
     }

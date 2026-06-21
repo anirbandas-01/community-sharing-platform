@@ -102,7 +102,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/',       [NotificationController::class, 'clearAll']);
         Route::put('/{id}/read', [NotificationController::class, 'markRead']);
         Route::delete('/{id}',   [NotificationController::class, 'destroy']);
-        Route::put('/user/notifications', [UserController::class, 'saveSettings']);
     });
 
     Route::prefix('user')->group(function () {

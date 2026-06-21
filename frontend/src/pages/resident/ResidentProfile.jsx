@@ -52,9 +52,15 @@ const ResidentProfile = () => {
     { icon: Settings,      label: 'Settings',           path: '/resident/settings' },
   ];
 
+  const [counts, setCounts] = useState({
+  communities: 0,
+  bookings:    0,
+  reviews:     0,
+});
+
   useEffect(() => {
   const loadProfile = async () => {
-    try {
+   try {
       setLoading(true);
       const res = await api.get('/resident/profile');
       const u = res.data.user || {};
@@ -68,6 +74,12 @@ const ResidentProfile = () => {
       };
       setFormData(data);
       setOriginalData(data);
+
+      setCounts({
+        communities: res.data.communities_count ?? 0,
+        bookings:    res.data.bookings_count    ?? 0,
+        reviews:     res.data.reviews_count     ?? 0,
+      });
     } catch (err) {
       setError('Failed to load profile.');
     } finally {
@@ -126,10 +138,10 @@ const ResidentProfile = () => {
   };
 
   const stats = [
-    { label: 'Communities',   value: user?.communities_count  ?? 0, color: 'blue' },
-    { label: 'Bookings',      value: user?.bookings_count     ?? 0, color: 'purple' },
-    { label: 'Reviews',       value: user?.reviews_count      ?? 0, color: 'yellow' },
-  ];
+  { label: 'Communities', value: counts.communities, color: 'blue' },
+  { label: 'Bookings',    value: counts.bookings,    color: 'purple' },
+  { label: 'Reviews',     value: counts.reviews,     color: 'yellow' },
+];
 
   return (
     <DashboardLayout menuItems={menuItems} userType="resident">

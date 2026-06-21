@@ -69,7 +69,7 @@ class OtpController extends Controller
             'payload'         => [
                 'name'      => $request->name,
                 'email'     => $request->email,
-                'password'  => bcrypt($request->password), // already hashed
+                'password'  => $request->password, // already hashed
                 'user_type' => $request->user_type,
                 'phone'     => $request->phone,
                 'city'      => $request->city,
@@ -162,7 +162,6 @@ class OtpController extends Controller
 
         // Create user — password is already bcrypt-hashed in payload
         $user = new User($payload);
-        $user->password      = $payload['password']; // already hashed
         $user->profile_image = $profileImageUrl;
         $user->save();
 

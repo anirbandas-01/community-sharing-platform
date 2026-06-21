@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\CommunityPost;
+  
 
 class Community extends Model
 {
@@ -18,6 +20,7 @@ class Community extends Model
         'visibility',
         'created_by',
         'member_count',
+        'location',
     ];
 
     protected $casts = [
@@ -48,48 +51,3 @@ class Community extends Model
     }
 }
 
-class CommunityMember extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'community_id',
-        'user_id',
-        'role',
-        'status',
-    ];
-
-    public function community()
-    {
-        return $this->belongsTo(Community::class);
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-}
-
-class CommunityPost extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'community_id',
-        'user_id',
-        'content',
-        'image',
-        'likes_count',
-        'comments_count',
-    ];
-
-    public function community()
-    {
-        return $this->belongsTo(Community::class);
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-}

@@ -84,7 +84,7 @@ const ResidentSettings = () => {
   const handleSaveNotifications = async () => {
     try {
       setSaving(true);
-      await api.put('/user/notifications', notifications);
+      await api.put('/user/settings', notifications);
       showSuccess('Notification preferences saved!');
     } catch {
       setError('Failed to save preferences. Please try again.');

@@ -101,7 +101,7 @@ const ResidentBookings = () => {
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
     try {
-      await api.put(`/bookings/${bookingId}/cancel`);
+      await api.post(`/bookings/${bookingId}/cancel`);
       setBookings(prev =>
         prev.map(b => b.id === bookingId ? { ...b, status: 'cancelled' } : b)
       );
@@ -115,7 +115,8 @@ const ResidentBookings = () => {
     try {
       setSubmittingReview(true);
       await api.post('/reviews', {
-        booking_id:      reviewModal.booking.id,
+        review_type:     'professional',
+        appointment_id:  reviewModal.booking.id,
         professional_id: reviewModal.booking.professional?.id,
         rating:          reviewData.rating,
         comment:         reviewData.comment,
@@ -285,7 +286,7 @@ const ResidentBookings = () => {
                     )}
 
                     {/* Leave review for completed, unreviewed bookings */}
-                    {booking.status === 'completed' && !booking.reviewed && (
+                    {booking.status === 'completed' && !booking.has_review && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -297,7 +298,7 @@ const ResidentBookings = () => {
                       </Button>
                     )}
 
-                    {booking.status === 'completed' && booking.reviewed && (
+                    {booking.status === 'completed' && booking.has_review && (
                       <span className="text-xs text-green-600 font-medium flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" /> Reviewed
                       </span>

@@ -133,12 +133,12 @@ class NotificationService
             $now  = now();
 
             foreach ($community->members as $member) {
-                if ($member->id === $post->user_id) continue; // skip author
+                if ($member->id === $post->user_id) continue; 
 
                 $link = match ($member->user_type) {
-                    'professional' => '/professional/messages',
-                    'business'     => '/business/messages',
-                    default        => '/resident/messages',
+                    'professional' => '/professional/groups',
+                    'business'     => '/resident/communities/' . $community->id, // business users can view communities
+                    default        => '/resident/communities/' . $community->id,
                 };
 
                 $rows[] = [
@@ -270,17 +270,42 @@ class NotificationService
     public static function reviewReceived(\App\Models\Review $review): void
     {
         $reviewer = User::find($review->user_id);
+        if (!$reviewer) return;
 
-        self::create($review->professional_id, 'review_received', [
-            'title' => "New {$review->rating}★ review",
-            'body'  => "{$reviewer->name} left you a review: \"" .
-                       (strlen($review->comment) > 60 ? substr($review->comment, 0, 60) . '…' : $review->comment) . '"',
-            'link'  => '/professional/reviews',
-            'meta'  => [
-                'review_id'     => $review->id,
-                'reviewer_name' => $reviewer->name,
-                'rating'        => $review->rating,
-            ],
+        // Determine who receives the notification and what link to show
+        $recipientId = match($review->review_type) {
+            'product', 'store' => $review->business_user_id,
+            default            => $review->professional_id,
+        };
+
+        // If no valid recipient, skip silently
+        if (!$recipientId) return;
+
+        $link = match($review->review_type) {
+            'product', 'store' => '/business/reviews',
+            default            => '/professional/reviews',
+        };
+     
+        $bodyPrefix = match($review->review_type) {
+        'product' => "{$reviewer->name} reviewed your product",
+        'store'   => "{$reviewer->name} reviewed your store",
+        default   => "{$reviewer->name} left you a review",
+       };
+
+       $shortComment = strlen($review->comment) > 60
+        ? substr($review->comment, 0, 60) . '…'
+        : $review->comment;
+
+            self::create($recipientId, 'review_received', [
+                    'title' => "New {$review->rating}★ review",
+                    'body'  => "{$bodyPrefix}: \"{$shortComment}\"",
+                    'link'  => $link,
+                    'meta'  => [
+                        'review_id'     => $review->id,
+                        'reviewer_name' => $reviewer->name,
+                        'rating'        => $review->rating,
+                        'review_type'   => $review->review_type,
+                    ],
         ]);
     }
 
@@ -288,19 +313,32 @@ class NotificationService
      * Professional responded to a review → notify the original reviewer.
      */
     public static function reviewResponded(\App\Models\Review $review): void
-    {
-        $professional = User::find($review->professional_id);
+{
+    // Get the responder — could be professional OR business owner
+    $responderId = match($review->review_type) {
+        'product', 'store' => $review->business_user_id,
+        default            => $review->professional_id,
+    };
 
-        self::create($review->user_id, 'review_responded', [
-            'title' => 'Response to your review',
-            'body'  => "{$professional->name} replied to your review.",
-            'link'  => '/resident/reviews',
-            'meta'  => [
-                'review_id'         => $review->id,
-                'professional_name' => $professional->name,
-            ],
-        ]);
-    }
+    $responder = User::find($responderId);
+    if (!$responder) return;
+
+    $link = match($review->review_type) {
+        'product', 'store' => '/resident/reviews',
+        default            => '/resident/reviews',
+    };
+
+    self::create($review->user_id, 'review_responded', [
+        'title' => 'Response to your review',
+        'body'  => "{$responder->name} replied to your review.",
+        'link'  => $link,
+        'meta'  => [
+            'review_id'      => $review->id,
+            'responder_name' => $responder->name,
+            'review_type'    => $review->review_type,
+        ],
+    ]);
+}
 
     // ── Communities ──────────────────────────────────────────────────────
 
@@ -311,7 +349,7 @@ class NotificationService
     {
         $link = match (User::find($userId)?->user_type) {
             'professional' => '/professional/groups',
-            default        => '/resident/communities',
+            default        => '/resident/communities/' . $community->id,  // ← specific community
         };
 
         self::create($userId, 'community_invite', [
@@ -337,7 +375,7 @@ class NotificationService
         self::create($community->created_by, 'community_joined', [
             'title' => 'New member joined',
             'body'  => "{$newMember->name} joined {$community->name}.",
-            'link'  => '/resident/communities',
+            'link'  => '/resident/communities/' . $community->id,
             'meta'  => [
                 'community_id'   => $community->id,
                 'community_name' => $community->name,

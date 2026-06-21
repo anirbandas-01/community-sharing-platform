@@ -36,7 +36,7 @@ class CommunitiesController extends Controller
                         'name' => $community->name,
                         'description' => $community->description,
                         'member_count' => $community->member_count,
-                        'location' => 'Mumbai', // Add location field to DB later if needed
+                        'location' => $community->location ?? $community->creator->city ?? null,
                         'admin_name' => $community->creator->name,
                         'category' => $community->category,
                         'image' => $community->image_url,
@@ -69,7 +69,7 @@ class CommunitiesController extends Controller
                         'name' => $community->name,
                         'description' => $community->description,
                         'member_count' => $community->member_count,
-                        'location' => 'Mumbai',
+                        'location' => $community->location ?? $community->creator->city ?? null,
                         'admin_name' => $community->creator->name,
                         'category' => $community->category,
                         'image' => $community->image_url,
@@ -104,7 +104,7 @@ class CommunitiesController extends Controller
                     'description' => $community->description,
                     'image' => $community->image_url,
                     'member_count' => $community->member_count,
-                    'location' => 'Mumbai, Maharashtra',
+                    'location' => $community->location ?? $community->creator->city ?? null,
                     'created_at' => $community->created_at->format('Y-m-d'),
                     'admin' => [
                         'name' => $community->creator->name,

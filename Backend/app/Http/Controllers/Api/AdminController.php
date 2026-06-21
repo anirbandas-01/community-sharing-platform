@@ -234,6 +234,7 @@ public function getUsers(Request $request)
                 'description' => 'required|string',
                 'category' => 'required|in:general,professional,business,local',
                 'visibility' => 'required|in:public,private',
+                'location'    => 'nullable|string|max:255',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ]);
 
@@ -247,6 +248,7 @@ public function getUsers(Request $request)
                 'description' => $validated['description'],
                 'category' => $validated['category'],
                 'visibility' => $validated['visibility'],
+                'location'    => $validated['location'] ?? null,
                 'image' => $imagePath,
                 'created_by' => $request->user()->id,
                 'status' => 'active',
