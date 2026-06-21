@@ -31,7 +31,10 @@ use Illuminate\Support\Facades\Http;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
+// Handle all OPTIONS preflight requests
+Route::options('{any}', function() {
+    return response('', 204);
+})->where('any', '.*');
 
 
 Route::post('/register', [AuthController::class, 'register']);

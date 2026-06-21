@@ -69,7 +69,7 @@ class OtpController extends Controller
             'payload'         => [
                 'name'      => $request->name,
                 'email'     => $request->email,
-                'password'  => $request->password, // already hashed
+                'password'  => $request->password, 
                 'user_type' => $request->user_type,
                 'phone'     => $request->phone,
                 'city'      => $request->city,
