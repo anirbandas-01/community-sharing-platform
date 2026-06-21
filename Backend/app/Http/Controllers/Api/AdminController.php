@@ -56,13 +56,20 @@ class AdminController extends Controller
                     ];
                 });
 
-            // User growth chart data (last 7 days)
+            // Replace with this (1 query instead of 7):
+            $growthRaw = User::where('created_at', '>=', now()->subDays(6)->startOfDay())
+                ->selectRaw("DATE(created_at) as date, COUNT(*) as count")
+                ->groupBy('date')
+                ->get()
+                ->keyBy('date');
+
             $user_growth = [];
             for ($i = 6; $i >= 0; $i--) {
                 $date = now()->subDays($i);
+                $dateKey = $date->format('Y-m-d');
                 $user_growth[] = [
-                    'date' => $date->format('M d'),
-                    'count' => User::whereDate('created_at', $date)->count(),
+                    'date'  => $date->format('M d'),
+                    'count' => $growthRaw->get($dateKey)?->count ?? 0,
                 ];
             }
 
