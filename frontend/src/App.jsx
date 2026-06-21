@@ -50,9 +50,11 @@ import ResidentMyOrders from './pages/resident/ResidentMyOrders';
 import ProfessionalMyOrders from './pages/professional/ProfessionalMyOrders';
 import AdminVerifications from './pages/admin/AdminVerifications';
 import BusinessReviews from './pages/business/BusinessReviews';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   return (
+  <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -466,6 +468,7 @@ function App() {
         <ChatBot />
       </BrowserRouter>
     </AuthProvider>
+  </ThemeProvider>
   );
 }
 

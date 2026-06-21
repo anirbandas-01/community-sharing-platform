@@ -102,11 +102,11 @@ export default function ChatBot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 group"
+          className="fixed bottom-5 right-5 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full p-2.5 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 group"
         >
-          <MessageCircle className="w-6 h-6" />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-            <Sparkles className="w-3 h-3" />
+          <MessageCircle className="w-4 h-4" />
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-2 h-2 flex items-center justify-center animate-pulse">
+            <Sparkles className="w-2 h-2" />
           </span>
         </button>
       )}

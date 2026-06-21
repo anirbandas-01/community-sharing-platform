@@ -4,6 +4,8 @@ import { Menu, X, Search, LogOut, User, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import NotificationBell from '../NotificationBell';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -11,6 +13,7 @@ const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) =>
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const isActive = (path) => location.pathname === path;
 
@@ -140,6 +143,14 @@ const DashboardLayout = ({ children, menuItems = [], userType = 'resident' }) =>
 
               {/* Right Side */}
               <div className="flex items-center gap-4">
+                  {/* theme change*/}
+                <button
+                    onClick={toggleTheme}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                    title="Toggle dark mode"
+                  >
+                    {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  </button>
                 {/* Notifications */}
                 <NotificationBell userType={userType} />
 
