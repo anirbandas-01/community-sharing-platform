@@ -83,11 +83,10 @@ class OtpController extends Controller
         try {
             Mail::to($request->email)->send(new OtpMail($otp, 'registration'));
         } catch (\Exception $e) {
-            Log::error('OTP email failed: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to send OTP email. Please try again.',
-            ], 500);
-        }
+          return response()->json([
+        'message' => $e->getMessage(),
+    ], 500);
+}
 
         Log::info('Registration OTP sent', ['email' => $request->email]);
 
