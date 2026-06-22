@@ -218,25 +218,25 @@ const Landing = () => {
             <div>
               <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Features</a></li>
-                <li><a href="#" className="hover:text-white">Pricing</a></li>
-                <li><a href="#" className="hover:text-white">For Business</a></li>
+                <li><a href="#features" className="hover:text-white">Features</a></li>
+                <li><a href="#features" className="hover:text-white">Pricing</a></li>
+                <li><Link to ="/register" className="hover:text-white">For Business</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">About</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
+                <li><Link to="/about" className="hover:text-white">About</Link></li>
+                <li><Link to="/blog" className="hover:text-white">Blog</Link></li>
+                <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Privacy</a></li>
-                <li><a href="#" className="hover:text-white">Terms</a></li>
-                <li><a href="#" className="hover:text-white">Security</a></li>
+                <li><Link to="/privacy-policy" className="hover:text-white">Privacy</Link></li>
+                <li><Link to="/terms" className="hover:text-white">Terms</Link></li>
+                <li><Link to="/security" className="hover:text-white">Security</Link></li>
               </ul>
             </div>
           </div>

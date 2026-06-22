@@ -18,13 +18,15 @@ class ChatbotController extends Controller
             $request->validate([
                 'message' => 'required|string|max:1000',
                 'conversation_history' => 'nullable|array',
+                 'stuck' => 'nullable|boolean',
             ]);
 
             $userMessage = $request->message;
             $history = $request->conversation_history ?? [];
+            $stuck = (bool) $request->input('stuck', false);
 
             // Build prompt with context
-            $prompt = $this->buildPrompt($history, $userMessage);
+            $prompt = $this->buildPrompt($history, $userMessage, $stuck);
 
             // Get API key from config
             $apiKey = config('services.gemini.api_key');
@@ -85,12 +87,12 @@ class ChatbotController extends Controller
                 
                 // Extract AI message from response
                 if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-                    $aiMessage = $data['candidates'][0]['content']['parts'][0]['text'];
-                    $aiMessage = $this->cleanResponse($aiMessage);
+                   $aiMessage = $this->cleanResponse($data['candidates'][0]['content']['parts'][0]['text']);                    
 
                     return response()->json([
                         'success' => true,
                         'message' => $aiMessage,
+                        'escalate' => $stuck,
                         'timestamp' => now()->toIso8601String(),
                     ]);
                 }
@@ -140,7 +142,7 @@ class ChatbotController extends Controller
     /**
      * Build prompt with conversation history
      */
-    private function buildPrompt(array $history, string $userMessage)
+    private function buildPrompt(array $history, string $userMessage, bool $stuck = false)
     {
         $systemPrompt = $this->getSystemPrompt();
         
@@ -157,6 +159,10 @@ class ChatbotController extends Controller
                 $conversationText .= "{$role}: {$content}\n\n";
             }
         }
+
+        if ($stuck) {
+        $conversationText .= "[SYSTEM NOTE: The user appears to be asking the same or a very similar question again, meaning your last answer likely didn't solve their problem. Briefly try one more time with a different, more specific angle, then clearly tell them you're connecting them with human support and that they can use the buttons below to message support or email support@communitysharing.com. Keep it short and warm.]\n\n";
+    }
 
         // Add current user message
         $conversationText .= "User: {$userMessage}\n\n";

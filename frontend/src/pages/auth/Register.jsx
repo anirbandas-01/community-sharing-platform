@@ -384,9 +384,18 @@ const Register = () => {
                   className="mt-1 w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                 <span className="text-sm text-gray-600">
                   I agree to the{' '}
-                  <a href="#" className="text-primary-600 hover:text-primary-700 font-medium">Terms &amp; Conditions</a>{' '}
+                  <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700 font-medium">
+                    Terms & Conditions
+                  </Link>{' '}
                   and{' '}
-                  <a href="#" className="text-primary-600 hover:text-primary-700 font-medium">Privacy Policy</a>
+                   <Link
+                        to="/privacy-policy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 font-medium"
+                      >
+                        Privacy Policy
+                    </Link>
                 </span>
               </label>
             </div>

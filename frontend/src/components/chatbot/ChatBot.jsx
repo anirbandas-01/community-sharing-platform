@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader, Sparkles } from 'lucide-react';
 import api from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +18,8 @@ export default function ChatBot() {
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const [repeatCount, setRepeatCount] = useState(0);
+  const lastUserMsgRef = useRef('');
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -43,6 +47,12 @@ export default function ChatBot() {
 
   const sendMessage = async (messageText = inputMessage) => {
     if (!messageText.trim() || isLoading) return;
+    
+
+    const trimmed = messageText.trim();
+    const wasRepeat = isSimilar(trimmed, lastUserMsgRef.current);
+    setRepeatCount(prev => (wasRepeat ? prev + 1 : 0));
+    lastUserMsgRef.current = trimmed;
 
     const userMessage = {
       role: 'user',
@@ -56,25 +66,27 @@ export default function ChatBot() {
 
     try {
       const response = await api.post('/chatbot/message', {
-        message: messageText.trim(),
+        message: trimmed,
         conversation_history: messages,
+        stuck: wasRepeat && repeatCount >= 1,
       });
 
       const aiMessage = {
         role: 'assistant',
         content: response.data.message,
         timestamp: response.data.timestamp,
+        escalate: response.data.escalate || false,
       };
 
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Chatbot error:', error);
-      const errorMessage = {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: 'Sorry, I encountered an error. Please try again.',
+      timestamp: new Date().toISOString(),
+    }]);
+     
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +107,16 @@ export default function ChatBot() {
       handleSubmit(e);
     }
   };
+  const isSimilar = (a, b) => {
+  const norm = (s) => s.toLowerCase().trim().replace(/[^\w\s]/g, '');
+  const na = norm(a), nb = norm(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const wordsA = new Set(na.split(/\s+/));
+  const wordsB = new Set(nb.split(/\s+/));
+  const overlap = [...wordsA].filter(w => wordsB.has(w)).length;
+  return overlap / Math.max(wordsA.size, wordsB.size) > 0.6;
+};
 
   return (
     <>
@@ -105,7 +127,7 @@ export default function ChatBot() {
           className="fixed bottom-5 right-5 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full p-2.5 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 group"
         >
           <MessageCircle className="w-4 h-4" />
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-2 h-2 flex items-center justify-center animate-pulse">
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center animate-pulse">
             <Sparkles className="w-2 h-2" />
           </span>
         </button>
@@ -138,7 +160,7 @@ export default function ChatBot() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-2 ${
@@ -159,8 +181,26 @@ export default function ChatBot() {
                     })}
                   </p>
                 </div>
-              </div>
-            ))}
+
+
+            {message.role === 'assistant' && message.escalate && (
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => { setIsOpen(false); navigate(`/${user?.user_type || 'resident'}/messages`); }}
+            className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700"
+          >
+            Message Support
+          </button>
+          <a
+            href="mailto:support@communitysharing.com"
+            className="text-xs px-3 py-1.5 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50"
+          >
+            Email Us
+          </a>
+        </div>
+      )}
+    </div>
+  ))}
 
             {/* Loading Indicator */}
             {isLoading && (

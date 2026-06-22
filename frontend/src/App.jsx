@@ -51,6 +51,12 @@ import ProfessionalMyOrders from './pages/professional/ProfessionalMyOrders';
 import AdminVerifications from './pages/admin/AdminVerifications';
 import BusinessReviews from './pages/business/BusinessReviews';
 import { ThemeProvider } from './context/ThemeContext';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import About from './pages/About';
+import Blog from './pages/Blog';
+import Contact from './pages/Contact';
+import TermsOfService from './pages/TermsOfService';
+import Security from './pages/Security';
 
 function App() {
   return (
@@ -63,7 +69,15 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
            <Route path="/forgot-password" element={<ForgotPassword />} />
-          
+
+           <Route path="/about" element={<About />} />
+           <Route path="/blog" element={<Blog />} />
+           <Route path="/contact" element={<Contact />} />
+           <Route path="/terms" element={<TermsOfService />} />
+           <Route path="/security" element={<Security />} />
+           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+
+           
           {/* Resident Routes */}
           <Route
             path="/resident/dashboard"

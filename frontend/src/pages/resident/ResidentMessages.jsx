@@ -1,9 +1,10 @@
 import {
   Home, Users, Briefcase, Calendar, MessageCircle,
-  Settings, User as UserIcon, Star, Store, ShoppingCart, useLocation 
+  Settings, User as UserIcon, Star, Store, ShoppingCart
 } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import MessagingCenter from '../../components/messages/MessagingCenter';
+import { useLocation } from 'react-router-dom';
 
 const menuItems = [
   { icon: Home,          label: 'Dashboard',          path: '/resident/dashboard' },
