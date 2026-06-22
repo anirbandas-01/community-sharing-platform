@@ -1,6 +1,6 @@
 import {
   Home, Users, Briefcase, Calendar, MessageCircle,
-  Settings, User as UserIcon, Star, Store, ShoppingCart,
+  Settings, User as UserIcon, Star, Store, ShoppingCart, useLocation 
 } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import MessagingCenter from '../../components/messages/MessagingCenter';
@@ -20,11 +20,14 @@ const menuItems = [
 ];
 
 export default function ResidentMessages() {
+  const location = useLocation();
   return (
     <MessagingCenter
       menuItems={menuItems}
       userType="resident"
       DashboardLayout={DashboardLayout}
+      initialTab={location.state?.tab}
+      initialCommunityId={location.state?.communityId}
     />
   );
 }

@@ -265,10 +265,10 @@ function EmptyChat({ icon, title, sub }) {
 /* ═══════════════════════════════════════════════════════════════════════════
    MessagingCenter — universal for ALL user types
    ═══════════════════════════════════════════════════════════════════════════ */
-export default function MessagingCenter({ menuItems, userType, DashboardLayout }) {
+export default function MessagingCenter({ menuItems, userType, DashboardLayout, initialTab, initialCommunityId  }) {
   const { user } = useAuth();
 
-  const [tab, setTab]     = useState('dm');
+  const [tab, setTab]     = useState(initialTab ||'dm');
   const [search, setSearch] = useState('');
 
   /* mobile: show list or chat panel */
@@ -314,6 +314,12 @@ export default function MessagingCenter({ menuItems, userType, DashboardLayout }
       setConversations(res.data.conversations || []);
     } catch {}
   }, []);
+    // Auto-select community when navigated from community page
+  useEffect(() => {
+    if (initialCommunityId && initialTab === 'community') {
+      selectCommunity(initialCommunityId);
+    }
+  }, [initialCommunityId, initialTab]);
 
   useEffect(() => { fetchConversations(); }, [fetchConversations]);
 

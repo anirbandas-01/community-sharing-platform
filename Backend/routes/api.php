@@ -37,7 +37,7 @@ Route::options('{any}', function() {
 })->where('any', '.*');
 
 
-Route::post('/register', [AuthController::class, 'register']);
+/* Route::post('/register', [AuthController::class, 'register']); */
 Route::post('/login', [AuthController::class, 'login']);
 
 //otp routes

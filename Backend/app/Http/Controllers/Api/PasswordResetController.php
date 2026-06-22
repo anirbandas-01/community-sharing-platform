@@ -46,16 +46,10 @@ class PasswordResetController extends Controller
         // The frontend shows a generic "if this email exists, a reset link has been sent" message.
         if (!$user) {
             return response()->json([
-                'message' => 'If this email is registered, a reset token has been generated.',
-            ]);
+                'message' => 'Please use the OTP-based password reset flow.',
+                'redirect' => '/forgot-password',
+            ], 410);
         }
-
-        // Generate a plain token, hash it before storing
-        $plainToken = Str::random(64);
-
-        $user->reset_token            = hash('sha256', $plainToken);
-        $user->reset_token_expires_at = now()->addMinutes(self::TOKEN_TTL_MINUTES);
-        $user->save();
 
         // ──────────────────────────────────────────────────────────────────
         // NOTE: Right now we return the token directly so the frontend can
@@ -67,13 +61,12 @@ class PasswordResetController extends Controller
         //
         //       When you add OTP, replace this block with sendOtp() below.
         // ──────────────────────────────────────────────────────────────────
-        Log::info('Password reset token generated', ['email' => $user->email]);
+        Log::info('Deprecated reset endpoint called', ['email' => $user->email]);
 
         return response()->json([
-            'message' => 'Token generated. Proceed to reset your password.',
-            'token'   => $plainToken,   // Remove this line once you add email sending
-            'email'   => $user->email,
-        ]);
+            'message' => 'This endpoint is deprecated. Please use OTP-based reset.',
+            'redirect' => '/forgot-password',
+        ], 410);
     }
 
     // ─────────────────────────────────────────────────────────────────────

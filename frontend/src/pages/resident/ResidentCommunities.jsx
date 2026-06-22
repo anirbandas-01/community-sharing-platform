@@ -100,10 +100,12 @@ const ResidentCommunities = () => {
 
   // FIX: navigate to messages (community chat)
   const handleOpenChat = async (community) => {
-    try {
-      await api.post('/messages/community-start', { community_id: community.id });
-    } catch {}
-    navigate('/resident/messages');
+    navigate('/resident/messages', {
+       state: {
+            tab:         'community',
+            communityId: community.id,
+        }
+    });
   };
 
   const filtered = (list) =>
