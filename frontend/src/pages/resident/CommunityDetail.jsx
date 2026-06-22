@@ -330,18 +330,30 @@ const CommunityDetail = () => {
                 <span className="font-semibold text-gray-900">{community.member_count}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Total Posts</span>
+                <span className="text-gray-600">Recent Posts</span>
                 {/* FIX: was hardcoded 156 — now uses real posts.length from API */}
                 <span className="font-semibold text-gray-900">{posts.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Members Loaded</span>
+                <span className="text-gray-600">Members Shown</span>
                 {/* FIX: was hardcoded "Active Today: 45" — replaced with real members count */}
-                <span className="font-semibold text-gray-900">{members.length}</span>
+                <span className="font-semibold text-gray-900">{members.length} of {community.member_count}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Created</span>
-                <span className="font-semibold text-gray-900">{community.created_at}</span>
+                <span className="text-gray-600">Category</span>
+                <span className="font-semibold text-gray-900">{community.category}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Visibility</span>
+                  <span className="font-semibold text-gray-900 capitalize">
+                      {community.visibility ?? 'Public'}
+                  </span>
+              </div>
+              <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Created</span>
+                  <span className="font-semibold text-gray-900">
+                      {community.created_at}
+                  </span>
               </div>
             </div>
           </Card>
