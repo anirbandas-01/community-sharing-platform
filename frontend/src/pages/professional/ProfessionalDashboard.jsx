@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Home, Briefcase, Calendar, MessageCircle, Users, TrendingUp, Settings, User as UserIcon } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
@@ -9,6 +10,7 @@ import api from '../../services/api';
 
 const ProfessionalDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -149,7 +151,7 @@ const ProfessionalDashboard = () => {
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Upcoming Schedule</h2>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/professional/bookings'}>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/professional/bookings')}>
                 View All
               </Button>
             </div>
@@ -183,7 +185,7 @@ const ProfessionalDashboard = () => {
                         <span>💵 ₹{job.total_price}</span>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => window.location.href = '/professional/bookings'}>Details</Button>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/professional/bookings')}>Details</Button>
                         {/* ← FIXED: Added onClick handler */}
                         {job.status === 'pending' && (
                           <Button 
@@ -239,19 +241,19 @@ const ProfessionalDashboard = () => {
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              <Button variant="primary" className="w-full justify-start" onClick={() => window.location.href = '/professional/bookings'}>
+              <Button variant="primary" className="w-full justify-start" onClick={() => navigate('/professional/bookings')}>
                 <Calendar className="w-5 h-5 mr-2" />
                 View Bookings
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/professional/services'}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/professional/services')}>
                 <Briefcase className="w-5 h-5 mr-2" />
                 Manage Services
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/professional/messages'}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/professional/messages')}>
                 <MessageCircle className="w-5 h-5 mr-2" />
                 Messages
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/professional/profile'}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/professional/profile')}>
                 <UserIcon className="w-5 h-5 mr-2" />
                 Edit Profile
               </Button>

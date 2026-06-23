@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Home, Users, Briefcase, MessageCircle, Calendar, Settings, User as UserIcon, Star, Store,ShoppingCart } from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
@@ -9,6 +10,7 @@ import api from '../../services/api';
 
 const ResidentDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [featuredProfessionals, setFeaturedProfessionals] = useState([]);
@@ -156,7 +158,7 @@ const ResidentDashboard = () => {
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Upcoming Bookings</h2>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/resident/bookings'}>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/resident/bookings')}>
                 View All
               </Button>
             </div>
@@ -173,7 +175,7 @@ const ResidentDashboard = () => {
                   variant="outline"
                   size="sm"
                   className="mt-3"
-                  onClick={() => window.location.href = '/resident/professionals'}
+                  onClick={() => navigate('/resident/professionals')}
                 >
                   Find a Professional
                 </Button>
@@ -205,7 +207,7 @@ const ResidentDashboard = () => {
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900">Featured Professionals</h2>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/resident/professionals'}>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/resident/professionals')}>
                 Browse All
               </Button>
             </div>
@@ -273,7 +275,7 @@ const ResidentDashboard = () => {
                       variant="primary"
                       size="sm"
                       className="w-full mt-3"
-                      onClick={() => window.location.href = `/resident/professionals/${pro.id}`}
+                      onClick={() => navigate(`/resident/professionals/${pro.id}`)}
                     >
                       Book Now
                     </Button>
@@ -290,23 +292,23 @@ const ResidentDashboard = () => {
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              <Button variant="primary" className="w-full justify-start" onClick={() => window.location.href = '/resident/professionals'}>
+              <Button variant="primary" className="w-full justify-start" onClick={() => navigate('/resident/professionals')}>
                 <Briefcase className="w-5 h-5 mr-2" />
                 Find Professional
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/find-residents'}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/resident/find-residents')}>
                 <Users className="w-5 h-5 mr-2" />
                 Find Residents
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/communities'}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/resident/communities')}>
                 <Users className="w-5 h-5 mr-2" />
                 Join Community
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/messages'}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/resident/messages')}>
                 <MessageCircle className="w-5 h-5 mr-2" />
                 Start Chat
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => window.location.href = '/resident/bookings'}>
+              <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/resident/bookings')}>
                 <Calendar className="w-5 h-5 mr-2" />
                 View Bookings
               </Button>
@@ -324,7 +326,7 @@ const ResidentDashboard = () => {
               <div className="text-center py-6">
                 <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                 <p className="text-sm text-gray-500 mb-3">No communities joined yet</p>
-                <Button variant="outline" size="sm" onClick={() => window.location.href = '/resident/communities'}>
+                <Button variant="outline" size="sm" onClick={() => navigate('/resident/communities')}>
                   Browse Communities
                 </Button>
               </div>
@@ -342,7 +344,7 @@ const ResidentDashboard = () => {
                   </div>
                 ))}
                 {myCommunities.length > 3 && (
-                  <Button variant="ghost" size="sm" className="w-full" onClick={() => window.location.href = '/resident/communities'}>
+                  <Button variant="ghost" size="sm" className="w-full" onClick={() => navigate('/resident/communities')}>
                     View all {myCommunities.length} communities
                   </Button>
                 )}

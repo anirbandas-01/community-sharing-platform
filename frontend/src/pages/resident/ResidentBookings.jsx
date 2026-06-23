@@ -88,10 +88,14 @@ const ResidentBookings = () => {
     }
   };
 
-  // FIX: Message button navigates to messages
+  // FIX: Guard against missing professional id before calling API
   const handleMessage = async (booking) => {
+    if (!booking.professional?.id) {
+      navigate('/resident/messages');
+      return;
+    }
     try {
-      await api.post('/messages/start', { recipient_id: booking.professional?.id });
+      await api.post('/messages/start', { recipient_id: booking.professional.id });
       navigate('/resident/messages');
     } catch {
       navigate('/resident/messages');
@@ -112,6 +116,13 @@ const ResidentBookings = () => {
 
   const handleSubmitReview = async () => {
     if (!reviewModal.booking) return;
+
+    // Frontend validation: backend requires comment with min 10 characters
+    if (!reviewData.comment || reviewData.comment.trim().length < 10) {
+      alert('Please write a review comment of at least 10 characters.');
+      return;
+    }
+
     try {
       setSubmittingReview(true);
       await api.post('/reviews', {
@@ -119,10 +130,10 @@ const ResidentBookings = () => {
         appointment_id:  reviewModal.booking.id,
         professional_id: reviewModal.booking.professional?.id,
         rating:          reviewData.rating,
-        comment:         reviewData.comment,
+        comment:         reviewData.comment.trim(),
       });
       setBookings(prev =>
-       prev.map(b => b.id === reviewModal.booking.id ? { ...b, has_review: true } : b)
+        prev.map(b => b.id === reviewModal.booking.id ? { ...b, reviewed: true } : b)
       );
       setReviewModal({ open: false, booking: null });
       setReviewData({ rating: 5, comment: '' });

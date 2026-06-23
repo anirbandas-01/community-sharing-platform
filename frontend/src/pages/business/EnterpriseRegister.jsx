@@ -68,6 +68,14 @@ const EnterpriseRegister = () => {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
+  // isReApply must be declared BEFORE validate() so the closure captures it correctly
+  const [isReApply, setIsReApply] = useState(false);
+  useEffect(() => {
+    api.get('/business/profile').then(res => {
+      if (res.data.enterprise?.status === 'rejected') setIsReApply(true);
+    }).catch(() => {});
+  }, []);
+
   const handlePhoto = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -80,14 +88,6 @@ const EnterpriseRegister = () => {
     reader.onloadend = () => setPhotoPreview(reader.result);
     reader.readAsDataURL(file);
   };
-
-  const [isReApply, setIsReApply] = useState(false);
-  useEffect(() => {
-  api.get('/business/profile').then(res => {
-    if (res.data.enterprise?.status === 'rejected') setIsReApply(true);
-    }).catch(() => {});
-  }, []);
-
 
   const validate = () => {
     const e = {};
