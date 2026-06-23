@@ -122,7 +122,7 @@ const ResidentBookings = () => {
         comment:         reviewData.comment,
       });
       setBookings(prev =>
-        prev.map(b => b.id === reviewModal.booking.id ? { ...b, reviewed: true } : b)
+       prev.map(b => b.id === reviewModal.booking.id ? { ...b, has_review: true } : b)
       );
       setReviewModal({ open: false, booking: null });
       setReviewData({ rating: 5, comment: '' });

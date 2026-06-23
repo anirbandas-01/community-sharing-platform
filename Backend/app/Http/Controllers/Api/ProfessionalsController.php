@@ -27,17 +27,17 @@ class ProfessionalsController extends Controller
             if ($request->search) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('city', 'LIKE', "%{$search}%")
+                    $q->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('city', 'ILIKE', "%{$search}%")
                     ->orWhereHas('professionalProfile', function ($subQ) use ($search) {
-                        $subQ->where('specialization', 'LIKE', "%{$search}%")
-                            ->orWhere('bio', 'LIKE', "%{$search}%")
-                            ->orWhere('qualifications', 'LIKE', "%{$search}%");
+                        $subQ->where('specialization', 'ILIKE', "%{$search}%")
+                            ->orWhere('bio', 'ILIKE', "%{$search}%")
+                            ->orWhere('qualifications', 'ILIKE', "%{$search}%");
                     })
                     ->orWhereHas('services', function ($subQ) use ($search) {
-                        $subQ->where('name', 'LIKE', "%{$search}%")
-                            ->orWhere('category', 'LIKE', "%{$search}%")
-                            ->orWhere('description', 'LIKE', "%{$search}%");
+                        $subQ->where('name', 'ILIKE', "%{$search}%")
+                            ->orWhere('category', 'ILIKE', "%{$search}%")
+                            ->orWhere('description', 'ILIKE', "%{$search}%");
                     });
                 });
             }
@@ -50,11 +50,11 @@ class ProfessionalsController extends Controller
                 $profession = $request->profession;
                 $query->where(function ($q) use ($profession) {
                     $q->whereHas('professionalProfile', function ($subQ) use ($profession) {
-                        $subQ->where('specialization', 'LIKE', "%{$profession}%")
-                            ->orWhere('bio', 'LIKE', "%{$profession}%");
+                        $subQ->where('specialization', 'ILIKE', "%{$profession}%")
+                            ->orWhere('bio', 'ILIKE', "%{$profession}%");
                     })->orWhereHas('services', function ($subQ) use ($profession) {
-                        $subQ->where('name', 'LIKE', "%{$profession}%")
-                            ->orWhere('category', 'LIKE', "%{$profession}%");
+                        $subQ->where('name', 'ILIKE', "%{$profession}%")
+                            ->orWhere('category', 'ILIKE', "%{$profession}%");
                     });
                 });
             }
