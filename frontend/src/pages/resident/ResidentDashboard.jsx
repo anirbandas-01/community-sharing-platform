@@ -232,22 +232,39 @@ const ResidentDashboard = () => {
                         src={pro.image}
                         alt={pro.name}
                         className="w-12 h-12 rounded-full object-cover"
+                        onError={(e) => {
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pro.name)}&size=48&background=6366f1&color=fff`;
+                        }}
                       />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900">{pro.name}</h3>
                         <p className="text-sm text-gray-600">{pro.profession}</p>
                       </div>
+                      {/* Available badge */}
+                      {pro.available && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                              Available
+                          </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                        </svg>
-                        <span className="text-sm font-medium text-gray-900">{pro.rating ?? 'New'}</span>
-                        {pro.rating && (
-                          <span className="text-xs text-gray-500">
-                            ({pro.total_reviews || pro.reviews_count || 0})
-                          </span>
+                        {pro.rating ? (
+                         <>
+                           <svg className="w-4 h-4 text-yellow-400 fill-current"    viewBox="0 0 20 20">
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                           </svg>
+                           <span className="text-sm font-medium text-gray-900">
+                             {pro.rating}
+                           </span>
+                           <span className="text-xs text-gray-500">
+                             ({pro.total_reviews ?? 0})
+                           </span>
+                         </>
+                      ) : (
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                        New
+                      </span>
                         )}
                       </div>
                       <span className="text-sm font-semibold text-primary-600">{pro.price}</span>

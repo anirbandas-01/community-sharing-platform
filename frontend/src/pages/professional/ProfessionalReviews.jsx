@@ -28,15 +28,13 @@ export default function ProfessionalReviews() {
   ];
 
   useEffect(() => {
-    if (user?.id) {
       fetchReviews();
-    }
-  }, [user]);
+  }, []);
 
   const fetchReviews = async () => {
   try {
     setLoading(true);
-    const response = await api.get(`/professionals/${user.id}/reviews`);
+    const response = await api.get(`/professionals/reviews`);
     setReviews(response.data.reviews || []);
     setStats(response.data.stats || null);
   } catch (error) {
