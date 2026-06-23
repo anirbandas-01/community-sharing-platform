@@ -80,7 +80,7 @@ function NoEnterpriseScreen({ navigate, userName }) {
   );
 }
 
-function PendingScreen({ userName }) {
+function PendingScreen({ userName, onRefresh }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mb-6">
@@ -107,6 +107,13 @@ function PendingScreen({ userName }) {
       </div>
 
       <Badge variant="warning" size="lg">⏳ Awaiting Admin Approval</Badge>
+
+       <button
+        onClick={onRefresh}
+        style={{ marginTop: 24, padding: '10px 28px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+      >
+        🔄 Check Approval Status
+      </button>
     </div>
   );
 }
@@ -199,6 +206,17 @@ const BusinessDashboard = () => {
     else if (enterpriseStatus !== null) setDashLoading(false);
   }, [enterpriseStatus]);
 
+  // ── Auto-poll every 30s while pending so user doesn't have to refresh manually
+  useEffect(() => {
+    if (enterpriseStatus !== 'pending') return;
+    const interval = setInterval(() => {
+      api.get('/business/profile')
+        .then(res => setEnterpriseStatus(res.data.enterprise?.status ?? 'none'))
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [enterpriseStatus]);
+
   // ── Toast from redirect (EnterpriseProtectedRoute passes ?blocked=true&status=...)
   useEffect(() => {
     if (searchParams.get('blocked') === 'true') {
@@ -247,10 +265,16 @@ const BusinessDashboard = () => {
   }
 
   if (enterpriseStatus === 'pending') {
+    const recheckStatus = () => {
+      setEnterpriseStatus(null);
+      api.get('/business/profile')
+        .then(res => setEnterpriseStatus(res.data.enterprise?.status ?? 'none'))
+        .catch(() => setEnterpriseStatus('none'));
+    };
     return (
       <DashboardLayout menuItems={menuItems} userType="business">
         {toast && <Toast message={toast} onClose={() => setToast('')} />}
-        <PendingScreen userName={firstName} />
+        <PendingScreen userName={firstName} onRefresh={recheckStatus} />
       </DashboardLayout>
     );
   }

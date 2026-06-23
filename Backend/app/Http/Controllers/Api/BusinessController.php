@@ -119,9 +119,10 @@ class BusinessController extends Controller
                 'orders' => [
                     'pending'   => $pendingOrders,
                     'new_today' => Order::where('business_user_id', $userId)->whereDate('created_at', today())->count(),
-                    'recent'    =>  Order::where('business_user_id', $userId)->with(['product','user'])->latest()->take(5)->get()->map(fn($o) => [
+                    'recent' => Order::where('business_user_id', $userId)->with(['product','user'])->latest()->take(5)->get()->map(fn($o) => [
                             'id'       => $o->id,
-                            'customer' => $o->user->name ?? 'Customer',
+                            'customer' => $o->user?->name ?? 'Customer',
+                            'product'  => $o->product?->name ?? 'Product',
                             'total'    => $o->total_price,
                             'status'   => $o->status,
                         ])->toArray(),
