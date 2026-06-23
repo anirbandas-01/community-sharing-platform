@@ -7,18 +7,11 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import api from '../../services/api';
 import { Home, Briefcase, Settings, User as UserIcon } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { openContactAdmin } from '../../components/ContactAdminModal';
 
-const CommunityDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [community, setCommunity] = useState(null);
-  const [members, setMembers] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isMember, setIsMember] = useState(false);
-  const [activeTab, setActiveTab] = useState('about');
-
-  const menuItems = [
+const ROLE_MENUS = {
+  resident: [
     { icon: Home, label: 'Dashboard', path: '/resident/dashboard' },
     { icon: Users, label: 'My Communities', path: '/resident/communities' },
     { icon: Briefcase, label: 'Find Professionals', path: '/resident/professionals' },
@@ -28,7 +21,52 @@ const CommunityDetail = () => {
     { icon: MessageCircle, label: 'Messages', path: '/resident/messages' },
     { icon: UserIcon, label: 'Profile', path: '/resident/profile' },
     { icon: Settings, label: 'Settings', path: '/resident/settings' },
-  ];
+  ],
+  professional: [
+    { icon: Home, label: 'Dashboard', path: '/professional/dashboard' },
+    { icon: Users, label: 'My Groups', path: '/professional/groups' },
+    { icon: Briefcase, label: 'My Services', path: '/professional/services' },
+    { icon: Calendar, label: 'Bookings', path: '/professional/bookings' },
+    { icon: MessageCircle, label: 'Messages', path: '/professional/messages' },
+    { icon: UserIcon, label: 'Profile', path: '/professional/profile' },
+    { icon: Settings, label: 'Settings', path: '/professional/settings' },
+  ],
+  business: [
+    { icon: Home, label: 'Dashboard', path: '/business/dashboard' },
+    { icon: Store, label: 'Inventory', path: '/business/inventory' },
+    { icon: ShoppingCart, label: 'Orders', path: '/business/orders' },
+    { icon: MessageCircle, label: 'Messages', path: '/business/messages' },
+    { icon: UserIcon, label: 'Profile', path: '/business/profile' },
+    { icon: Settings, label: 'Settings', path: '/business/settings' },
+  ],
+};
+
+const BACK_PATHS = {
+  resident: '/resident/communities',
+  professional: '/professional/groups',
+  business: '/business/communities',
+};
+
+const MESSAGES_PATHS = {
+  resident: '/resident/messages',
+  professional: '/professional/messages',
+  business: '/business/messages',
+};
+
+const CommunityDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.user_type || 'resident';
+  const [community, setCommunity] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isMember, setIsMember] = useState(false);
+  const [activeTab, setActiveTab] = useState('about');
+  const [contactingAdmin, setContactingAdmin] = useState(false);
+
+  const menuItems = ROLE_MENUS[role] || ROLE_MENUS.resident;
 
   useEffect(() => {
     fetchCommunityDetails();
@@ -70,9 +108,50 @@ const CommunityDetail = () => {
     }
   };
 
+  // Fix #19: "Open Chat" / "View Community Chat" had no onClick — both now
+  // navigate to this user's Messages page, pre-opened on the Communities tab
+  // for this specific community.
+  const handleOpenCommunityChat = () => {
+    navigate(MESSAGES_PATHS[role] || '/resident/messages', {
+      state: { tab: 'community', communityId: community.id },
+    });
+  };
+
+  // "Contact Admin" — opens the universal Contact Admin mini-window,
+  // pre-filled with this community's name so the message has context.
+  const handleContactCommunityAdmin = () => {
+    openContactAdmin({
+      communityId: community.id,
+      communityName: community.name,
+      subject: `Question about ${community.name}`,
+    });
+  };
+
+  // Direct-message the community's admin/creator (uses the existing
+  // 1-to-1 messaging system instead of the support-ticket inbox).
+  const handleMessageAdminDirectly = async () => {
+    if (!community.admin?.id) {
+      handleContactCommunityAdmin();
+      return;
+    }
+    setContactingAdmin(true);
+    try {
+      const res = await api.post('/messages/start', { recipient_id: community.admin.id });
+      navigate(MESSAGES_PATHS[role] || '/resident/messages', {
+        state: { tab: 'dm', conversationId: res.data.conversation_id },
+      });
+    } catch (error) {
+      console.error('Error starting conversation with admin:', error);
+      // Fall back to the support-ticket modal if a DM can't be started
+      handleContactCommunityAdmin();
+    } finally {
+      setContactingAdmin(false);
+    }
+  };
+
   if (loading && !community) {
     return (
-      <DashboardLayout menuItems={menuItems} userType="resident">
+      <DashboardLayout menuItems={menuItems} userType={role}>
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
@@ -85,11 +164,11 @@ const CommunityDetail = () => {
 
   if (!community) {
     return (
-      <DashboardLayout menuItems={menuItems} userType="resident">
+      <DashboardLayout menuItems={menuItems} userType={role}>
         <Card className="text-center py-12">
           <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Community Not Found</h3>
-          <Button variant="primary" onClick={() => navigate('/resident/communities')}>
+          <Button variant="primary" onClick={() => navigate(BACK_PATHS[role] || '/resident/communities')}>
             Back to Communities
           </Button>
         </Card>
@@ -98,10 +177,10 @@ const CommunityDetail = () => {
   }
 
   return (
-    <DashboardLayout menuItems={menuItems} userType="resident">
+    <DashboardLayout menuItems={menuItems} userType={role}>
       {/* Back Button */}
       <button
-        onClick={() => navigate('/resident/communities')}
+        onClick={() => navigate(BACK_PATHS[role] || '/resident/communities')}
         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -135,7 +214,7 @@ const CommunityDetail = () => {
             <div className="flex gap-2">
               {isMember ? (
                 <>
-                  <Button variant="primary">
+                  <Button variant="primary" onClick={handleOpenCommunityChat}>
                     <MessageCircle className="w-5 h-5 mr-2" />
                     Open Chat
                   </Button>
@@ -315,9 +394,9 @@ const CommunityDetail = () => {
                 <p className="text-sm text-gray-600">{community.admin?.role || 'Community Manager'}</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="w-full mt-4">
+            <Button variant="outline" size="sm" className="w-full mt-4" onClick={handleMessageAdminDirectly} disabled={contactingAdmin}>
               <MessageCircle className="w-4 h-4 mr-2" />
-              Contact Admin
+              {contactingAdmin ? 'Opening chat...' : 'Contact Admin'}
             </Button>
           </Card>
 
@@ -364,7 +443,7 @@ const CommunityDetail = () => {
               <p className="text-sm opacity-90 mb-4">
                 Stay active and engage with your community
               </p>
-              <Button variant="secondary" size="sm" className="w-full bg-white text-primary-600 hover:bg-gray-100">
+              <Button variant="secondary" size="sm" className="w-full bg-white text-primary-600 hover:bg-gray-100" onClick={handleOpenCommunityChat}>
                 View Community Chat
               </Button>
             </Card>

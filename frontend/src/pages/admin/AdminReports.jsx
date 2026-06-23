@@ -4,7 +4,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import api from '../../services/api';
-import { Home, Settings } from 'lucide-react';
+import { Home, Settings , LifeBuoy} from 'lucide-react';
 
 const AdminReports = () => {
   const [reports, setReports] = useState(null);
@@ -16,6 +16,7 @@ const AdminReports = () => {
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Building2, label: 'Communities', path: '/admin/communities' },
     { icon: ShieldCheck, label: 'Verifications', path: '/admin/verifications' },
+    { icon: LifeBuoy, label: 'Support Inbox', path: '/admin/support' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];

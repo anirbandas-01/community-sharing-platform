@@ -4,8 +4,8 @@ import {
   ShieldCheck, Clock, CheckCircle, XCircle,
   ChevronDown, ChevronUp, Phone, Mail, MapPin,
   Briefcase, DollarSign, Hash, User, ExternalLink,
-  AlertTriangle, RefreshCw,
-} from 'lucide-react';
+  AlertTriangle, RefreshCw
+, LifeBuoy} from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -18,7 +18,8 @@ const menuItems = [
   { icon: Users,       label: 'Users',          path: '/admin/users' },
   { icon: Building2,   label: 'Communities',    path: '/admin/communities' },
   { icon: ShieldCheck, label: 'Verifications',  path: '/admin/verifications' },
-  { icon: FileText,    label: 'Reports',        path: '/admin/reports' },
+  { icon: LifeBuoy, label: 'Support Inbox', path: '/admin/support' },
+    { icon: FileText,    label: 'Reports',        path: '/admin/reports' },
   { icon: Settings,    label: 'Settings',       path: '/admin/settings' },
 ];
 

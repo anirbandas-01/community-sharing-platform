@@ -35,4 +35,9 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
     ],  
+    /* Platform admin support inbox — where "Contact Admin" / "Mail Admin" emails go */
+    'admin_support' => [
+        'email' => env('ADMIN_SUPPORT_EMAIL', env('MAIL_FROM_ADDRESS', 'admin@communitysharing.com')),
+        'name'  => env('ADMIN_SUPPORT_NAME', 'CommunitySharing Admin'),
+    ],
 ];

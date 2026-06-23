@@ -107,7 +107,9 @@ class CommunitiesController extends Controller
                     'location' => $community->location ?? $community->creator->city ?? null,
                     'created_at' => $community->created_at->format('Y-m-d'),
                     'admin' => [
+                        'id' => $community->creator->id,
                         'name' => $community->creator->name,
+                        'email' => $community->creator->email,
                         'role' => 'Community Manager',
                         'avatar' => $community->creator->profile_image_url,
                     ],
@@ -136,21 +138,40 @@ class CommunitiesController extends Controller
     public function members($id)
     {
         try {
-            $community = Community::findOrFail($id);
-            
+            $community = Community::with('creator')->findOrFail($id);
+
             $members = $community->members()
                 ->get()
-                ->map(function ($member) {
+                ->map(function ($member) use ($community) {
                     return [
                         'id' => $member->id,
                         'name' => $member->name,
-                        'role' => $member->pivot->role,
+                        'email' => $member->email,
+                        'user_type' => $member->user_type,
+                        'role' => $member->id === $community->created_by ? 'Admin' : $member->pivot->role,
+                        'is_admin' => $member->id === $community->created_by,
                         'avatar' => $member->profile_image_url,
                         'joined' => $member->pivot->created_at->format('Y-m-d'),
                     ];
                 });
 
-            return response()->json(['members' => $members]);
+            // Make sure the community creator/admin always appears, even if
+            // they were never explicitly added as a "member" row.
+            $hasAdmin = $members->contains('id', $community->created_by);
+            if (!$hasAdmin && $community->creator) {
+                $members->prepend([
+                    'id' => $community->creator->id,
+                    'name' => $community->creator->name,
+                    'email' => $community->creator->email,
+                    'user_type' => $community->creator->user_type,
+                    'role' => 'Admin',
+                    'is_admin' => true,
+                    'avatar' => $community->creator->profile_image_url,
+                    'joined' => $community->created_at->format('Y-m-d'),
+                ]);
+            }
+
+            return response()->json(['members' => $members->values()]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error loading members',

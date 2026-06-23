@@ -384,6 +384,44 @@ class NotificationService
         ]);
     }
 
+    // ── Support tickets ─────────────────────────────────────────────────
+
+    /**
+     * New "Contact Admin" message → notify every admin user in-app.
+     */
+    public static function supportTicketCreated(\App\Models\SupportTicket $ticket): void
+    {
+        $admins = User::where('user_type', 'admin')->pluck('id');
+
+        foreach ($admins as $adminId) {
+            self::create($adminId, 'support_ticket_created', [
+                'title' => 'New support message',
+                'body'  => "{$ticket->name} sent a message" . ($ticket->community ? " about {$ticket->community->name}" : ''),
+                'link'  => '/admin/support',
+                'meta'  => [
+                    'ticket_id' => $ticket->id,
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Admin replied to a ticket → notify the original sender (if registered).
+     */
+    public static function supportTicketReplied(\App\Models\SupportTicket $ticket): void
+    {
+        if (!$ticket->user_id) return;
+
+        self::create($ticket->user_id, 'support_ticket_replied', [
+            'title' => 'Admin replied to your message',
+            'body'  => $ticket->admin_reply,
+            'link'  => '/' . ($ticket->user->user_type ?? 'resident') . '/dashboard',
+            'meta'  => [
+                'ticket_id' => $ticket->id,
+            ],
+        ]);
+    }
+
     // ── Core create helper ────────────────────────────────────────────────
 
     private static function create(int $userId, string $type, array $data): void

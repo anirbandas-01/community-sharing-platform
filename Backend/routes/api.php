@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SupportController;
 use Illuminate\Support\Facades\Http;
 
 /*
@@ -58,6 +59,12 @@ Route::prefix('otp')->group(function () {
 Route::post('/forgot-password', [PasswordResetController::class, 'validateEmail']);
 Route::post('/reset-password',  [PasswordResetController::class, 'resetPassword']);
 
+// ── Universal "Contact Admin" — works for guests AND logged-in users ────
+// (controller manually resolves the bearer token if present, so logged-in
+// users are auto-identified while guests can still submit the form)
+Route::post('/support/contact', [SupportController::class, 'contact']);
+Route::post('/contact', [SupportController::class, 'contact']); // alias used by the static Contact page
+
 
 // Admin Routes (add after other routes)
 Route::prefix('admin')->group(function () {
@@ -90,6 +97,12 @@ Route::prefix('admin')->group(function () {
         Route::post('/settings', [AdminController::class, 'saveSettings']);
 
         Route::get('/reports', [AdminController::class, 'getReports']);
+
+        // Support inbox — universal "Contact Admin" tickets
+        Route::get('/support', [SupportController::class, 'index']);
+        Route::put('/support/{id}', [SupportController::class, 'updateStatus']);
+        Route::post('/support/{id}/reply', [SupportController::class, 'reply']);
+        Route::delete('/support/{id}', [SupportController::class, 'destroy']);
 
     });
 });

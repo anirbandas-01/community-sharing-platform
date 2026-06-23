@@ -57,6 +57,9 @@ import Blog from './pages/Blog';
 import Contact from './pages/Contact';
 import TermsOfService from './pages/TermsOfService';
 import Security from './pages/Security';
+import ContactAdminModal from './components/ContactAdminModal';
+import ContactAdminButton from './components/ContactAdminButton';
+import AdminSupport from './pages/admin/AdminSupport';
 
 function App() {
   return (
@@ -474,12 +477,23 @@ function App() {
             }
           />
 
+          <Route
+            path="/admin/support"
+            element={
+              <ProtectedRoute allowedTypes={['admin']}>
+                <AdminSupport />
+              </ProtectedRoute>
+            }
+          />
+
           
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
         <ChatBot />
+        <ContactAdminButton />
+        <ContactAdminModal />
       </BrowserRouter>
     </AuthProvider>
   </ThemeProvider>

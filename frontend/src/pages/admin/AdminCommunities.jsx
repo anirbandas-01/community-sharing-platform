@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Building2, Search, Edit2, Trash2, CheckCircle, XCircle, Clock , ShieldCheck} from 'lucide-react';
+import { Building2, Search, Edit2, Trash2, CheckCircle, XCircle, Clock , ShieldCheck, Plus, Image as ImageIcon, Loader2} from 'lucide-react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
-import { Home, Users, FileText, Settings } from 'lucide-react';
+import { Home, Users, FileText, Settings , LifeBuoy} from 'lucide-react';
+
+const CATEGORY_OPTIONS = [
+  { value: 'resident', label: 'Resident' },
+  { value: 'professional', label: 'Professional' },
+  { value: 'business', label: 'Business' },
+  { value: 'general', label: 'General' },
+  { value: 'local', label: 'Local' },
+];
+
+const EMPTY_FORM = { name: '', description: '', category: 'resident', visibility: 'public', location: '', image: null };
 
 const AdminCommunities = () => {
   const [communities, setCommunities] = useState([]);
@@ -16,11 +26,19 @@ const AdminCommunities = () => {
   const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [editingId, setEditingId] = useState(null); // null = creating new
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Building2, label: 'Communities', path: '/admin/communities' },
     { icon: ShieldCheck, label: 'Verifications', path: '/admin/verifications' },
+    { icon: LifeBuoy, label: 'Support Inbox', path: '/admin/support' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
@@ -38,6 +56,75 @@ const AdminCommunities = () => {
       console.error('Error fetching communities:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openCreateModal = () => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setImagePreview(null);
+    setFormError('');
+    setShowFormModal(true);
+  };
+
+  const openEditModal = (community) => {
+    setEditingId(community.id);
+    setForm({
+      name: community.name || '',
+      description: community.description || '',
+      category: community.category || 'resident',
+      visibility: community.visibility || 'public',
+      location: community.location || '',
+      image: null,
+    });
+    setImagePreview(community.image || null);
+    setFormError('');
+    setShowFormModal(true);
+    setShowDetailsModal(false);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setForm((f) => ({ ...f, image: file }));
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.description.trim()) {
+      setFormError('Name and description are required.');
+      return;
+    }
+    setSaving(true);
+    setFormError('');
+    try {
+      const fd = new FormData();
+      fd.append('name', form.name);
+      fd.append('description', form.description);
+      fd.append('category', form.category);
+      fd.append('visibility', form.visibility);
+      if (form.location) fd.append('location', form.location);
+      if (form.image) fd.append('image', form.image);
+
+      if (editingId) {
+        fd.append('_method', 'PUT');
+        await api.post(`/admin/communities/${editingId}`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        await api.post('/admin/communities', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
+      setShowFormModal(false);
+      fetchCommunities();
+    } catch (err) {
+      console.error('Error saving community:', err);
+      setFormError(err.response?.data?.message || 'Failed to save community. Please check the fields and try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -93,9 +180,15 @@ const AdminCommunities = () => {
 
   return (
     <DashboardLayout menuItems={menuItems} userType="admin">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Community Management</h1>
-        <p className="text-gray-600">Manage and moderate platform communities</p>
+      <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Community Management</h1>
+          <p className="text-gray-600">Manage and moderate platform communities</p>
+        </div>
+        <Button variant="primary" onClick={openCreateModal}>
+          <Plus className="w-5 h-5 mr-2" />
+          Create Community
+        </Button>
       </div>
 
       <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -196,8 +289,12 @@ const AdminCommunities = () => {
             <Card key={community.id} hover className="cursor-pointer" onClick={() => { setSelectedCommunity(community); setShowDetailsModal(true); }}>
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4 flex-1">
-                  <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
-                    {community.name?.charAt(0) || 'C'}
+                  <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl overflow-hidden">
+                    {community.image ? (
+                      <img src={community.image} alt={community.name} className="w-full h-full object-cover" />
+                    ) : (
+                      community.name?.charAt(0) || 'C'
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
@@ -205,11 +302,20 @@ const AdminCommunities = () => {
                         <h3 className="text-lg font-bold text-gray-900 mb-1">{community.name}</h3>
                         <p className="text-sm text-gray-600">{community.description}</p>
                       </div>
-                      <Badge variant={getStatusColor(community.status)} className="capitalize">{community.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getStatusColor(community.status)} className="capitalize">{community.status}</Badge>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEditModal(community); }}
+                          className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
+                          title="Edit community"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     <div className="grid md:grid-cols-3 gap-4 mt-3">
                       <div className="text-sm text-gray-600">
-                        <span className="font-medium">Category:</span> {community.category}
+                        <span className="font-medium">Category:</span> <span className="capitalize">{community.category}</span>
                       </div>
                       <div className="text-sm text-gray-600">
                         <span className="font-medium">Members:</span> {community.member_count || 0}
@@ -291,12 +397,114 @@ const AdminCommunities = () => {
                     Mark as Pending
                   </Button>
                 )}
+                <Button variant="outline" onClick={() => openEditModal(selectedCommunity)}>
+                  <Edit2 className="w-5 h-5 mr-2" />
+                  Edit
+                </Button>
                 <Button variant="outline" onClick={() => handleDeleteCommunity(selectedCommunity.id)}>
                   <Trash2 className="w-5 h-5 mr-2" />
                   Delete
                 </Button>
               </div>
             </div>
+          </Card>
+        </div>
+      )}
+      {showFormModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowFormModal(false)}>
+          <Card className="max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {editingId ? 'Edit Community' : 'Create Community'}
+              </h2>
+              <button onClick={() => setShowFormModal(false)} className="text-gray-400 hover:text-gray-600">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+
+              {/* Image upload */}
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="w-8 h-8 text-gray-400" />
+                  )}
+                </div>
+                <label className="flex-1">
+                  <span className="block text-sm font-medium text-gray-700 mb-1">Community Picture</span>
+                  <input type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleImageChange}
+                    className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:font-medium hover:file:bg-primary-100" />
+                </label>
+              </div>
+
+              <Input
+                label="Community Name"
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Green Valley Residents"
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="What is this community about?"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <select
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    {CATEGORY_OPTIONS.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                  <select
+                    value={form.visibility}
+                    onChange={(e) => setForm({ ...form, visibility: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+              </div>
+
+              <Input
+                label="Location (optional)"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                placeholder="e.g. Pune, Maharashtra"
+              />
+
+              <div className="flex gap-3 pt-2">
+                <Button type="submit" variant="primary" className="flex-1" disabled={saving}>
+                  {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Plus className="w-5 h-5 mr-2" />}
+                  {saving ? 'Saving...' : editingId ? 'Save Changes' : 'Create Community'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowFormModal(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
           </Card>
         </div>
       )}

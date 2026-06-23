@@ -6,7 +6,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
-import { Home, Building2, FileText, Settings, ShieldCheck } from 'lucide-react';
+import { Home, Building2, FileText, Settings, ShieldCheck , LifeBuoy} from 'lucide-react';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -21,6 +21,7 @@ const AdminUsers = () => {
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: Building2, label: 'Communities', path: '/admin/communities' },
     { icon: ShieldCheck, label: 'Verifications', path: '/admin/verifications' },
+    { icon: LifeBuoy, label: 'Support Inbox', path: '/admin/support' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];

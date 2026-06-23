@@ -232,7 +232,7 @@ public function getUsers(Request $request)
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'required|string',
-                'category' => 'required|in:general,professional,business,local',
+                'category' => 'required|in:resident,professional,business,general,local',
                 'visibility' => 'required|in:public,private',
                 'location'    => 'nullable|string|max:255',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -277,7 +277,7 @@ public function getUsers(Request $request)
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'description' => 'sometimes|string',
-                'category' => 'sometimes|in:general,professional,business,local',
+                'category' => 'sometimes|in:resident,professional,business,general,local',
                 'visibility' => 'sometimes|in:public,private',
                 'status' => 'sometimes|in:active,inactive',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
